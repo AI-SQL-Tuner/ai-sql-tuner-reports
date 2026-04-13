@@ -3,18 +3,42 @@
 
   <url>
     <loc>https://reports.aisqltuner.com/</loc>
+    <lastmod>2026-04-12</lastmod>
   </url>
 
   <url>
     <loc>https://reports.aisqltuner.com/index.html</loc>
+    <lastmod>2026-04-12</lastmod>
   </url>
 
   <url>
     <loc>https://reports.aisqltuner.com/aisqltuner-server-health-check-20260412-gpt-5-4-low.html</loc>
+    <lastmod>2026-04-12</lastmod>
   </url>
 
   <url>
     <loc>https://reports.aisqltuner.com/aisqltuner-server-health-check-20260412-sonnet-4-6-low.html</loc>
+    <lastmod>2026-04-12</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/aisqltuner-code-review-20260301.html</loc>
+    <lastmod>2026-03-01</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/aisqltuner-fix-deadlocks-20260320.html</loc>
+    <lastmod>2026-03-20</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/aisqltuner-query-tuner-sp00060-20260328.html</loc>
+    <lastmod>2026-03-28</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/aisqltuner--sqlstorm-index-tuning-20260319.html</loc>
+    <lastmod>2026-03-19</lastmod>
   </url>
 
 </urlset>

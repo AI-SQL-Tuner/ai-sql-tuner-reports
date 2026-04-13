@@ -10,7 +10,6 @@
     --blue-dark: #005EA3;
     --blue-darker: #004A82;
     --white: #FFFFFF;
-    --off-white: #F0F4F8;
     --text-primary: #FFFFFF;
     --text-secondary: #D0E4F7;
   }
@@ -62,6 +61,8 @@
   }
 
   .card a {
+    display: inline-block;
+    margin: 6px 0;
     color: var(--text-secondary);
     text-decoration: none;
     font-weight: 600;
@@ -91,31 +92,39 @@
 
   <div class="card">
     <h2>Server Health Check Reports</h2>
-
-  <p>
-    <a href="aisqltuner-server-health-check-20260412-gpt-5-4-low.html">
-      View Server Health Check using GPT 5.4 Low reasoning
-    </a>
-  </p>
-
-  <p>
-    <a href="aisqltuner-server-health-check-20260412-sonnet-4-6-low.html">
-      View Server Health Check using Claude Sonnet 4.6 Low reasoning
-    </a>
-  </p>
-    
+    <a href="aisqltuner-server-health-check-20260412-gpt-5-4-low.html">View Server Health Check using GPT 5.4 Low reasoning</a><br>
+    <a href="aisqltuner-server-health-check-20260412-sonnet-4-6-low.html">View Server Health Check using Claude Sonnet 4.6 Low reasoning</a>
   </div>
 
+  <div class="card">
+    <h2>Code Review Reports</h2>
+    <a href="aisqltuner-code-review-20260301.html">View SQL Code Review Report</a>
+  </div>
+
+  <div class="card">
+    <h2>Deadlock Fix Reports</h2>
+    <a href="aisqltuner-fix-deadlocks-20260320.html">View Deadlock Analysis and Fix Report</a>
+  </div>
+
+  <div class="card">
+    <h2>Query Tuner Reports</h2>
+    <a href="aisqltuner-query-tuner-sp00060-20260328.html">View Query Tuner Report (sp00060)</a>
+  </div>
+
+  <div class="card">
+    <h2>SQLStorm Index Tuning Reports</h2>
+    <a href="aisqltuner--sqlstorm-index-tuning-20260319.html">View SQLStorm Index Tuning Report</a>
+  </div>
 
   <div class="card">
     <h2>All Other Reports</h2>
-    <a href="raw/">Browse /raw/ directory →</a>
+    <a href="raw/">Browse /raw/ directory -></a>
   </div>
 
 </div>
 
 <footer>
-  © 2026 AI SQL Tuner LLC — Sample Reports
+  Copyright 2026 AI SQL Tuner LLC - Sample Reports
 </footer>
 
 </body>

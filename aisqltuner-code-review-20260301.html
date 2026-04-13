@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI SQL Tuner Recommendations</title>
+  <style>
+    :root{
+      --bg:#0A84FF;          /* macOS accent blue */
+      --panel:#0b5fc0;
+      --text:#ffffff;
+      --muted:#dbeafe;
+      --line:#93c5fd;
+      --code:#0b1220;
+      --link:#e0f2fe;
+      --ok:#bbf7d0;
+      --warn:#fde68a;
+      --high:#fecaca;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      line-height:1.45;
+    }
+    a{color:var(--link)}
+    .layout{display:flex;min-height:100vh}
+    .toc{
+      width:280px;flex:0 0 280px;position:sticky;top:0;height:100vh;overflow:auto;
+      padding:24px 18px;border-right:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.12)
+    }
+    .toc h2{margin:0 0 10px 0;font-size:1.05rem}
+    .toc ul{margin:0;padding-left:18px}
+    .toc li{margin:7px 0}
+    .content{flex:1;padding:28px 34px 90px 34px;max-width:1200px}
+    h1{margin:0 0 6px 0;font-size:2rem}
+    h2{margin-top:28px;font-size:1.4rem;border-bottom:1px solid rgba(255,255,255,.25);padding-bottom:6px}
+    .sub{color:var(--muted);margin:2px 0}
+    .card{
+      background:rgba(0,0,0,.14);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:14px 16px;margin:12px 0
+    }
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    pre{margin:10px 0 0 0;white-space:pre-wrap}
+    pre code{display:block;background:var(--code);color:#e5e7eb;border:1px solid #1f2937;border-radius:8px;padding:12px}
+    table{border-collapse:collapse;width:100%;margin-top:8px}
+    th,td{border:1px solid rgba(255,255,255,.3);padding:8px 10px;text-align:left}
+    th{background:rgba(0,0,0,.15)}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.82rem;margin-left:8px}
+    .high{background:var(--high);color:#111827}
+    .med{background:var(--warn);color:#111827}
+    .conf{color:var(--muted);font-size:.92rem}
+    footer{margin-top:30px;padding-top:14px;border-top:1px solid rgba(255,255,255,.25);color:var(--muted);font-size:.92rem}
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc">
+      <h2>Table of Contents</h2>
+      <ul>
+        <li><a href="#summary">Executive summary</a></li>
+        <li><a href="#scope">Review scope & object counts</a></li>
+        <li><a href="#recommendations">Detailed priortized recommendations</a></li>
+        <li><a href="#confidence">Confidence levels</a></li>
+      </ul>
+    </nav>
+
+    <main class="content">
+      <h1>AI SQL Tuner Recommendations</h1>
+      <p class="sub"><strong>Tuning Goal:</strong> Code Review</p>
+      <p class="sub"><strong>Server:</strong> RockyPC &nbsp;|&nbsp; <strong>Database:</strong> SQLStorm</p>
+      <p class="sub"><strong>Version:</strong> SQL Server 2022 (16.x), 16.0.1165.1 RTM-GDR, Developer Edition (64-bit), Engine Edition: Enterprise</p>
+
+      <h2 id="summary">Executive summary</h2>
+      <div class="card">
+        <ol>
+          <li><strong>Highest-impact fix:</strong> remove long-running waits inside explicit transactions in <code>dbo.usp_UpdateTablesWithDelay</code>; this is the clearest locking/blocking risk.</li>
+          <li><strong>Second highest-impact:</strong> correct non-SARGable and logically incorrect joins (especially joins on <code>DisplayName</code>, <code>Title</code>, and conditions like <code>ON 1=1</code>), which currently force scans and produce row explosion.</li>
+          <li><strong>Third:</strong> replace expensive random row selection (<code>ORDER BY NEWID()</code>) and many scalar correlated subqueries with set-based alternatives.</li>
+          <li><strong>Fourth:</strong> standardize time filters and parameterization (many hard-coded literal dates), improving plan quality and compatibility with SQL Server 2022 PSP optimization.</li>
+          <li><strong>Fifth:</strong> add/adjust targeted covering indexes for repeated patterns on large tables (<code>Votes</code>, <code>PostHistory</code>, <code>Posts</code>, <code>Comments</code>), aligned to observed scan-heavy access.</li>
+        </ol>
+      </div>
+
+      <h2 id="scope">Review scope & object counts</h2>
+      <div class="card">
+        <ul>
+          <li><strong>Stored procedures reviewed:</strong> 100</li>
+          <li><strong>Functions reviewed:</strong> 0 provided</li>
+          <li><strong>Triggers reviewed:</strong> 0 provided</li>
+          <li><strong>Views reviewed:</strong> 0 provided</li>
+          <li><strong>Large tables and index usage summary reviewed:</strong> Yes (tables &gt; 1,000 rows and largest index usage/size data)</li>
+          <li><strong>Scope note:</strong> recommendations are based only on the most recent objects provided for review.</li>
+        </ul>
+      </div>
+
+      <h2 id="recommendations">Detailed priortized recommendations</h2>
+      <ol>
+        <li>
+          <strong>Eliminate transaction-held waits and tighten write transaction scope</strong>
+          <span class="pill high">Priority 1</span>
+          <ul>
+            <li>Affected object: <code>dbo.usp_UpdateTablesWithDelay</code> (called by <code>dbo.usp_UpdateTablesInLoop</code>).</li>
+            <li><code>WAITFOR DELAY '00:00:05'</code> inside an open transaction holds X locks longer than necessary and invites blocking/deadlocks.</li>
+            <li>Also replace <code>GETDATE()</code> with <code>SYSUTCDATETIME()</code> for deterministic UTC audit behavior.</li>
+          </ul>
+          <pre><code>-- Recommended pattern
+CREATE OR ALTER PROCEDURE dbo.usp_UpdateTablesWithDelay
+  @UserId int, @NewReputation int, @PostId int, @NewScore int
+AS
+BEGIN
+  SET NOCOUNT ON;
+  SET XACT_ABORT ON;
+
+  BEGIN TRY
+    BEGIN TRAN;
+
+    UPDATE dbo.Users
+      SET Reputation = @NewReputation,
+          LastAccessDate = SYSUTCDATETIME()
+    WHERE Id = @UserId;
+
+    UPDATE dbo.Posts
+      SET Score = @NewScore,
+          LastActivityDate = SYSUTCDATETIME()
+    WHERE Id = @PostId;
+
+    COMMIT;
+  END TRY
+  BEGIN CATCH
+    IF @@TRANCOUNT &gt; 0 ROLLBACK;
+    THROW;
+  END CATCH;
+
+  -- if delay is needed for test harness behavior, do it after commit
+  -- WAITFOR DELAY '00:00:05';
+END;</code></pre>
+          <div class="conf">Confidence: 0.99</div>
+        </li>
+
+        <li>
+          <strong>Remove <code>ORDER BY NEWID()</code> random selection on large tables</strong>
+          <span class="pill high">Priority 1</span>
+          <ul>
+            <li>Affected object: <code>dbo.usp_UpdateTablesInLoop</code>.</li>
+            <li>This forces full-sort behavior and scales poorly on <code>Users</code> (267k) and <code>Posts</code> (246k).</li>
+          </ul>
+          <pre><code>-- Lightweight random key sampling pattern
+DECLARE @MaxUserId int = (SELECT MAX(Id) FROM dbo.Users);
+DECLARE @MaxPostId int = (SELECT MAX(Id) FROM dbo.Posts);
+
+SELECT TOP (1) @RandomUserId = u.Id
+FROM dbo.Users u
+WHERE u.Id &gt;= ABS(CHECKSUM(NEWID())) % @MaxUserId
+ORDER BY u.Id;
+
+SELECT TOP (1) @RandomPostId = p.Id
+FROM dbo.Posts p
+WHERE p.Id &gt;= ABS(CHECKSUM(NEWID())) % @MaxPostId
+ORDER BY p.Id;</code></pre>
+          <div class="conf">Confidence: 0.97</div>
+        </li>
+
+        <li>
+          <strong>Correct row-multiplication joins and non-key joins (logic + performance)</strong>
+          <span class="pill high">Priority 1</span>
+          <ul>
+            <li>Frequent anti-patterns found: joining on <code>DisplayName</code>/<code>Title</code>, <code>ON 1=1</code>, joining unrelated keys (e.g., <code>PostId = UserId</code>).</li>
+            <li>Notable procedures: <code>sp09909</code>, <code>sp09867</code>, <code>sp09831</code>, <code>sp09828</code>, <code>sp09826</code>, <code>sp09982</code>, <code>sp09886</code>, <code>sp09884</code>, <code>sp00987</code>.</li>
+            <li>These patterns explain heavy scans seen on clustered indexes (<code>Users</code>, <code>Posts</code>, <code>Votes</code>, <code>PostHistory</code>).</li>
+          </ul>
+          <pre><code>-- Example correction (name-based join -> key-based join)
+-- bad: ON ua.DisplayName = tp.OwnerName
+-- good:
+JOIN dbo.Users u ON u.Id = tp.OwnerUserId
+JOIN UserActivity ua ON ua.UserId = u.Id</code></pre>
+          <div class="conf">Confidence: 0.98</div>
+        </li>
+
+        <li>
+          <strong>Replace correlated scalar subqueries with pre-aggregated joins</strong>
+          <span class="pill med">Priority 2</span>
+          <ul>
+            <li>Common in: <code>sp09974</code>, <code>sp09940</code>, <code>sp09946</code>, <code>sp09854</code>, <code>sp09824</code>, <code>sp09815</code>, <code>sp00099</code>.</li>
+            <li>Pattern causes repeated lookups/scans per row.</li>
+          </ul>
+          <pre><code>-- Replace N scalar subqueries with one grouped source
+WITH VoteAgg AS (
+  SELECT PostId,
+         SUM(CASE WHEN VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpVotes,
+         SUM(CASE WHEN VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownVotes
+  FROM dbo.Votes
+  GROUP BY PostId
+)
+SELECT p.Id, p.Title, v.UpVotes, v.DownVotes
+FROM dbo.Posts p
+LEFT JOIN VoteAgg v ON v.PostId = p.Id;</code></pre>
+          <div class="conf">Confidence: 0.95</div>
+        </li>
+
+        <li>
+          <strong>Make date filtering SARGable and parameter-driven</strong>
+          <span class="pill med">Priority 2</span>
+          <ul>
+            <li>Many procedures hard-code literal timestamps and use expressions like <code>CAST('date' AS DATETIME) - DATEADD(...)</code> (e.g., <code>sp09921</code>, <code>sp09963</code>, <code>sp09978</code>, <code>sp09905</code>, <code>sp09844</code>).</li>
+            <li>Use direct range predicates and input parameters so plans can benefit from SQL Server 2022 PSP.</li>
+          </ul>
+          <pre><code>DECLARE @FromDate datetime2(0) = DATEADD(YEAR, -1, SYSUTCDATETIME());
+
+... WHERE p.CreationDate &gt;= @FromDate;</code></pre>
+          <div class="conf">Confidence: 0.96</div>
+        </li>
+
+        <li>
+          <strong>Prevent aggregate overcount from fan-out joins</strong>
+          <span class="pill med">Priority 2</span>
+          <ul>
+            <li>Several procs aggregate after joining multiple 1-to-many tables at once (Posts+Votes+Comments+Badges), inflating counts.</li>
+            <li>Examples: <code>sp09941</code>, <code>sp09977</code>, <code>sp09990</code>, <code>sp09881</code>, <code>sp09814</code>.</li>
+            <li>Aggregate each child table first, then join per key.</li>
+          </ul>
+          <div class="conf">Confidence: 0.94</div>
+        </li>
+
+        <li>
+          <strong>Refactor tag search (<code>LIKE '%tag%'</code>) to normalized token matching</strong>
+          <span class="pill med">Priority 3</span>
+          <ul>
+            <li>Seen in many procedures: <code>sp09990</code>, <code>sp09982</code>, <code>sp00992</code>, <code>sp09886</code>, <code>sp09881</code>.</li>
+            <li>Leading wildcard prevents index seeks and drives scans.</li>
+            <li>Use parsed tag table (PostId, TagName) populated once; index <code>(TagName, PostId)</code>.</li>
+          </ul>
+          <div class="conf">Confidence: 0.92</div>
+        </li>
+
+        <li>
+          <strong>Index tuning aligned to observed scan-heavy access</strong>
+          <span class="pill med">Priority 3</span>
+          <ul>
+            <li>Given usage data: high clustered scans on <code>Votes</code>, <code>PostHistory</code>, <code>Users</code>, <code>Posts</code>, <code>Comments</code>.</li>
+            <li>Create/adjust focused covering indexes for frequent GROUP BY / WHERE patterns.</li>
+          </ul>
+          <pre><code>-- Candidate examples (validate with workload before deployment)
+CREATE INDEX IX_Votes_PostId_VoteTypeId_UserId
+ON dbo.Votes(PostId, VoteTypeId, UserId)
+INCLUDE (CreationDate, BountyAmount);
+
+CREATE INDEX IX_Posts_PostTypeId_Score_CreationDate
+ON dbo.Posts(PostTypeId, Score DESC, CreationDate DESC)
+INCLUDE (OwnerUserId, ViewCount, Title, AnswerCount, CommentCount);
+
+CREATE INDEX IX_Comments_UserId_PostId
+ON dbo.Comments(UserId, PostId)
+INCLUDE (CreationDate, Score);</code></pre>
+          <div class="conf">Confidence: 0.90</div>
+        </li>
+
+        <li>
+          <strong>Reduce unnecessary <code>OFFSET/FETCH</code> without selective predicates</strong>
+          <span class="pill med">Priority 3</span>
+          <ul>
+            <li>Many procs use <code>OFFSET 0 FETCH NEXT N</code> after large sorts; equivalent <code>TOP (N)</code> with targeted ORDER BY can be simpler and cheaper.</li>
+            <li>Examples: <code>sp09998</code>, <code>sp09995</code>, <code>sp09991</code>, <code>sp09874</code>, <code>sp09851</code>.</li>
+          </ul>
+          <div class="conf">Confidence: 0.86</div>
+        </li>
+
+        <li>
+          <strong>Use naming/schema and error-handling standards consistently</strong>
+          <span class="pill med">Priority 3</span>
+          <ul>
+            <li>Avoid <code>sp*</code> naming (reserved lookup behavior and ambiguity); prefer schema-qualified <code>dbo.usp_*</code>.</li>
+            <li>Standardize <code>TRY/CATCH + THROW</code> for mutating procedures.</li>
+            <li>Reduce <code>PRINT</code> in loops for production; use lightweight logging table if needed.</li>
+          </ul>
+          <div class="conf">Confidence: 0.88</div>
+        </li>
+      </ol>
+
+      <h2 id="confidence">Confidence levels</h2>
+      <div class="card">
+        <ul>
+          <li><strong>Overall confidence:</strong> High (0.93)</li>
+          <li><strong>Locking/concurrency findings:</strong> Very High (0.99)</li>
+          <li><strong>Query anti-pattern findings:</strong> High (0.95)</li>
+          <li><strong>Index recommendations:</strong> Medium-High (0.90), pending workload validation</li>
+          <li><strong>SQL Server 2022 capability fit:</strong> High (Enterprise features available; recommendations are edition-compatible)</li>
+        </ul>
+      </div>
+
+      <footer>
+        Generated by AI SQL Tuner Studio using model gpt-5.3-codex with reasoning effort low —
+        <a href="https://aisqltuner.com" target="_blank" rel="noopener noreferrer">https://aisqltuner.com</a><br/>
+        Based on analysis as of 2026-03-01 18:01:51 UTC
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI SQL Tuner Recommendations</title>
+<style>
+  :root{
+    --bg:#0A84FF; /* macOS accent blue */
+    --panel:#127df0;
+    --panel2:#0b6fe0;
+    --text:#ffffff;
+    --muted:#dcecff;
+    --line:rgba(255,255,255,0.22);
+    --code:#081b33;
+    --good:#9ef0b8;
+    --warn:#ffe08a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.45}
+  a{color:#ffffff;text-decoration:none}
+  a:hover{text-decoration:underline}
+  .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+  .toc{
+    position:sticky;top:0;align-self:start;height:100vh;overflow:auto;
+    background:rgba(0,0,0,0.16);border-right:1px solid var(--line);padding:24px 20px
+  }
+  .toc h2{font-size:1.05rem;margin:0 0 14px 0}
+  .toc ul{list-style:none;padding:0;margin:0}
+  .toc li{margin:10px 0}
+  .toc .meta{margin-top:22px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.93rem}
+  .content{padding:32px 40px 56px 40px;max-width:1100px}
+  h1{font-size:2rem;line-height:1.15;margin:0 0 8px 0}
+  .subtitle{font-size:1rem;color:var(--muted);margin-bottom:18px}
+  .server{
+    background:rgba(255,255,255,0.10);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;margin-bottom:24px
+  }
+  .server strong{color:#fff}
+  h2{margin:30px 0 12px 0;font-size:1.35rem;border-bottom:1px solid var(--line);padding-bottom:8px}
+  h3{margin:20px 0 8px 0;font-size:1.06rem}
+  p{margin:8px 0 12px 0}
+  ol{padding-left:22px}
+  ul{padding-left:20px}
+  li{margin:8px 0}
+  .card{
+    background:rgba(255,255,255,0.10);border:1px solid var(--line);border-radius:12px;
+    padding:18px 18px;margin:14px 0
+  }
+  .priority{font-weight:700}
+  .confidence{color:var(--good);font-weight:700}
+  .impact{color:var(--warn);font-weight:700}
+  table{width:100%;border-collapse:collapse;margin:14px 0 8px 0;background:rgba(255,255,255,0.08);border-radius:10px;overflow:hidden}
+  th,td{padding:12px 10px;border:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:rgba(0,0,0,0.14)}
+  pre{margin:10px 0 0 0}
+  code, pre{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
+    font-size:.92rem
+  }
+  pre code{
+    display:block;white-space:pre-wrap;word-break:break-word;
+    background:var(--code);color:#eaf4ff;border:1px solid rgba(255,255,255,0.12);
+    border-radius:10px;padding:14px
+  }
+  .footer{
+    margin-top:32px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.93rem
+  }
+  .small{font-size:.93rem;color:var(--muted)}
+  @media (max-width: 980px){
+    .layout{grid-template-columns:1fr}
+    .toc{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--line)}
+    .content{padding:24px}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="Table of contents">
+    <h2>Contents</h2>
+    <ul>
+      <li><a href="#executive-summary">Executive summary</a></li>
+      <li><a href="#detailed-recommendations">Detailed prioritized recommendations</a></li>
+      <li><a href="#implementation-notes">Implementation notes</a></li>
+    </ul>
+    <div class="meta">
+      <div><strong>Server:</strong> RockyPC</div>
+      <div><strong>Database:</strong> WideWorldImporters</div>
+      <div><strong>Version:</strong> SQL Server 2022 RTM-GDR 16.0.1170.5</div>
+      <div><strong>Edition:</strong> Developer / Engine Edition: Enterprise</div>
+      <div><strong>RCSI:</strong> Disabled</div>
+    </div>
+  </nav>
+
+  <main class="content">
+    <header>
+      <h1>AI SQL Tuner Recommendations</h1>
+      <div class="subtitle">Tuning Goal: <strong>Fix Deadlocks</strong></div>
+      <div class="server">
+        <div><strong>Server Name:</strong> RockyPC</div>
+        <div><strong>Database Name:</strong> WideWorldImporters</div>
+        <div><strong>SQL Server Version:</strong> Microsoft SQL Server 2022 (RTM-GDR) 16.0.1170.5 (X64)</div>
+      </div>
+    </header>
+
+    <section id="executive-summary">
+      <h2>Executive summary</h2>
+      <div class="card">
+        <ol>
+          <li>
+            <span class="priority">Top priority: standardize object access order inside all write transactions.</span>
+            The deadlocks are classic cyclic write deadlocks caused by two sessions updating the same objects in opposite order:
+            <ul>
+              <li><strong>Sales:</strong> one procedure updates <code>Sales.OrderLines</code> then <code>Sales.Orders</code>, while the other updates <code>Sales.Orders</code> then <code>Sales.OrderLines</code>.</li>
+              <li><strong>Application:</strong> one transaction updates <code>Application.Countries</code> then <code>Application.StateProvinces</code>, while the competing session does the reverse.</li>
+            </ul>
+            This is the highest-impact fix because it directly removes the deadlock cycle rather than only reducing its frequency.
+            <div class="small"><span class="confidence">Confidence: 99%</span></div>
+          </li>
+          <li>
+            <span class="priority">Second priority: collapse related multi-statement updates into one deterministic procedure or one consistent transaction template.</span>
+            The repeated deadlocks show the pattern is structural, not incidental. Centralizing the update sequence will prevent future code paths from reintroducing inverse lock ordering.
+            <div class="small"><span class="confidence">Confidence: 96%</span></div>
+          </li>
+          <li>
+            <span class="priority">Third priority: enable Read Committed Snapshot Isolation (RCSI).</span>
+            RCSI will not eliminate writer-versus-writer deadlocks like the ones shown, but it is still a strong secondary action because it reduces blocking from shared locks and lowers the chance of more complex mixed read/write deadlock patterns elsewhere.
+            <div class="small"><span class="confidence">Confidence: 83%</span></div>
+          </li>
+          <li>
+            <span class="priority">Fourth priority: shorten transactions and add deadlock retry handling in callers.</span>
+            The current deadlocks occur inside explicit user transactions with <code>trancount = 2</code>. Faster commit and deterministic retries reduce user-visible failures even after code fixes.
+            <div class="small"><span class="confidence">Confidence: 90%</span></div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="detailed-recommendations">
+      <h2>Detailed priortized recommendations</h2>
+
+      <ol>
+        <li>
+          <div class="card">
+            <h3>Rewrite conflicting procedures and scripts to acquire locks in the same object order everywhere</h3>
+            <p><span class="impact">Impact: Very High</span> &nbsp; <span class="confidence">Confidence: 99%</span></p>
+            <ul>
+              <li>For the <strong>Sales</strong> deadlocks, pick one order and enforce it globally. Example: always update <code>Sales.Orders</code> first, then <code>Sales.OrderLines</code> for a given <code>OrderID</code>.</li>
+              <li>For the <strong>Application</strong> deadlock, pick one order and enforce it globally. Example: always update <code>Application.Countries</code> first, then <code>Application.StateProvinces</code>.</li>
+              <li>Do not allow any competing code path, stored procedure, trigger, job, or ad hoc batch to reverse that order.</li>
+              <li>The deadlock graphs clearly show each session owns an <code>X</code> lock on one table and waits for the other table, forming a direct cycle.</li>
+            </ul>
+            <p><strong>Recommended direction:</strong></p>
+            <pre><code>-- Standardize on this order for Sales updates:
+BEGIN TRAN;
+
+UPDATE Sales.Orders
+SET Comments = ISNULL(Comments, '') + ' [Standard]'
+WHERE OrderID = @OrderID;
+
+UPDATE Sales.OrderLines
+SET Description = SUBSTRING(ISNULL(Description, '') + ' [Standard]', 1, 100)
+WHERE OrderID = @OrderID;
+
+COMMIT;</code></pre>
+            <pre><code>-- Standardize on this order for Application updates:
+BEGIN TRAN;
+
+UPDATE Application.Countries
+SET LatestRecordedPopulation = LatestRecordedPopulation + 1,
+    ValidFrom = SYSUTCDATETIME()
+WHERE IsoNumericCode = @IsoNumericCode;
+
+UPDATE Application.StateProvinces
+SET LatestRecordedPopulation = LatestRecordedPopulation + 1,
+    ValidFrom = SYSUTCDATETIME()
+WHERE StateProvinceCode = @StateProvinceCode;
+
+COMMIT;</code></pre>
+          </div>
+        </li>
+
+        <li>
+          <div class="card">
+            <h3>Replace the two Sales procedures with one canonical procedure</h3>
+            <p><span class="impact">Impact: Very High</span> &nbsp; <span class="confidence">Confidence: 97%</span></p>
+            <ul>
+              <li><code>dbo.UpdOrdersandLines</code> and <code>dbo.UpdLinesandOrders</code> encode opposite lock acquisition order and are the direct source of Deadlocks #1 and #3.</li>
+              <li>Keep only one procedure for that business action and retire the inverse-order version.</li>
+              <li>If both behaviors are needed, parameterize the data changes, not the physical update order.</li>
+              <li>This is safer than relying on developers to remember a convention across multiple procedures.</li>
+            </ul>
+            <pre><code>CREATE OR ALTER PROCEDURE dbo.UpdOrdersAndLines_Canonical
+    @OrderID int
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRAN;
+
+    UPDATE Sales.Orders
+    SET Comments = ISNULL(Comments, '') + ' [Proc]'
+    WHERE OrderID = @OrderID;
+
+    UPDATE Sales.OrderLines
+    SET Description = SUBSTRING(ISNULL(Description, '') + ' [Proc]', 1, 100)
+    WHERE OrderID = @OrderID;
+
+    COMMIT;
+END</code></pre>
+          </div>
+        </li>
+
+        <li>
+          <div class="card">
+            <h3>For tightly related parent/child updates, lock the driving parent row first and keep that rule universal</h3>
+            <p><span class="impact">Impact: High</span> &nbsp; <span class="confidence">Confidence: 92%</span></p>
+            <ul>
+              <li>For order-related work, use the order header row as the transaction anchor.</li>
+              <li>Acquire the header row lock first, then update child rows. This gives every session the same starting point.</li>
+              <li>Where appropriate, explicitly probe the parent row first to establish a deterministic lock path before touching children.</li>
+            </ul>
+            <pre><code>BEGIN TRAN;
+
+SELECT 1
+FROM Sales.Orders WITH (UPDLOCK, HOLDLOCK)
+WHERE OrderID = @OrderID;
+
+UPDATE Sales.Orders
+SET Comments = ISNULL(Comments, '') + ' [Proc]'
+WHERE OrderID = @OrderID;
+
+UPDATE Sales.OrderLines
+SET Description = SUBSTRING(ISNULL(Description, '') + ' [Proc]', 1, 100)
+WHERE OrderID = @OrderID;
+
+COMMIT;</code></pre>
+            <ul>
+              <li>Use this only as part of the broader standardized order strategy. Lock hints alone do not fix inverse ordering if different sessions still lock different objects first.</li>
+            </ul>
+          </div>
+        </li>
+
+        <li>
+          <div class="card">
+            <h3>Enable Read Committed Snapshot Isolation for the database</h3>
+            <p><span class="impact">Impact: Medium-High</span> &nbsp; <span class="confidence">Confidence: 83%</span></p>
+            <ul>
+              <li><strong>RCSI is currently disabled.</strong></li>
+              <li>RCSI reduces reader/writer blocking and can prevent additional deadlock classes involving shared locks.</li>
+              <li>It will <strong>not</strong> directly eliminate the writer/writer deadlocks shown here, so it should be treated as a secondary improvement, not the primary fix.</li>
+              <li>SQL Server 2022 supports this fully; your edition has no limitation here.</li>
+            </ul>
+            <pre><code>ALTER DATABASE WideWorldImporters
+SET READ_COMMITTED_SNAPSHOT ON
+WITH ROLLBACK IMMEDIATE;</code></pre>
+          </div>
+        </li>
+
+        <li>
+          <div class="card">
+            <h3>Shorten transaction lifetime and remove nonessential work between the first and second updates</h3>
+            <p><span class="impact">Impact: High</span> &nbsp; <span class="confidence">Confidence: 90%</span></p>
+            <ul>
+              <li>The deadlock victims show explicit user transactions and <code>trancount = 2</code>, which increases the window in which cyclic blocking can form.</li>
+              <li>Move all validation, variable assignment, and non-DML logic before <code>BEGIN TRAN</code> whenever possible.</li>
+              <li>Commit immediately after the final update.</li>
+              <li>Avoid interactive SSMS testing patterns that hold transactions open longer than application code would.</li>
+            </ul>
+          </div>
+        </li>
+
+        <li>
+          <div class="card">
+            <h3>Add deadlock retry handling in the application or calling batch</h3>
+            <p><span class="impact">Impact: Medium</span> &nbsp; <span class="confidence">Confidence: 94%</span></p>
+            <ul>
+              <li>Even after the structural fix, a small number of deadlocks can still occur in busy systems.</li>
+              <li>Retry only on error 1205, with a short bounded backoff and full transaction replay.</li>
+              <li>This is mitigation, not root-cause removal, so prioritize it below code-order fixes.</li>
+            </ul>
+            <pre><code>-- Pseudocode pattern
+retry up to 3 times:
+  begin tran
+  execute canonical procedure
+  commit
+on error 1205:
+  rollback
+  wait 100-300 ms with jitter
+  retry</code></pre>
+          </div>
+        </li>
+
+        <li>
+          <div class="card">
+            <h3>Keep row targeting as selective and seek-based as possible</h3>
+            <p><span class="impact">Impact: Medium</span> &nbsp; <span class="confidence">Confidence: 78%</span></p>
+            <ul>
+              <li>The current deadlocks occur on primary key keylocks, which is already relatively selective.</li>
+              <li>Still, preserve efficient seeks on the predicate columns:
+                <ul>
+                  <li><code>Sales.Orders(OrderID)</code></li>
+                  <li><code>Sales.OrderLines(... by OrderID path ...)</code></li>
+                  <li><code>Application.Countries(IsoNumericCode)</code></li>
+                  <li><code>Application.StateProvinces(StateProvinceCode)</code></li>
+                </ul>
+              </li>
+              <li>If any nonclustered path causes extra lookup work or broader touching of rows in the real workload, tune that access path so locks are held for less time.</li>
+              <li>This is lower priority because the deadlock evidence already points primarily to order inversion, not missing-index scans.</li>
+            </ul>
+          </div>
+        </li>
+
+        <li>
+          <div class="card">
+            <h3>Avoid mixing ad hoc scripts and procedural code that touch the same tables in different orders</h3>
+            <p><span class="impact">Impact: Medium</span> &nbsp; <span class="confidence">Confidence: 88%</span></p>
+            <ul>
+              <li>Deadlock #2 came from ad hoc transactional batches in SSMS.</li>
+              <li>Document and enforce a single transaction template for all manual maintenance and test scripts touching these objects.</li>
+              <li>For shared environments, place canonical write logic behind stored procedures and limit direct table updates.</li>
+            </ul>
+          </div>
+        </li>
+
+        <li>
+          <div class="card">
+            <h3>Use application locks only if business logic cannot be refactored to a single ordering rule</h3>
+            <p><span class="impact">Impact: Situational</span> &nbsp; <span class="confidence">Confidence: 74%</span></p>
+            <ul>
+              <li>If multiple complex code paths must update the same logical entity and cannot be consolidated, serialize by business key using <code>sp_getapplock</code>.</li>
+              <li>This can be effective for hot entities like a single <code>OrderID</code>, but it introduces deliberate serialization and should not be the first fix.</li>
+            </ul>
+            <pre><code>BEGIN TRAN;
+
+EXEC sys.sp_getapplock
+    @Resource = CONCAT('Order:', @OrderID),
+    @LockMode = 'Exclusive',
+    @LockOwner = 'Transaction',
+    @LockTimeout = 10000;
+
+-- Canonical update sequence here
+
+COMMIT;</code></pre>
+          </div>
+        </li>
+      </ol>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Deadlock</th>
+            <th>Primary Cause</th>
+            <th>Most Effective Fix</th>
+            <th>Confidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>#1</td>
+            <td><code>Sales.Orders</code> and <code>Sales.OrderLines</code> updated in opposite order by two procedures</td>
+            <td>Retire inverse-order proc and enforce one canonical update order</td>
+            <td>99%</td>
+          </tr>
+          <tr>
+            <td>#2</td>
+            <td><code>Application.Countries</code> and <code>Application.StateProvinces</code> updated in opposite order by ad hoc transactions</td>
+            <td>Use one transaction template with fixed order everywhere</td>
+            <td>98%</td>
+          </tr>
+          <tr>
+            <td>#3</td>
+            <td>Repeat of Deadlock #1 pattern</td>
+            <td>Same as #1; confirms recurring structural defect</td>
+            <td>99%</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="implementation-notes">
+      <h2>Implementation notes</h2>
+      <div class="card">
+        <ul>
+          <li>SQL Server 2022 Enterprise capabilities available on this server are sufficient for all recommendations above.</li>
+          <li>No recommendation here depends on features unavailable in your version or edition.</li>
+          <li>The strongest fix is transactional design consistency, not engine-level tuning.</li>
+          <li>Because the deadlocks are keylock-to-keylock cycles on specific rows, changing MAXDOP, memory settings, or general server configuration is not a primary deadlock remedy for this case.</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div>Generated by AI SQL Tuner Studio using model gpt-5.4 with reasoning effort low.</div>
+      <div><a href="https://aisqltuner.com">https://aisqltuner.com</a></div>
+      <div>Based on analysis as of 2026-03-20 21:34:04 UTC</div>
+    </footer>
+  </main>
+</div>
+</body>
+</html>

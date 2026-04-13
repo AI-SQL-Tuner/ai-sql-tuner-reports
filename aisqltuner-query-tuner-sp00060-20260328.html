@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI SQL Tuner Recommendations</title>
+<style>
+  :root{
+    --bg:#0A84FF;
+    --panel:#0b5fc0;
+    --panel-2:#084a95;
+    --text:#f5f7fb;
+    --muted:#d9e7ff;
+    --line:rgba(255,255,255,.18);
+    --accent:#9ec8ff;
+    --good:#7ee787;
+    --warn:#ffd166;
+    --bad:#ff8a8a;
+    --code:#071f3d;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.45;
+  }
+  a{color:#ffffff}
+  .layout{
+    display:grid;
+    grid-template-columns:280px 1fr;
+    gap:24px;
+    max-width:1600px;
+    margin:0 auto;
+    padding:24px;
+  }
+  .toc{
+    position:sticky;
+    top:20px;
+    align-self:start;
+    background:rgba(0,0,0,.14);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px;
+  }
+  .toc h2{
+    margin:0 0 12px 0;
+    font-size:1.05rem;
+  }
+  .toc ul{
+    margin:0;
+    padding-left:18px;
+  }
+  .toc li{margin:8px 0}
+  .content{
+    min-width:0;
+  }
+  .hero,.card{
+    background:rgba(0,0,0,.14);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:22px;
+    margin-bottom:20px;
+  }
+  h1{
+    margin:0 0 6px 0;
+    font-size:2rem;
+    letter-spacing:.2px;
+  }
+  .subtitle{
+    color:var(--muted);
+    font-size:1rem;
+    margin-bottom:12px;
+  }
+  .meta{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:10px;
+    margin-top:14px;
+  }
+  .meta div{
+    background:rgba(255,255,255,.06);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 12px;
+  }
+  h2{
+    margin:0 0 14px 0;
+    font-size:1.35rem;
+    border-bottom:1px solid var(--line);
+    padding-bottom:8px;
+  }
+  h3{
+    margin:18px 0 10px 0;
+    font-size:1.08rem;
+  }
+  p{margin:10px 0}
+  ul,ol{margin:10px 0 10px 22px}
+  li{margin:8px 0}
+  .pill{
+    display:inline-block;
+    padding:4px 10px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.08);
+    margin-right:8px;
+    margin-bottom:8px;
+    font-size:.92rem;
+  }
+  .priority-1{color:var(--bad); font-weight:700}
+  .priority-2{color:var(--warn); font-weight:700}
+  .priority-3{color:var(--accent); font-weight:700}
+  .evidence,.notes{
+    background:rgba(255,255,255,.06);
+    border-left:4px solid var(--accent);
+    padding:10px 12px;
+    border-radius:10px;
+    margin:10px 0;
+  }
+  .risk{
+    background:rgba(255,138,138,.10);
+    border-left:4px solid var(--bad);
+    padding:10px 12px;
+    border-radius:10px;
+    margin:10px 0;
+  }
+  .benefit{
+    background:rgba(126,231,135,.10);
+    border-left:4px solid var(--good);
+    padding:10px 12px;
+    border-radius:10px;
+    margin:10px 0;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:12px 0 18px 0;
+    font-size:.95rem;
+  }
+  th,td{
+    border:1px solid var(--line);
+    padding:10px 12px;
+    vertical-align:top;
+  }
+  th{
+    text-align:left;
+    background:rgba(255,255,255,.08);
+  }
+  pre{
+    margin:12px 0;
+    padding:14px;
+    background:var(--code);
+    color:#f4f8ff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:auto;
+  }
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  footer{
+    opacity:.95;
+    text-align:center;
+    padding:18px 24px 30px;
+    color:var(--muted);
+  }
+  .small{font-size:.92rem;color:var(--muted)}
+</style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="toc" aria-label="Table of contents">
+      <h2>Contents</h2>
+      <ul>
+        <li><a href="#summary">Executive summary</a></li>
+        <li><a href="#recommendations">Detailed prioritized recommendations</a></li>
+        <li><a href="#rewrites">Query rewrite examples</a></li>
+        <li><a href="#indexes">Index recommendations</a></li>
+        <li><a href="#stats">Statistics recommendations</a></li>
+        <li><a href="#parameters">Parameter sniffing / plan guidance</a></li>
+        <li><a href="#tables">Table-specific insights</a></li>
+        <li><a href="#validation">Validation steps</a></li>
+      </ul>
+    </nav>
+
+    <main class="content">
+      <section class="hero">
+        <h1>AI SQL Tuner Recommendations</h1>
+        <div class="subtitle">Tuning Goal: Query Tuner</div>
+        <div>
+          <span class="pill">Server: RockyPC</span>
+          <span class="pill">Database: SQLStorm</span>
+          <span class="pill">Version: SQL Server 2022 RTM-GDR 16.0.1170.5</span>
+          <span class="pill">Edition: Developer / Engine Edition Enterprise</span>
+          <span class="pill">Estimated Query Cost: 200.01 (Critical)</span>
+          <span class="pill">Compatibility Features: PSP, IQP, Online Index Ops, Compression</span>
+        </div>
+        <div class="meta">
+          <div><strong>Query</strong><br>exec sp00060</div>
+          <div><strong>Main Risk</strong><br>Expensive string-matching join to Tags plus large fanout aggregation</div>
+          <div><strong>Top Opportunity</strong><br>Rewrite to pre-aggregate by user and replace tag-based RankedPosts logic</div>
+        </div>
+      </section>
+
+      <section id="summary" class="card">
+        <h2>Executive summary</h2>
+        <ol>
+          <li>
+            <span class="priority-1">Priority 1 — Rewrite the procedure to remove the Tags LIKE join and fix the final join logic.</span>
+            <ul>
+              <li>The most expensive branch is the <strong>Nested Loops</strong> over <strong>Posts</strong> and <strong>Tags</strong> with predicate <code>p.Tags LIKE '%' + t.TagName + '%'</code>, followed by sort/windowing.</li>
+              <li>The final join appears logically incorrect: <code>tp.UserId = rp.PostId</code>. This likely multiplies work and may also produce incorrect results.</li>
+            </ul>
+          </li>
+          <li>
+            <span class="priority-1">Priority 2 — Pre-aggregate Posts, Votes, and Badges separately before joining to Users.</span>
+            <ul>
+              <li>The current <code>UserStats</code> CTE joins <strong>Users → Posts → Votes → Badges</strong> before aggregation, producing an estimated <strong>1,700,990</strong> rows into a hash aggregate.</li>
+              <li>This creates unnecessary row explosion and forces <code>COUNT(DISTINCT ...)</code> work.</li>
+            </ul>
+          </li>
+          <li>
+            <span class="priority-2">Priority 3 — Add one targeted Posts index and one filtered Votes index if the rewrite is implemented.</span>
+            <ul>
+              <li>A composite <strong>Posts</strong> index on <code>(OwnerUserId, PostTypeId, CreationDate DESC)</code> can support latest-post retrieval and reduce scans.</li>
+              <li>A filtered <strong>Votes</strong> index for <code>VoteTypeId IN (2,3)</code> can shrink reads significantly for this procedure.</li>
+            </ul>
+          </li>
+          <li>
+            <span class="priority-3">Priority 4 — Statistics are generally healthy; no urgent stats repair is indicated.</span>
+            <ul>
+              <li>Referenced statistics show <strong>ModificationCount = 0</strong> and mostly <strong>SamplingPercent = 100</strong>.</li>
+              <li>This is primarily a <strong>query shape / access path</strong> problem, not a stale-statistics problem.</li>
+            </ul>
+          </li>
+        </ol>
+
+        <div class="evidence">
+          <strong>Evidence</strong><br>
+          1) Plan cost is <strong>200.01</strong>, which falls in the <strong>critical</strong> range.<br>
+          2) The costly path includes <strong>Nested Loops (Est. Cost 193.282)</strong>, <strong>Sort (193.392)</strong>, and <strong>Window Aggregate (193.393)</strong> driven by <code>Posts.Tags LIKE '%'+Tags.TagName+'%'</code>.
+        </div>
+        <div class="small"><strong>Confidence:</strong> 0.96</div>
+      </section>
+
+      <section id="recommendations" class="card">
+        <h2>Detailed prioritized recommendations</h2>
+
+        <ol>
+          <li>
+            <h3>Rewrite RankedPosts and remove the non-SARGable tag-matching join</h3>
+            <p>The current <code>RankedPosts</code> CTE is the dominant bottleneck. It scans question posts, then evaluates a leading-wildcard <code>LIKE</code> against every tag value, sorts the result, computes <code>ROW_NUMBER()</code>, and later joins it back using <code>tp.UserId = rp.PostId</code>.</p>
+            <div class="evidence">
+              <strong>Evidence</strong><br>
+              • <strong>Node 8</strong>: <strong>Nested Loops</strong>, estimated cost <strong>193.282</strong>, predicate <code>[Posts].[Tags] like [Expr1020]</code>.<br>
+              • <strong>Node 9</strong>: <strong>Clustered Index Scan</strong> on <strong>Posts</strong>, estimated rows <strong>104,436</strong>, estimated rows read <strong>246,672</strong>; predicate only <code>PostTypeId = 1</code>.
+            </div>
+            <div class="benefit">
+              <strong>Expected impact</strong><br>
+              Very high. Eliminating this branch should remove the single largest cost center and most likely cut both CPU and memory demand dramatically.
+            </div>
+            <p><strong>Why it matters:</strong> A predicate of the form <code>LIKE '%value%'</code> is not seekable on a normal b-tree index. On SQL Server 2022 Enterprise, you have advanced features available, but none of them make this pattern efficient on a denormalized tag string.</p>
+            <div class="small"><strong>Confidence:</strong> 0.98</div>
+          </li>
+
+          <li>
+            <h3>Pre-aggregate Posts, Votes, and Badges independently to avoid fanout</h3>
+            <p>The current <code>UserStats</code> CTE aggregates after joining multiple one-to-many relationships, forcing distinct counts and a large hash aggregate over an expanded rowset.</p>
+            <div class="evidence">
+              <strong>Evidence</strong><br>
+              • <strong>Node 20</strong>: Hash Match right outer join outputs estimated <strong>1,700,990</strong> rows.<br>
+              • <strong>Node 18</strong>: Hash Match aggregate then performs <code>COUNT(DISTINCT p.Id)</code> and <code>COUNT(DISTINCT b.Id)</code> over that expanded set.
+            </div>
+            <div class="benefit">
+              <strong>Expected impact</strong><br>
+              High. This usually reduces cardinality inflation, sort pressure, aggregate work, and memory grant needs.
+            </div>
+            <div class="small"><strong>Confidence:</strong> 0.97</div>
+          </li>
+
+          <li>
+            <h3>Fix the final join predicate</h3>
+            <p>The final statement joins <code>TopUsers tp</code> to <code>RankedPosts rp</code> on <code>tp.UserId = rp.PostId</code>. For a “latest post per user” result, that is almost certainly incorrect and also prevents the optimizer from using a straightforward user-to-post access path.</p>
+            <div class="evidence">
+              <strong>Evidence</strong><br>
+              • Final query text: <code>LEFT JOIN RankedPosts rp ON tp.UserId = rp.PostId</code>.<br>
+              • Plan <strong>Node 4</strong> builds hash on <strong>[Posts].[Id]</strong> and probes with <strong>[Users].[Id]</strong>, confirming the join is <code>UserId = PostId</code>.
+            </div>
+            <div class="benefit">
+              <strong>Expected impact</strong><br>
+              Very high for correctness, high for performance once the query is rewritten to join on <code>OwnerUserId</code>.
+            </div>
+            <div class="small"><strong>Confidence:</strong> 0.99</div>
+          </li>
+
+          <li>
+            <h3>Add a targeted Posts index to support latest-post retrieval by user</h3>
+            <p>If you rewrite to use <code>OUTER APPLY (SELECT TOP 1 ... FROM Posts WHERE OwnerUserId = ...)</code>, the current indexes are not ideal for retrieving the latest question per user efficiently.</p>
+            <div class="evidence">
+              <strong>Evidence</strong><br>
+              • Existing <strong>IX_Posts_PostTypeId_CreationDate_Score</strong> is keyed on <code>PostTypeId, CreationDate, Score, Id</code>, not <code>OwnerUserId</code>.<br>
+              • DMV missing index for <strong>Posts(OwnerUserId)</strong>: avg user impact <strong>36.74%</strong>.
+            </div>
+            <div class="small"><strong>Confidence:</strong> 0.91</div>
+          </li>
+
+          <li>
+            <h3>Add a filtered Votes index for up/down vote counting</h3>
+            <p>This procedure only counts vote types <code>2</code> and <code>3</code>. A filtered index can materially reduce read volume versus scanning the whole Votes table or clustered index.</p>
+            <div class="evidence">
+              <strong>Evidence</strong><br>
+              • <strong>Node 21</strong>: clustered scan of <strong>Votes</strong>, estimated rows read <strong>926,084</strong> in the plan branch.<br>
+              • Table metadata shows <strong>Votes</strong> has <strong>2,778,252 rows</strong>; existing nonclustered index <strong>IX_Votes_PostId_VoteTypeId</strong> exists but the current query shape does not exploit it well.
+            </div>
+            <div class="small"><strong>Confidence:</strong> 0.88</div>
+          </li>
+
+          <li>
+            <h3>No immediate parameter sniffing action</h3>
+            <p>This procedure takes no parameters, so classic parameter sniffing is not the driver here. SQL Server 2022 Parameter Sensitive Plan optimization is available, but it is not applicable to this procedure as written.</p>
+            <div class="evidence">
+              <strong>Evidence</strong><br>
+              • User query is <code>exec sp00060</code> with no parameters.<br>
+              • Showplan does not expose parameterized predicates for this statement.
+            </div>
+            <div class="small"><strong>Confidence:</strong> 0.99</div>
+          </li>
+        </ol>
+      </section>
+
+      <section id="rewrites" class="card">
+        <h2>Query rewrite examples</h2>
+
+        <h3>Before</h3>
+        <pre><code>WITH RankedPosts AS (
+    SELECT 
+        p.Id AS PostId,
+        p.Title,
+        p.CreationDate,
+        ROW_NUMBER() OVER (PARTITION BY t.Id ORDER BY p.CreationDate DESC) AS rn,
+        t.TagName
+    FROM Posts p
+    JOIN Tags t ON p.Tags LIKE '%' + t.TagName + '%'
+    WHERE p.PostTypeId = 1
+),
+UserStats AS (
+    SELECT 
+        u.Id AS UserId,
+        u.DisplayName,
+        COUNT(DISTINCT p.Id) AS TotalPosts,
+        SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpVotes,
+        SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownVotes,
+        COUNT(DISTINCT b.Id) AS BadgeCount
+    FROM Users u
+    LEFT JOIN Posts p ON u.Id = p.OwnerUserId
+    LEFT JOIN Votes v ON p.Id = v.PostId
+    LEFT JOIN Badges b ON u.Id = b.UserId
+    GROUP BY u.Id, u.DisplayName
+),
+TopUsers AS (
+    SELECT 
+        us.UserId,
+        us.DisplayName,
+        us.TotalPosts,
+        us.UpVotes,
+        us.DownVotes,
+        us.BadgeCount,
+        DENSE_RANK() OVER (ORDER BY us.TotalPosts DESC, us.UpVotes - us.DownVotes DESC) AS UserRank
+    FROM UserStats us
+    WHERE us.TotalPosts > 10
+)
+SELECT 
+    tp.UserRank,
+    tp.DisplayName,
+    tp.TotalPosts,
+    tp.UpVotes,
+    tp.DownVotes,
+    tp.BadgeCount,
+    rp.Title AS LatestPostTitle,
+    rp.CreationDate AS LatestPostDate,
+    CASE 
+        WHEN rp.rn = 1 THEN 'Latest'
+        ELSE 'Older'
+    END AS PostStatus
+FROM TopUsers tp
+LEFT JOIN RankedPosts rp ON tp.UserId = rp.PostId
+ORDER BY tp.UserRank, rp.CreationDate DESC;</code></pre>
+
+        <h3>After — recommended rewrite</h3>
+        <pre><code>CREATE OR ALTER PROCEDURE dbo.sp00060
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH PostCounts AS
+    (
+        SELECT
+            p.OwnerUserId AS UserId,
+            COUNT_BIG(*) AS TotalPosts
+        FROM dbo.Posts AS p
+        WHERE p.OwnerUserId IS NOT NULL
+        GROUP BY p.OwnerUserId
+    ),
+    VoteCounts AS
+    (
+        SELECT
+            p.OwnerUserId AS UserId,
+            SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpVotes,
+            SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownVotes
+        FROM dbo.Posts AS p
+        LEFT JOIN dbo.Votes AS v
+            ON v.PostId = p.Id
+           AND v.VoteTypeId IN (2,3)
+        WHERE p.OwnerUserId IS NOT NULL
+        GROUP BY p.OwnerUserId
+    ),
+    BadgeCounts AS
+    (
+        SELECT
+            b.UserId,
+            COUNT_BIG(*) AS BadgeCount
+        FROM dbo.Badges AS b
+        GROUP BY b.UserId
+    ),
+    TopUsers AS
+    (
+        SELECT
+            u.Id AS UserId,
+            u.DisplayName,
+            CONVERT(int, ISNULL(pc.TotalPosts, 0)) AS TotalPosts,
+            CONVERT(int, ISNULL(vc.UpVotes, 0)) AS UpVotes,
+            CONVERT(int, ISNULL(vc.DownVotes, 0)) AS DownVotes,
+            CONVERT(int, ISNULL(bc.BadgeCount, 0)) AS BadgeCount,
+            DENSE_RANK() OVER
+            (
+                ORDER BY
+                    ISNULL(pc.TotalPosts, 0) DESC,
+                    ISNULL(vc.UpVotes, 0) - ISNULL(vc.DownVotes, 0) DESC
+            ) AS UserRank
+        FROM dbo.Users AS u
+        LEFT JOIN PostCounts AS pc ON pc.UserId = u.Id
+        LEFT JOIN VoteCounts AS vc ON vc.UserId = u.Id
+        LEFT JOIN BadgeCounts AS bc ON bc.UserId = u.Id
+        WHERE ISNULL(pc.TotalPosts, 0) > 10
+    )
+    SELECT
+        tu.UserRank,
+        tu.DisplayName,
+        tu.TotalPosts,
+        tu.UpVotes,
+        tu.DownVotes,
+        tu.BadgeCount,
+        lp.Title AS LatestPostTitle,
+        lp.CreationDate AS LatestPostDate,
+        CASE WHEN lp.PostId IS NULL THEN NULL ELSE 'Latest' END AS PostStatus
+    FROM TopUsers AS tu
+    OUTER APPLY
+    (
+        SELECT TOP (1)
+            p.Id AS PostId,
+            p.Title,
+            p.CreationDate
+        FROM dbo.Posts AS p
+        WHERE p.OwnerUserId = tu.UserId
+          AND p.PostTypeId = 1
+        ORDER BY p.CreationDate DESC, p.Id DESC
+    ) AS lp
+    ORDER BY tu.UserRank, lp.CreationDate DESC;
+END;</code></pre>
+
+        <ul>
+          <li>This rewrite removes the <strong>non-SARGable tag join</strong>.</li>
+          <li>It removes the <strong>join fanout</strong> between Posts, Votes, and Badges before aggregation.</li>
+          <li>It fixes the likely logical issue by retrieving the latest post by <strong>OwnerUserId</strong>, not by matching <strong>UserId</strong> to <strong>PostId</strong>.</li>
+          <li>It also removes unnecessary <code>COUNT(DISTINCT ...)</code> work.</li>
+        </ul>
+
+        <h3>If tag logic is truly required</h3>
+        <pre><code>-- Best long-term fix: normalize tags into a bridge table
+-- Example structure:
+CREATE TABLE dbo.PostTags
+(
+    PostId int NOT NULL,
+    TagId  int NOT NULL,
+    CONSTRAINT PK_PostTags PRIMARY KEY CLUSTERED (TagId, PostId),
+    CONSTRAINT FK_PostTags_Post FOREIGN KEY (PostId) REFERENCES dbo.Posts(Id),
+    CONSTRAINT FK_PostTags_Tag  FOREIGN KEY (TagId)  REFERENCES dbo.Tags(Id)
+);
+
+CREATE INDEX IX_PostTags_PostId_TagId ON dbo.PostTags(PostId, TagId);</code></pre>
+        <p>For this specific procedure, normalization is optional only because the current output does not actually return <code>TagName</code>. If tags are not needed, removing that branch is the best choice.</p>
+      </section>
+
+      <section id="indexes" class="card">
+        <h2>Index recommendations</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Priority</th>
+              <th>Index</th>
+              <th>Purpose</th>
+              <th>estimatedStorageBytes</th>
+              <th>expectedReadBenefitPercent</th>
+              <th>expectedWriteOverheadPercent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>IX_Posts_OwnerUserId_PostTypeId_CreationDate</td>
+              <td>Supports latest-post lookup by user and improves grouping/join access by OwnerUserId</td>
+              <td>~41,000,000</td>
+              <td>55%</td>
+              <td>8%</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>IX_Votes_PostId_VoteTypeId_UpDown_Filtered</td>
+              <td>Reduces vote-read volume to only VoteTypeId 2/3 used by this procedure</td>
+              <td>~18,000,000</td>
+              <td>35%</td>
+              <td>3%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>1) Create index on Posts for latest-post-per-user access</h3>
+        <pre><code>CREATE INDEX IX_Posts_OwnerUserId_PostTypeId_CreationDate
+ON dbo.Posts
+(
+    OwnerUserId,
+    PostTypeId,
+    CreationDate DESC,
+    Id
+)
+INCLUDE
+(
+    Title
+)
+WITH
+(
+    ONLINE = ON,
+    DATA_COMPRESSION = PAGE,
+    SORT_IN_TEMPDB = ON
+);</code></pre>
+        <ul>
+          <li><strong>estimatedStorageBytes:</strong> ~41,000,000</li>
+          <li><strong>expectedReadBenefitPercent:</strong> 55%</li>
+          <li><strong>expectedWriteOverheadPercent:</strong> 8%</li>
+          <li><strong>maintenanceNotes:</strong> Moderate maintenance cost; keep PAGE compression; online rebuilds are supported in your edition. Reassess if a broader OwnerUserId index already exists later.</li>
+        </ul>
+        <div class="risk">
+          <strong>Risk assessment</strong><br>
+          Moderate write overhead on a 986,688-row table. Acceptable if this reporting procedure is important, but avoid adding further overlapping OwnerUserId indexes without consolidation.
+        </div>
+        <div class="evidence">
+          <strong>Evidence</strong><br>
+          • Missing index DMV suggests <strong>Posts(OwnerUserId)</strong> with avg user impact <strong>36.74%</strong>.<br>
+          • Existing index <strong>IX_Posts_PostTypeId_CreationDate_Score</strong> is not keyed by <strong>OwnerUserId</strong>, so it is not ideal for <code>OUTER APPLY TOP (1)</code> by user.
+        </div>
+
+        <h3>2) Create filtered Votes index for vote types 2 and 3</h3>
+        <pre><code>CREATE INDEX IX_Votes_PostId_VoteTypeId_UpDown_Filtered
+ON dbo.Votes
+(
+    PostId,
+    VoteTypeId
+)
+WHERE VoteTypeId IN (2,3)
+WITH
+(
+    ONLINE = ON,
+    DATA_COMPRESSION = PAGE,
+    SORT_IN_TEMPDB = ON
+);</code></pre>
+        <ul>
+          <li><strong>estimatedStorageBytes:</strong> ~18,000,000</li>
+          <li><strong>expectedReadBenefitPercent:</strong> 35%</li>
+          <li><strong>expectedWriteOverheadPercent:</strong> 3%</li>
+          <li><strong>maintenanceNotes:</strong> Low-to-moderate maintenance because the filter limits rows. Particularly valuable when vote-type counts are a recurring pattern.</li>
+        </ul>
+        <div class="risk">
+          <strong>Risk assessment</strong><br>
+          Low write overhead relative to a full-table nonclustered index, but it adds maintenance and should only be kept if the vote-type 2/3 pattern is used repeatedly.
+        </div>
+        <div class="evidence">
+          <strong>Evidence</strong><br>
+          • Plan <strong>Node 21</strong> scans Votes clustered index instead of leveraging a narrow vote-type-specific access path.<br>
+          • Column cardinality shows <strong>VoteTypeId</strong> has only about <strong>13 distinct values</strong>, making a filtered index attractive for a frequently queried subset.
+        </div>
+
+        <h3>Indexes not recommended for this specific query</h3>
+        <ul>
+          <li><strong>Tags(TagName)</strong>: not useful for <code>LIKE '%TagName%'</code> on the Posts side due to the leading wildcard pattern and denormalized storage.</li>
+          <li><strong>Additional Badges(UserId)</strong> index: current <strong>IX_Badges_UserId</strong> already provides the needed access pattern, and clustered key <code>Id</code> is implicitly available at the leaf level.</li>
+          <li><strong>Drop recommendations</strong>: none are advised based on the provided query alone.</li>
+        </ul>
+      </section>
+
+      <section id="stats" class="card">
+        <h2>Statistics maintenance recommendations</h2>
+        <ol>
+          <li>
+            <strong>No urgent corrective statistics action is required for this query.</strong>
+            <div class="evidence">
+              <strong>Evidence</strong><br>
+              • Referenced statistics show <strong>ModificationCount = 0</strong>.<br>
+              • Sampling is mostly <strong>100%</strong> on key stats such as <strong>IX_Posts_PostTypeId_CreationDate_Score</strong>, <strong>IX_Votes_PostId_VoteTypeId</strong>, and <strong>IX_Badges_UserId</strong>.
+            </div>
+          </li>
+          <li>
+            <strong>After creating any recommended index, update statistics on the affected table or let index creation generate fresh stats.</strong>
+            <pre><code>UPDATE STATISTICS dbo.Posts WITH FULLSCAN;
+UPDATE STATISTICS dbo.Votes WITH FULLSCAN;</code></pre>
+          </li>
+          <li>
+            <strong>Consider scheduled FULLSCAN for skew-sensitive reporting tables only if compile quality becomes unstable.</strong>
+            <ul>
+              <li>Because this environment is SQL Server 2022 and current stats quality is already high, scheduled blanket FULLSCAN on all tables is not necessary.</li>
+              <li>Target <strong>Posts</strong> and <strong>Votes</strong> first if plan quality regresses after data growth.</li>
+            </ul>
+          </li>
+        </ol>
+        <div class="small"><strong>Confidence:</strong> 0.92</div>
+      </section>
+
+      <section id="parameters" class="card">
+        <h2>Parameter sniffing / plan guidance</h2>
+        <ul>
+          <li><strong>Parameter sniffing:</strong> Not applicable to this procedure in its current form because there are no parameters.</li>
+          <li><strong>Plan guides / hints:</strong> Not recommended as the primary fix. The problem is query design, not parameter instability.</li>
+          <li><strong>SQL Server 2022 PSP:</strong> Available on this platform, but not relevant without parameters.</li>
+          <li><strong>Memory grant / spills:</strong> No spill warnings are present in the provided plan XML, so there is no direct evidence of tempdb spill. However, the plan has a large desired memory estimate.</li>
+        </ul>
+        <div class="evidence">
+          <strong>Evidence</strong><br>
+          • Query text is <code>exec sp00060</code> with no arguments.<br>
+          • <strong>MemoryGrantInfo</strong> shows <code>SerialDesiredMemory="474904"</code>; no explicit spill warning is present in the XML.
+        </div>
+        <div class="small"><strong>Confidence:</strong> 0.95</div>
+      </section>
+
+      <section id="tables" class="card">
+        <h2>Table-specific insights</h2>
+
+        <h3>dbo.Posts</h3>
+        <ul>
+          <li><strong>Largest referenced table by storage:</strong> 986,688 rows, 411 MB total.</li>
+          <li>Current query scans the clustered index for the RankedPosts branch and scans <strong>IX_Posts_PostTypeId_CreationDate_Score</strong> for the UserStats branch.</li>
+          <li>Owner-based retrieval is under-indexed for this workload.</li>
+        </ul>
+        <div class="evidence">
+          <strong>Evidence</strong><br>
+          • Clustered index usage: <strong>Scans 2234</strong> vs <strong>Seeks 400</strong>.<br>
+          • Missing index DMV entry for <strong>OwnerUserId</strong> on Posts with avg impact <strong>36.74%</strong>.
+        </div>
+
+        <h3>dbo.Votes</h3>
+        <ul>
+          <li><strong>Highest row count:</strong> 2,778,252 rows.</li>
+          <li>The query only needs vote types 2 and 3, yet current shape leads to a broad scan.</li>
+          <li>Existing <strong>IX_Votes_PostId_VoteTypeId</strong> is useful, but rewrite is needed for the optimizer to favor a narrower path consistently.</li>
+        </ul>
+        <div class="evidence">
+          <strong>Evidence</strong><br>
+          • Clustered PK usage: <strong>Scans 1709</strong>, <strong>Seeks 0</strong>.<br>
+          • Existing <strong>IX_Votes_PostId_VoteTypeId</strong>: <strong>Seeks 68</strong>, <strong>Scans 6</strong>, indicating it already has value in other workloads.
+        </div>
+
+        <h3>dbo.Badges</h3>
+        <ul>
+          <li>878,704 rows but compact at 13 MB; existing <strong>IX_Badges_UserId</strong> is appropriate for counting badges by user.</li>
+          <li>No additional index is required specifically for this procedure after rewrite.</li>
+        </ul>
+        <div class="evidence">
+          <strong>Evidence</strong><br>
+          • Plan <strong>Node 23</strong> uses <strong>IX_Badges_UserId</strong> directly.<br>
+          • Index usage shows the index exists and is actively used with low scan volume compared with table size.
+        </div>
+
+        <h3>dbo.Users</h3>
+        <ul>
+          <li>534,386 rows, 44 MB total; full clustered scan is reasonable when ranking many users.</li>
+          <li>No direct Users index change is needed for this query.</li>
+        </ul>
+        <div class="evidence">
+          <strong>Evidence</strong><br>
+          • Plan <strong>Node 26</strong> scans Users clustered index with estimated rows <strong>267,193</strong>.<br>
+          • Missing index DMV entries for <strong>Users(Reputation)</strong> are unrelated to this procedure.
+        </div>
+
+        <h3>dbo.Tags</h3>
+        <ul>
+          <li>Small table at 1,232 rows, but it still becomes expensive because it is used in a nested loops string comparison against many Posts rows.</li>
+          <li>The issue is not Tags size; it is the join method and string pattern.</li>
+        </ul>
+        <div class="evidence">
+          <strong>Evidence</strong><br>
+          • Tags scan itself is cheap: <strong>Node 12</strong> estimated cost <strong>0.0091</strong>.<br>
+          • The expensive part is repeated evaluation inside <strong>Node 8 Nested Loops</strong> against Posts rows.
+        </div>
+      </section>
+
+      <section id="validation" class="card">
+        <h2>Validation steps</h2>
+        <p>Validate each recommended change by comparing before/after metrics using <strong>SET STATISTICS IO ON</strong> and <strong>SET STATISTICS TIME ON</strong>.</p>
+        <pre><code>SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+
+EXEC dbo.sp00060;
+
+SET STATISTICS IO OFF;
+SET STATISTICS TIME OFF;</code></pre>
+        <ul>
+          <li>Capture logical reads for <strong>Posts</strong> and <strong>Votes</strong>.</li>
+          <li>Compare CPU time and elapsed time before/after the rewrite.</li>
+          <li>Confirm that the expensive <strong>Posts ↔ Tags LIKE</strong> branch disappears from the plan.</li>
+          <li>Confirm that latest-post retrieval uses the new <strong>Posts</strong> index if created.</li>
+          <li>Confirm vote aggregation uses the filtered <strong>Votes</strong> index if created.</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    Generated by AI SQL Tuner Studio using model gpt-5.4 with reasoning effort low. <a href="https://aisqltuner.com">https://aisqltuner.com</a><br>
+    Based on analysis as of 2026-03-28 14:05:40 UTC
+  </footer>
+</body>
+</html>
