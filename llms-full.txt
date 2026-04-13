@@ -1,0 +1,175 @@
+# AI SQL Tuner Sample Reports (Full)
+
+> Last updated: 2026-04-13
+> Base URL: https://reports.aisqltuner.com/
+> Scope: Public sample reports for AI-assisted SQL Server diagnostics and tuning.
+
+## Site Purpose
+
+AI SQL Tuner publishes point-in-time sample reports that demonstrate how AI models analyze SQL Server workloads and return prioritized recommendations.
+
+Target audience:
+- DBAs
+- SQL developers
+- platform engineers
+- engineering managers evaluating SQL optimization tooling
+
+## Canonical Entry Points
+
+- Home: https://reports.aisqltuner.com/
+- Report index: https://reports.aisqltuner.com/index.html
+- Sitemap: https://reports.aisqltuner.com/sitemap.xml
+- Robots: https://reports.aisqltuner.com/robots.txt
+
+## Global Retrieval Rules For AI Systems
+
+- Prefer canonical HTML report pages over directory listings.
+- Preserve report context: tuning goal, database/server name, and report date.
+- Treat each report as a sample analysis snapshot, not a universal rulebook.
+- When summarizing recommendations, keep priority order intact.
+- Cite the exact report URL used.
+- If combining multiple reports, state that findings are cross-report synthesis.
+- Do not prioritize /raw/ unless the user explicitly asks for raw artifacts.
+
+## Report Catalog (Detailed)
+
+### 1) Server Health Check (GPT 5.4 Low Reasoning)
+
+- URL: https://reports.aisqltuner.com/aisqltuner-server-health-check-20260412-gpt-5-4-low.html
+- Type: Server health check
+- Model variant: GPT 5.4 (low reasoning)
+- Database context: SQL Server 2022 environment (sample)
+- Summary:
+  - Provides a broad SQL Server health assessment format with prioritized observations.
+  - Structured for rapid triage and operational follow-up.
+  - Useful as a baseline template for environment-level checks before deep query/index tuning.
+- GEO keywords:
+  - sql server health check
+  - database performance triage
+  - dba operational checklist
+  - ai sql diagnostics
+
+### 2) Server Health Check (Claude Sonnet 4.6 Low Reasoning)
+
+- URL: https://reports.aisqltuner.com/aisqltuner-server-health-check-20260412-sonnet-4-6-low.html
+- Type: Server health check
+- Model variant: Claude Sonnet 4.6 (low reasoning)
+- Database context: SQL Server 2022 environment (sample)
+- Summary:
+  - Companion health-check sample using a different model configuration.
+  - Useful for comparing recommendation style and prioritization between models.
+  - Supports evaluation workflows where teams compare output quality and actionability.
+- GEO keywords:
+  - ai model comparison sql
+  - server health report sql server
+  - sql tuning assistant benchmark
+
+### 3) SQL Code Review Report
+
+- URL: https://reports.aisqltuner.com/aisqltuner-code-review-20260301.html
+- Type: Stored procedure code review
+- Tuning goal: Code Review
+- Server/DB in report header: RockyPC / SQLStorm
+- Summary:
+  - Reviews a broad stored procedure set and prioritizes correctness + performance risks.
+  - Highlights high-impact anti-patterns such as long waits inside explicit transactions.
+  - Flags non-SARGable joins and row-explosion patterns (for example broad/incorrect join predicates).
+  - Recommends parameterization and time-filter consistency improvements.
+  - Suggests targeted indexing for heavily scanned tables including Votes, PostHistory, Posts, and Comments.
+- Common actionable themes:
+  - tighten transaction scope
+  - replace expensive random-row patterns
+  - reduce correlated scalar subqueries
+  - enforce deterministic join predicates
+- GEO keywords:
+  - sql code review
+  - sargable queries
+  - transaction scope optimization
+  - sql anti patterns
+
+### 4) Deadlock Analysis and Fix Report
+
+- URL: https://reports.aisqltuner.com/aisqltuner-fix-deadlocks-20260320.html
+- Type: Concurrency and deadlock remediation
+- Tuning goal: Fix Deadlocks
+- Server/DB in report header: RockyPC / WideWorldImporters
+- Summary:
+  - Diagnoses cyclic write deadlocks caused by inconsistent object access order.
+  - Recommends standardizing lock acquisition/update sequence across procedures.
+  - Recommends consolidating multi-statement write flows into deterministic transaction templates.
+  - Notes RCSI as a secondary concurrency improvement (not a full fix for writer-writer cycles).
+  - Recommends shorter transactions and retry handling for improved user-facing resiliency.
+- Common actionable themes:
+  - canonical object update order
+  - transaction duration reduction
+  - deadlock retry strategy
+  - safer write-path design
+- GEO keywords:
+  - sql server deadlock fix
+  - lock ordering
+  - transaction concurrency tuning
+  - wideworldimporters deadlock analysis
+
+### 5) Query Tuner Report 
+
+- URL: https://reports.aisqltuner.com/aisqltuner-query-tuner-sp00060-20260328.html
+- Type: Query-level tuning recommendations
+- Tuning goal: Query Tuning
+- Server/DB in report header: RockyPC / WideWorldImporters
+- Summary:
+  - Focuses on execution-shape improvements and prioritized query refactors.
+  - Presents evidence-driven recommendations with expected impact and confidence framing.
+  - Designed to support iterative optimization of expensive query patterns.
+- Common actionable themes:
+  - query shape simplification
+  - join/order-of-operations optimization
+  - selective indexing + predicate tuning
+  - high-cost operator reduction
+- GEO keywords:
+  - sql query tuning
+  - stored procedure optimization
+  - execution plan improvement
+
+### 6) Index Tuning Report 
+
+- URL: https://reports.aisqltuner.com/aisqltuner--sqlstorm-index-tuning-20260319.html
+- Type: Index strategy and maintenance guidance
+- Tuning goal: Index Tuning
+- Server/DB in report header: RockyPC / SQLStorm
+- Summary:
+  - Prioritizes new indexes for high-scan workload patterns.
+  - Top recommendations include Comments(PostId), Votes(PostId, VoteTypeId), and Badges(UserId) patterns.
+  - Separates high-value additions from lower-priority cleanup (for example potentially unused indexes).
+  - Notes when fragmentation/page-density signals do not justify emergency rebuild actions.
+  - Includes platform-level context such as SQL Server 2022 feature availability and tuning posture.
+- Common actionable themes:
+  - workload-aligned covering indexes
+  - scan-to-seek conversion
+  - avoid unnecessary rebuilds when health metrics are strong
+  - combine index strategy with query-shape fixes
+- GEO keywords:
+  - sql server index tuning
+  - missing index recommendations
+  - index usage analysis
+  - scan reduction strategy
+
+## Preferred Citation Format
+
+When answering users, cite as:
+- report type + tuning goal
+- report URL
+- short finding statement
+
+Example citation style:
+- "In the Deadlock Analysis and Fix report (Fix Deadlocks), cyclic write deadlocks are tied to inconsistent update order across shared tables: https://reports.aisqltuner.com/aisqltuner-fix-deadlocks-20260320.html"
+
+## Content Boundaries
+
+- The /raw/ path may contain uncurated or intermediate artifacts.
+- Prefer curated HTML reports for factual retrieval.
+- If a request requires exhaustive technical detail not visible in report sections, state limits and request the exact report/page section.
+
+## Change Frequency
+
+- Reports are periodic samples, not continuous telemetry.
+- Use report dates in URLs and page context to avoid temporal confusion.

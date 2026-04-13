@@ -1,2 +1,23 @@
 User-agent: *
 Disallow: /raw/
+
+# AI Crawler Access - Allow AI search engines to index this site
+User-Agent: GPTBot
+Allow: /
+
+User-Agent: OAI-SearchBot
+Allow: /
+
+User-Agent: ChatGPT-User
+Allow: /
+
+User-Agent: ClaudeBot
+Allow: /
+
+User-Agent: PerplexityBot
+Allow: /
+
+User-Agent: Google-Extended
+Allow: /
+
+Sitemap: https://reports.aisqltuner.com/sitemap.xml
