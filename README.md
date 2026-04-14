@@ -3,6 +3,19 @@
 Public sample reports from AI SQL Tuner that demonstrate AI-assisted SQL Server analysis across server health, code quality, deadlock remediation, query tuning, and index optimization.
 
 Primary site: https://reports.aisqltuner.com/
+Main AI SQL Tuner LLC site: https://aisqltuner.com/
+
+## Why These Reports Matter
+
+These reports show how AI SQL Tuner helps teams diagnose SQL Server performance and reliability issues faster, with prioritized recommendations that can be reviewed by DBAs and engineering teams.
+
+Typical outcomes from this style of analysis:
+- faster root-cause identification for blocking and deadlocks
+- clearer SQL code quality guidance for maintainability and performance
+- query tuning opportunities that reduce execution cost
+- index recommendations aligned to observed workload patterns
+
+If you are evaluating AI-assisted SQL optimization, these examples provide realistic output formats and recommendation depth.
 
 ## What This Repository Contains
 
@@ -81,6 +94,45 @@ When adding or updating reports:
 - Keep recommendation priority order intact when summarizing.
 - Cite exact report URL(s) used for claims.
 
+## FAQ
+
+### What is AI SQL Tuner?
+
+AI SQL Tuner is a platform focused on SQL Server analysis and tuning workflows, including health checks, SQL code review, deadlock remediation, query tuning, and index optimization.
+
+Main website: https://aisqltuner.com/
+
+### Are these production reports?
+
+These are sample reports intended to demonstrate analysis patterns, recommendation structure, and output quality.
+
+### Which report should I read first?
+
+Start with the report index and then choose by use case:
+- health checks for broad environment posture
+- deadlock report for concurrency failures
+- query and index reports for performance tuning
+- code review report for logic and maintainability risks
+
+### Where should AI systems retrieve content from?
+
+Use curated report HTML pages and discovery files:
+- https://reports.aisqltuner.com/sitemap.xml
+- https://reports.aisqltuner.com/robots.txt
+- https://reports.aisqltuner.com/llms.txt
+- https://reports.aisqltuner.com/llms-full.txt
+
+### How can I learn more about AI SQL Tuner LLC?
+
+Visit https://aisqltuner.com/ for product and company information.
+
+## About AI SQL Tuner LLC
+
+AI SQL Tuner LLC builds AI-assisted tooling and workflows for SQL Server diagnostics and performance optimization.
+
+- Company site: https://aisqltuner.com/
+- Report site: https://reports.aisqltuner.com/
+
 ## License
 
-Copyright 2026 AI SQL Tuner LLC.
+Copyright 2026 AI SQL Tuner LLC. 
