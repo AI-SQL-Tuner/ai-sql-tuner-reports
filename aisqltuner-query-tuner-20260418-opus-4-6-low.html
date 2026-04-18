@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="AI SQL Tuner query optimization report generated April 18, 2026, using Claude Opus 4.6 (low effort). Query performance insights and index recommendations.">
+<title>SQL Query Optimization Report (Claude Opus 4.6) | AI SQL Tuner</title>
+<link rel="canonical" href="https://reports.aisqltuner.com/aisqltuner-query-tuner-20260418-opus-4-6-low.html">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SQL Query Optimization Report (Claude Opus 4.6)">
+<meta property="og:description" content="AI SQL Tuner query optimization report generated April 18, 2026, using Claude Opus 4.6 (low effort). Query performance insights and index recommendations.">
+<meta property="og:url" content="https://reports.aisqltuner.com/aisqltuner-query-tuner-20260418-opus-4-6-low.html">
+<meta property="og:site_name" content="AI SQL Tuner">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SQL Query Optimization Report (Claude Opus 4.6)">
+<meta name="twitter:description" content="AI SQL Tuner query optimization report generated April 18, 2026, using Claude Opus 4.6 (low effort). Query performance insights and index recommendations.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "SQL Query Optimization Report (Claude Opus 4.6)",
+  "description": "AI SQL Tuner query optimization report generated April 18, 2026, using Claude Opus 4.6 (low effort). Query performance insights and index recommendations.",
+  "url": "https://reports.aisqltuner.com/aisqltuner-query-tuner-20260418-opus-4-6-low.html",
+  "datePublished": "2026-04-18",
+  "publisher": {
+    "@type": "Organization",
+    "name": "AI SQL Tuner",
+    "url": "https://aisqltuner.com/"
+  }
+}
+</script>
+<style>
+  :root {
+    --accent-blue: #007AFF;
+    --dark-bg: #1a1a2e;
+    --card-bg: #16213e;
+    --card-border: #0f3460;
+    --text-primary: #f0f0f0;
+    --text-secondary: #b0b0c0;
+    --text-muted: #808090;
+    --green: #34C759;
+    --orange: #FF9500;
+    --red: #FF3B30;
+    --yellow: #FFD60A;
+    --code-bg: #0d1b2a;
+    --table-header: #0f3460;
+    --table-row-alt: #1a2744;
+    --link-color: #64D2FF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--dark-bg);
+    color: var(--text-primary);
+    line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
+  }
+  nav.toc {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    background-color: #0f1629;
+    border-right: 1px solid var(--card-border);
+    overflow-y: auto;
+    padding: 24px 16px;
+    z-index: 100;
+  }
+  nav.toc h3 {
+    color: var(--accent-blue);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--card-border);
+  }
+  nav.toc ul {
+    list-style: none;
+    padding: 0;
+  }
+  nav.toc ul li {
+    margin-bottom: 4px;
+  }
+  nav.toc ul li a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13px;
+    display: block;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+  nav.toc ul li a:hover {
+    background-color: rgba(0, 122, 255, 0.15);
+    color: var(--accent-blue);
+  }
+  nav.toc ul li.toc-section > a {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 14px;
+  }
+  nav.toc ul li.toc-sub {
+    padding-left: 14px;
+  }
+  main {
+    margin-left: 280px;
+    flex: 1;
+    padding: 40px 48px;
+    max-width: 1100px;
+  }
+  header {
+    margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid var(--accent-blue);
+  }
+  header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 4px;
+  }
+  header .subtitle {
+    font-size: 15px;
+    color: var(--accent-blue);
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+  header .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px 24px;
+    margin-top: 12px;
+  }
+  header .meta-item {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  header .meta-item span {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-top: 40px;
+    margin-bottom: 18px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--card-border);
+  }
+  h3 {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--accent-blue);
+    margin-top: 28px;
+    margin-bottom: 12px;
+  }
+  h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 18px;
+    margin-bottom: 8px;
+  }
+  p {
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  .card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card.critical { border-left: 4px solid var(--red); }
+  .card.high { border-left: 4px solid var(--orange); }
+  .card.medium { border-left: 4px solid var(--yellow); }
+  .card.info { border-left: 4px solid var(--accent-blue); }
+  .card.success { border-left: 4px solid var(--green); }
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 6px;
+  }
+  .badge.critical { background-color: rgba(255, 59, 48, 0.2); color: var(--red); }
+  .badge.high { background-color: rgba(255, 149, 0, 0.2); color: var(--orange); }
+  .badge.medium { background-color: rgba(255, 214, 10, 0.2); color: var(--yellow); }
+  .badge.low { background-color: rgba(0, 122, 255, 0.2); color: var(--accent-blue); }
+  .badge.confidence { background-color: rgba(52, 199, 89, 0.15); color: var(--green); }
+  pre {
+    background-color: var(--code-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin-bottom: 14px;
+  }
+  pre code {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 12.5px;
+    color: #e0e0e0;
+    line-height: 1.5;
+  }
+  ol, ul {
+    padding-left: 24px;
+    margin-bottom: 14px;
+  }
+  ol li, ul li {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  table th {
+    background-color: var(--table-header);
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--accent-blue);
+  }
+  table td {
+    padding: 8px 14px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  table tr:nth-child(even) td {
+    background-color: var(--table-row-alt);
+  }
+  .cost-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .cost-critical { background-color: rgba(255,59,48,0.2); color: var(--red); }
+  .evidence {
+    background-color: rgba(0, 122, 255, 0.08);
+    border-left: 3px solid var(--accent-blue);
+    padding: 10px 14px;
+    margin: 10px 0 14px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .risk {
+    background-color: rgba(255, 149, 0, 0.08);
+    border-left: 3px solid var(--orange);
+    padding: 10px 14px;
+    margin: 10px 0 14px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  footer {
+    margin-top: 60px;
+    padding: 24px 0;
+    border-top: 1px solid var(--card-border);
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  footer a {
+    color: var(--link-color);
+    text-decoration: none;
+  }
+  footer a:hover {
+    text-decoration: underline;
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .summary-stat {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .summary-stat .value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent-blue);
+  }
+  .summary-stat .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .summary-stat.red .value { color: var(--red); }
+  .summary-stat.orange .value { color: var(--orange); }
+  .summary-stat.green .value { color: var(--green); }
+  .highlight { color: var(--accent-blue); font-weight: 600; }
+  .tag {
+    display: inline-block;
+    background: rgba(0,122,255,0.12);
+    color: var(--accent-blue);
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'SF Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h3>Table of Contents</h3>
+  <ul>
+    <li class="toc-section"><a href="#executive-summary">Executive Summary</a></li>
+    <li class="toc-sub"><a href="#cost-overview">Cost Overview</a></li>
+    <li class="toc-sub"><a href="#top-priorities">Top Priorities</a></li>
+    <li class="toc-section"><a href="#detailed-recommendations">Detailed Recommendations</a></li>
+    <li class="toc-sub"><a href="#rec1">1. LIKE '%…%' Cross Join on Tags</a></li>
+    <li class="toc-sub"><a href="#rec2">2. Logical Bug: JOIN on Wrong Column</a></li>
+    <li class="toc-sub"><a href="#rec3">3. Cartesian Product from Badges</a></li>
+    <li class="toc-sub"><a href="#rec4">4. Query Rewrite Strategy</a></li>
+    <li class="toc-sub"><a href="#rec5">5. Index Recommendations</a></li>
+    <li class="toc-sub"><a href="#rec6">6. Statistics Maintenance</a></li>
+    <li class="toc-sub"><a href="#rec7">7. Parameter Sniffing</a></li>
+    <li class="toc-section"><a href="#table-insights">Table-Specific Insights</a></li>
+    <li class="toc-section"><a href="#validation">Validation Steps</a></li>
+  </ul>
+</nav>
+
+<main>
+  <header>
+    <h1>AI SQL Tuner Recommendations</h1>
+    <div class="subtitle">Tuning Goal: Query Tuner &mdash; Stored Procedure <code>sp00060</code></div>
+    <div class="meta-grid">
+      <div class="meta-item">Server: <span>RockyPC</span></div>
+      <div class="meta-item">Database: <span>SQLStorm</span></div>
+      <div class="meta-item">Version: <span>SQL Server 2022 (16.0.1175.1)</span></div>
+      <div class="meta-item">Edition: <span>Developer Edition (Enterprise features)</span></div>
+    </div>
+  </header>
+
+  <!-- ========== EXECUTIVE SUMMARY ========== -->
+  <h2 id="executive-summary">Executive Summary</h2>
+
+  <div class="summary-grid">
+    <div class="summary-stat red">
+      <div class="value">199.87</div>
+      <div class="label">Estimated Cost</div>
+    </div>
+    <div class="summary-stat red">
+      <div class="value">Critical</div>
+      <div class="label">Severity (≥100)</div>
+    </div>
+    <div class="summary-stat orange">
+      <div class="value">5</div>
+      <div class="label">Issues Found</div>
+    </div>
+    <div class="summary-stat orange">
+      <div class="value">~5.6 GB</div>
+      <div class="label">Est. Memory Grant</div>
+    </div>
+    <div class="summary-stat green">
+      <div class="value">100%</div>
+      <div class="label">Stats Sampled</div>
+    </div>
+  </div>
+
+  <div class="card critical">
+    <p>This query has an estimated subtree cost of <strong>199.87</strong>, placing it in the <span class="cost-badge cost-critical">CRITICAL</span> category. The dominant bottleneck is the <strong>Nested Loops with LIKE '%…%'</strong> join between Posts (246K rows) and Tags (1,232 rows), which effectively produces a cross join with per-row LIKE evaluation costing <strong>~193 out of 199.87 (96.7%)</strong> of total plan cost. Additionally, the query contains a <strong>logical bug</strong> in the final LEFT JOIN that joins on the wrong column, and produces an inflated intermediate row set of <strong>1.7M rows</strong> from a Cartesian-like expansion via Badges. The requested memory grant of <strong>~5.6 GB</strong> will very likely spill to tempdb on most systems.</p>
+  </div>
+
+  <h3 id="cost-overview">Cost Overview</h3>
+  <table>
+    <tr><th>Plan Component</th><th>Est. Cost</th><th>% of Total</th><th>Severity</th></tr>
+    <tr><td>Nested Loops (Posts × Tags LIKE)</td><td>193.28</td><td>96.7%</td><td><span class="badge critical">Critical</span></td></tr>
+    <tr><td>UserStats CTE (Hash Aggregates + Joins)</td><td>5.47</td><td>2.7%</td><td><span class="badge low">Low</span></td></tr>
+    <tr><td>Final Hash Join + Sort</td><td>1.12</td><td>0.6%</td><td><span class="badge low">Low</span></td></tr>
+  </table>
+
+  <h3 id="top-priorities">Top Priorities</h3>
+  <ol>
+    <li><strong><span class="badge critical">Critical</span> Fix the LIKE '%…%' cross join pattern</strong> — The join <code>p.Tags LIKE '%' + t.TagName + '%'</code> forces a Nested Loops scan of 246K Posts × 1,232 Tags = ~304M comparisons. Replace with a relational tag-to-post mapping table or use full-text search.</li>
+    <li><strong><span class="badge critical">Critical</span> Fix the logical bug in the final JOIN</strong> — <code>LEFT JOIN RankedPosts rp ON tp.UserId = rp.PostId</code> incorrectly joins UserId to PostId. This should be <code>ON tp.UserId = rp.PostOwnerUserId</code> (or an appropriate column). The current join produces meaningless results.</li>
+    <li><strong><span class="badge high">High</span> Eliminate Cartesian expansion from Badges</strong> — The UserStats CTE joins Users → Posts → Votes → Badges with LEFT JOINs and COUNT(DISTINCT), producing 1.7M intermediate rows. Pre-aggregate each dimension separately before joining.</li>
+    <li><strong><span class="badge medium">Medium</span> Add a covering index on Posts for PostTypeId filter</strong> — The clustered index scan of the entire 399MB Posts table could be narrowed with an index on PostTypeId that includes the necessary columns.</li>
+    <li><strong><span class="badge low">Low</span> Monitor memory grant</strong> — SerialDesiredMemory is 5.8GB; on real execution this will almost certainly spill to tempdb.</li>
+  </ol>
+
+  <!-- ========== DETAILED RECOMMENDATIONS ========== -->
+  <h2 id="detailed-recommendations">Detailed Prioritized Recommendations</h2>
+
+  <!-- REC 1 -->
+  <h3 id="rec1">1. Eliminate the LIKE '%…%' Cross Join Pattern</h3>
+  <div class="card critical">
+    <p><span class="badge critical">Critical</span> <span class="badge confidence">Confidence: 98%</span></p>
+    <p>The <code>LIKE '%' + t.TagName + '%'</code> join predicate between Posts and Tags is the single largest cost driver. It is a non-SARGable predicate applied inside a Nested Loops join. The optimizer scans all 246,672 Posts rows (filtered to ~104K by PostTypeId=1), then for each row, evaluates the LIKE against all 1,232 Tags via a Lazy Spool. This results in approximately <strong>128 million string comparisons</strong>.</p>
+
+    <div class="evidence">
+      <strong>Evidence:</strong> NodeId=8 Nested Loops Inner Join, EstimateRows=104,436, EstimateCPU=67.23, EstimatedTotalSubtreeCost=193.28. NodeId=10 Table Spool (Lazy Spool) with EstimateRewinds=104,435. Predicate: <code>[Posts].[Tags] LIKE [Expr1020]</code>.
+    </div>
+
+    <h4>Option A: Create a PostTags Bridge Table (Recommended)</h4>
+    <p>Since StackOverflow-style Posts store tags in a delimited string like <code>&lt;c#&gt;&lt;.net&gt;&lt;linq&gt;</code>, the most effective fix is to normalize this into a relational mapping table:</p>
+    <pre><code>-- One-time ETL to create a proper many-to-many relationship
+CREATE TABLE dbo.PostTags (
+    PostId   INT NOT NULL,
+    TagId    INT NOT NULL,
+    CONSTRAINT PK_PostTags PRIMARY KEY CLUSTERED (PostId, TagId),
+    CONSTRAINT FK_PostTags_Posts FOREIGN KEY (PostId) REFERENCES dbo.Posts(Id),
+    CONSTRAINT FK_PostTags_Tags  FOREIGN KEY (TagId)  REFERENCES dbo.Tags(Id)
+);
+
+-- Create reverse index for tag-centric lookups
+CREATE NONCLUSTERED INDEX IX_PostTags_TagId
+ON dbo.PostTags (TagId, PostId)
+WITH (DATA_COMPRESSION = PAGE);
+
+-- Populate (one-time)
+INSERT INTO dbo.PostTags (PostId, TagId)
+SELECT DISTINCT p.Id, t.Id
+FROM dbo.Posts p
+CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(p.Tags, '&lt;', ''), '&gt;', ' '), ' ') s
+INNER JOIN dbo.Tags t ON t.TagName = LTRIM(RTRIM(s.value))
+WHERE s.value &lt;&gt; '' AND p.Tags IS NOT NULL;</code></pre>
+
+    <table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>estimatedStorageBytes</td><td>~7 MB (PK) + ~7 MB (IX) = ~14 MB total</td></tr>
+      <tr><td>expectedReadBenefitPercent</td><td>95–99% cost reduction for tag-related joins</td></tr>
+      <tr><td>expectedWriteOverheadPercent</td><td>Negligible for reads; inserts/updates to Posts need ETL sync</td></tr>
+      <tr><td>maintenanceNotes</td><td>Requires trigger or application-layer logic to keep in sync with Posts.Tags column</td></tr>
+    </table>
+
+    <div class="risk">
+      <strong>Risk:</strong> Requires a schema change and ongoing maintenance to keep PostTags synchronized. However, this eliminates the fundamental anti-pattern and transforms O(n×m) string comparison into O(n) hash/merge joins. If Posts.Tags column is not being updated frequently (index usage shows 0 updates), risk is minimal.
+    </div>
+
+    <h4>Option B: Use Full-Text Search (Alternative)</h4>
+    <p>If schema changes are not feasible, create a full-text index on Posts.Tags and use CONTAINS or FREETEXT. This is less optimal than a bridge table but eliminates the LIKE cross join.</p>
+
+    <h4>Rewritten RankedPosts CTE (using bridge table):</h4>
+    <pre><code>-- BEFORE (current — ~193 cost units)
+FROM Posts p
+JOIN Tags t ON p.Tags LIKE '%' + t.TagName + '%'
+WHERE p.PostTypeId = 1
+
+-- AFTER (with PostTags bridge — estimated &lt;2 cost units)
+FROM Posts p
+INNER JOIN dbo.PostTags pt ON p.Id = pt.PostId
+INNER JOIN Tags t ON pt.TagId = t.Id
+WHERE p.PostTypeId = 1</code></pre>
+  </div>
+
+  <!-- REC 2 -->
+  <h3 id="rec2">2. Fix the Logical Bug: Final JOIN on Wrong Column</h3>
+  <div class="card critical">
+    <p><span class="badge critical">Critical</span> <span class="badge confidence">Confidence: 99%</span></p>
+    <p>The final SELECT joins <code>TopUsers tp LEFT JOIN RankedPosts rp ON tp.UserId = rp.PostId</code>. This joins a User's ID to a Post's ID — these are different entities and will produce semantically incorrect results. The RankedPosts CTE selects <code>p.Id AS PostId</code> but does not expose the Post's OwnerUserId. The intent appears to be joining on the user who authored the post.</p>
+
+    <div class="evidence">
+      <strong>Evidence:</strong> NodeId=4 Hash Match Right Outer Join — HashKeysBuild references <code>[Posts].[Id]</code>, HashKeysProbe references <code>[Users].[Id]</code>. The CTE output <code>PostId</code> is <code>p.Id</code> (Post primary key), not a user identifier.
+    </div>
+
+    <h4>Fix:</h4>
+    <pre><code>-- BEFORE (buggy)
+WITH RankedPosts AS (
+    SELECT 
+        p.Id AS PostId,
+        p.Title,
+        p.CreationDate,
+        ROW_NUMBER() OVER (PARTITION BY t.Id ORDER BY p.CreationDate DESC) AS rn,
+        t.TagName
+    FROM Posts p
+    JOIN Tags t ON p.Tags LIKE '%' + t.TagName + '%'
+    WHERE p.PostTypeId = 1
+)
+...
+LEFT JOIN RankedPosts rp ON tp.UserId = rp.PostId  -- BUG: UserId ≠ PostId
+
+-- AFTER (corrected — add OwnerUserId to CTE)
+WITH RankedPosts AS (
+    SELECT 
+        p.Id AS PostId,
+        p.OwnerUserId,              -- ADD THIS
+        p.Title,
+        p.CreationDate,
+        ROW_NUMBER() OVER (PARTITION BY t.Id ORDER BY p.CreationDate DESC) AS rn,
+        t.TagName
+    FROM Posts p
+    INNER JOIN dbo.PostTags pt ON p.Id = pt.PostId
+    INNER JOIN Tags t ON pt.TagId = t.Id
+    WHERE p.PostTypeId = 1
+)
+...
+LEFT JOIN RankedPosts rp ON tp.UserId = rp.OwnerUserId  -- FIXED</code></pre>
+
+    <div class="risk">
+      <strong>Risk:</strong> This is a correctness fix, not a performance-only change. However, fixing this may significantly change the result set cardinality and thus also impact performance (likely reducing rows since the current join is semi-random).
+    </div>
+  </div>
+
+  <!-- REC 3 -->
+  <h3 id="rec3">3. Eliminate Cartesian Expansion in UserStats CTE</h3>
+  <div class="card high">
+    <p><span class="badge high">High</span> <span class="badge confidence">Confidence: 95%</span></p>
+    <p>The UserStats CTE performs <code>Users LEFT JOIN Posts LEFT JOIN Votes LEFT JOIN Badges</code> in a single pass, producing a Cartesian-like expansion to <strong>1.7M intermediate rows</strong> before aggregating with COUNT(DISTINCT). A user with 10 posts, 50 votes across those posts, and 5 badges would contribute 10 × 50 × 5 = 2,500 rows instead of just needing 3 pre-aggregated lookups.</p>
+
+    <div class="evidence">
+      <strong>Evidence:</strong> NodeId=19 Compute Scalar, EstimateRows=1,700,990. NodeId=18 Hash Match Aggregate, EstimateRows=177,639. The row explosion from 267K users to 1.7M rows demonstrates the Cartesian multiplication effect.
+    </div>
+
+    <h4>Rewrite: Pre-aggregate Each Dimension</h4>
+    <pre><code>-- BEFORE (Cartesian explosion to 1.7M rows)
+UserStats AS (
+    SELECT u.Id AS UserId, u.DisplayName,
+        COUNT(DISTINCT p.Id) AS TotalPosts,
+        SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpVotes,
+        SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownVotes,
+        COUNT(DISTINCT b.Id) AS BadgeCount
+    FROM Users u
+    LEFT JOIN Posts p ON u.Id = p.OwnerUserId
+    LEFT JOIN Votes v ON p.Id = v.PostId
+    LEFT JOIN Badges b ON u.Id = b.UserId
+    GROUP BY u.Id, u.DisplayName
+)
+
+-- AFTER (pre-aggregate, ~300K rows max per subquery)
+PostCounts AS (
+    SELECT OwnerUserId, COUNT(*) AS TotalPosts
+    FROM Posts
+    GROUP BY OwnerUserId
+),
+VoteCounts AS (
+    SELECT p.OwnerUserId,
+        SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpVotes,
+        SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownVotes
+    FROM Posts p
+    INNER JOIN Votes v ON p.Id = v.PostId
+    WHERE v.VoteTypeId IN (2, 3)
+    GROUP BY p.OwnerUserId
+),
+BadgeCounts AS (
+    SELECT UserId, COUNT(*) AS BadgeCount
+    FROM Badges
+    GROUP BY UserId
+),
+UserStats AS (
+    SELECT 
+        u.Id AS UserId,
+        u.DisplayName,
+        ISNULL(pc.TotalPosts, 0) AS TotalPosts,
+        ISNULL(vc.UpVotes, 0) AS UpVotes,
+        ISNULL(vc.DownVotes, 0) AS DownVotes,
+        ISNULL(bc.BadgeCount, 0) AS BadgeCount
+    FROM Users u
+    LEFT JOIN PostCounts pc ON u.Id = pc.OwnerUserId
+    LEFT JOIN VoteCounts vc ON u.Id = vc.OwnerUserId
+    LEFT JOIN BadgeCounts bc ON u.Id = bc.UserId
+)</code></pre>
+    <p>This eliminates COUNT(DISTINCT) and reduces intermediate rows from 1.7M to approximately 267K (one per user).</p>
+
+    <div class="risk">
+      <strong>Risk:</strong> Minimal. This is a semantically equivalent rewrite that reduces memory grant requirements and eliminates Cartesian inflation. The pre-aggregation pattern is standard best practice.
+    </div>
+  </div>
+
+  <!-- REC 4 -->
+  <h3 id="rec4">4. Complete Query Rewrite</h3>
+  <div class="card info">
+    <p><span class="badge medium">Medium</span> <span class="badge confidence">Confidence: 90%</span></p>
+    <p>Combining all fixes from recommendations 1–3, here is the complete rewritten stored procedure:</p>
+
+    <pre><code>ALTER PROCEDURE sp00060
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    WITH PostCounts AS (
+        SELECT OwnerUserId, COUNT(*) AS TotalPosts
+        FROM dbo.Posts
+        WHERE OwnerUserId IS NOT NULL
+        GROUP BY OwnerUserId
+        HAVING COUNT(*) > 10   -- Push filter early
+    ),
+    VoteCounts AS (
+        SELECT p.OwnerUserId,
+            SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpVotes,
+            SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownVotes
+        FROM dbo.Posts p
+        INNER JOIN dbo.Votes v ON p.Id = v.PostId
+        WHERE v.VoteTypeId IN (2, 3)
+          AND p.OwnerUserId IS NOT NULL
+        GROUP BY p.OwnerUserId
+    ),
+    BadgeCounts AS (
+        SELECT UserId, COUNT(*) AS BadgeCount
+        FROM dbo.Badges
+        GROUP BY UserId
+    ),
+    TopUsers AS (
+        SELECT 
+            u.Id AS UserId,
+            u.DisplayName,
+            pc.TotalPosts,
+            ISNULL(vc.UpVotes, 0) AS UpVotes,
+            ISNULL(vc.DownVotes, 0) AS DownVotes,
+            ISNULL(bc.BadgeCount, 0) AS BadgeCount,
+            DENSE_RANK() OVER (
+                ORDER BY pc.TotalPosts DESC, 
+                         ISNULL(vc.UpVotes, 0) - ISNULL(vc.DownVotes, 0) DESC
+            ) AS UserRank
+        FROM dbo.Users u
+        INNER JOIN PostCounts pc ON u.Id = pc.OwnerUserId
+        LEFT JOIN VoteCounts vc ON u.Id = vc.OwnerUserId
+        LEFT JOIN BadgeCounts bc ON u.Id = bc.UserId
+    ),
+    RankedPosts AS (
+        SELECT 
+            p.Id AS PostId,
+            p.OwnerUserId,
+            p.Title,
+            p.CreationDate,
+            ROW_NUMBER() OVER (
+                PARTITION BY pt.TagId 
+                ORDER BY p.CreationDate DESC
+            ) AS rn,
+            t.TagName
+        FROM dbo.Posts p
+        INNER JOIN dbo.PostTags pt ON p.Id = pt.PostId
+        INNER JOIN dbo.Tags t ON pt.TagId = t.Id
+        WHERE p.PostTypeId = 1
+    )
+    SELECT 
+        tp.UserRank,
+        tp.DisplayName,
+        tp.TotalPosts,
+        tp.UpVotes,
+        tp.DownVotes,
+        tp.BadgeCount,
+        rp.Title AS LatestPostTitle,
+        rp.CreationDate AS LatestPostDate,
+        CASE 
+            WHEN rp.rn = 1 THEN 'Latest'
+            ELSE 'Older'
+        END AS PostStatus
+    FROM TopUsers tp
+    LEFT JOIN RankedPosts rp ON tp.UserId = rp.OwnerUserId
+    ORDER BY tp.UserRank, rp.CreationDate DESC;
+END;</code></pre>
+
+    <p><strong>Expected impact:</strong> Estimated cost reduction from ~200 to &lt;10. Memory grant reduction from ~5.6GB to &lt;200MB. Execution time improvement of 90%+.</p>
+  </div>
+
+  <!-- REC 5 -->
+  <h3 id="rec5">5. Index Recommendations</h3>
+
+  <div class="card medium">
+    <h4>5a. PostTags Bridge Table Indexes (if created per Rec #1)</h4>
+    <p>Already specified in Recommendation 1. The PK on (PostId, TagId) and the secondary index on (TagId, PostId) are essential.</p>
+
+    <h4>5b. Index on Posts for PostTypeId with Covering Columns</h4>
+    <p>Currently the plan scans the full 399MB clustered index on Posts to filter PostTypeId = 1 (returning ~104K of 246K rows, a 42% selectivity). With the rewrite, an index becomes more beneficial since the bridge table join changes the access pattern.</p>
+
+    <pre><code>CREATE NONCLUSTERED INDEX IX_Posts_PostTypeId_Covering
+ON dbo.Posts (PostTypeId, CreationDate DESC)
+INCLUDE (OwnerUserId, Title, Tags)
+WITH (DATA_COMPRESSION = PAGE, ONLINE = ON);</code></pre>
+
+    <table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>estimatedStorageBytes</td><td>~25 MB (with PAGE compression; Posts avg Tags=13.5 bytes, Title=24 bytes)</td></tr>
+      <tr><td>expectedReadBenefitPercent</td><td>60–75% for RankedPosts CTE; avoids 399MB clustered scan</td></tr>
+      <tr><td>expectedWriteOverheadPercent</td><td>3–5% on Posts INSERT/UPDATE (already has 2 NC indexes)</td></tr>
+      <tr><td>maintenanceNotes</td><td>PAGE compression recommended; ONLINE build available on Enterprise/Developer. Consider dropping if PostTags bridge eliminates need for Tags column in this index.</td></tr>
+    </table>
+
+    <div class="evidence">
+      <strong>Evidence:</strong> NodeId=9 Clustered Index Scan on PK__Posts, EstimateIO=2.32, reads all 246,672 rows to filter PostTypeId=1 returning 104,436. Column cardinality shows PostTypeId has only 5 distinct values.
+    </div>
+
+    <div class="risk">
+      <strong>Risk:</strong> Low. Posts table already has 2 nonclustered indexes. This adds ~25MB. If using the PostTags bridge table, consider a simpler version without the Tags INCLUDE column.
+    </div>
+
+    <h4>5c. Filtered Index on Votes for VoteTypeId IN (2, 3)</h4>
+    <p>The rewritten VoteCounts CTE filters on VoteTypeId IN (2, 3). A filtered index avoids scanning all 926K votes (most of which are type 1 = AcceptedByOriginator, type 5 = Favorite, etc.).</p>
+
+    <pre><code>CREATE NONCLUSTERED INDEX IX_Votes_PostId_UpDownVotes
+ON dbo.Votes (PostId)
+INCLUDE (VoteTypeId)
+WHERE VoteTypeId IN (2, 3)
+WITH (DATA_COMPRESSION = PAGE, ONLINE = ON);</code></pre>
+
+    <table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>estimatedStorageBytes</td><td>~3–5 MB (filtered; upvotes + downvotes are a subset of 926K)</td></tr>
+      <tr><td>expectedReadBenefitPercent</td><td>40–60% for VoteCounts CTE; reads only relevant vote types</td></tr>
+      <tr><td>expectedWriteOverheadPercent</td><td>1–2% (only maintained for VoteTypeId 2 or 3 inserts)</td></tr>
+      <tr><td>maintenanceNotes</td><td>Filtered indexes not usable with parameterized queries unless OPTION(RECOMPILE) or the filter matches. Safe here since values are hardcoded in the SP.</td></tr>
+    </table>
+
+    <div class="evidence">
+      <strong>Evidence:</strong> NodeId=21 Clustered Index Scan on PK__Votes, EstimateRows=926,084, EstimateIO=1.12. Currently reads all votes when only VoteTypeId 2 and 3 are needed.
+    </div>
+
+    <div class="risk">
+      <strong>Risk:</strong> Very low. Filtered index is small (~3–5MB) and only maintained on relevant inserts. Already have IX_Votes_PostId_VoteTypeId which covers this query, but a filtered version is smaller.
+    </div>
+
+    <h4>5d. Consider Dropping Unused Indexes</h4>
+    <p>All index usage stats show <strong>0 seeks, 0 scans, 0 lookups</strong> across every index. This suggests either the server was recently restarted, statistics were just rebuilt, or these indexes are genuinely unused. After the server has been running with production workload for a sufficient period, review and consider dropping:</p>
+    <ul>
+      <li><code>IX_Votes_UserId_VoteTypeId</code> (8.8 MB) — if no queries seek by UserId on Votes</li>
+      <li><code>IX_Votes_PostId_VoteTypeId_UpDown_Filtered</code> (8.3 MB) — may be superseded by the new filtered index above</li>
+    </ul>
+  </div>
+
+  <!-- REC 6 -->
+  <h3 id="rec6">6. Statistics Maintenance</h3>
+  <div class="card success">
+    <p><span class="badge low">Low</span> <span class="badge confidence">Confidence: 95%</span></p>
+    <p>Statistics are in excellent shape:</p>
+    <ul>
+      <li>All referenced statistics are sampled at <strong>100%</strong></li>
+      <li>All have <strong>ModificationCount = 0</strong></li>
+      <li>Auto Create/Update Statistics are <strong>enabled</strong></li>
+      <li>Last updates range from 2026-02-28 to 2026-03-28 — all recent</li>
+    </ul>
+    <p><strong>Recommendation:</strong> No immediate action needed. Consider enabling <code>AUTO_UPDATE_STATISTICS_ASYNC</code> to avoid query compile delays on large tables:</p>
+    <pre><code>ALTER DATABASE [SQLStorm] SET AUTO_UPDATE_STATISTICS_ASYNC ON;</code></pre>
+    <div class="evidence">
+      <strong>Evidence:</strong> All 15 StatisticsInfo entries in the plan show SamplingPercent=100, ModificationCount=0. Cardinality estimates appear reasonable for the given data (e.g., Posts estimate of 104,436 for PostTypeId=1 out of 246,672 total).
+    </div>
+  </div>
+
+  <!-- REC 7 -->
+  <h3 id="rec7">7. Parameter Sniffing Considerations</h3>
+  <div class="card info">
+    <p><span class="badge low">Low</span> <span class="badge confidence">Confidence: 90%</span></p>
+    <p>This stored procedure takes <strong>no parameters</strong>, so traditional parameter sniffing is not a concern. The query uses only literal constants (<code>PostTypeId = 1</code>, <code>VoteTypeId = 2</code>, <code>VoteTypeId = 3</code>, <code>TotalPosts > 10</code>). The plan will always be compiled with the same values.</p>
+    <p>However, note that <code>ARITHABORT</code> is set to <strong>false</strong> in the plan's StatementSetOptions. This can cause the plan to not be shared with SSMS sessions (which default to ARITHABORT ON), potentially leading to two cached plans. Consider adding <code>SET ARITHABORT ON</code> to the stored procedure.</p>
+    <pre><code>ALTER PROCEDURE sp00060
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET ARITHABORT ON;  -- Ensure plan sharing with SSMS
+    ...</code></pre>
+    <p>SQL Server 2022's <strong>Parameter Sensitive Plan (PSP) optimization</strong> and <strong>DOP feedback</strong> features are available on this instance but are not applicable since there are no parameters and the query runs parallel (Branches=1 indicates a parallel plan).</p>
+  </div>
+
+  <!-- ========== TABLE INSIGHTS ========== -->
+  <h2 id="table-insights">Table-Specific Insights</h2>
+
+  <div class="card info">
+    <table>
+      <tr>
+        <th>Table</th>
+        <th>Rows</th>
+        <th>Size</th>
+        <th>Indexes</th>
+        <th>Key Observations</th>
+      </tr>
+      <tr>
+        <td><strong>Posts</strong></td>
+        <td>246,672<br><small>(1.23M total incl. all types)</small></td>
+        <td>399 MB (CI)<br>+ 23 MB (NC)</td>
+        <td>3</td>
+        <td>
+          Largest table. Tags column (avg 13.5 bytes) stores delimited tag names — the root cause of the LIKE anti-pattern. PostTypeId has only 5 distinct values; PostTypeId=1 selects ~42% of rows. Title has ~104K distinct values (avg 24 bytes).
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Votes</strong></td>
+        <td>926,084</td>
+        <td>12 MB (CI)<br>+ 31 MB (NC)</td>
+        <td>4</td>
+        <td>
+          Most indexes by count. PostId has ~243K distinct values. VoteTypeId has 13 distinct values. The NC indexes total 31MB — more than 2.5× the clustered index, suggesting potential over-indexing. Only VoteTypeId 2 and 3 are needed by this query.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Badges</strong></td>
+        <td>439,352</td>
+        <td>8 MB (CI)<br>+ 5 MB (NC)</td>
+        <td>2</td>
+        <td>
+          154K distinct UserIds means avg ~2.85 badges per user. IX_Badges_UserId includes Class column but this query only needs UserId and Id. The existing index is adequate.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Users</strong></td>
+        <td>267,193</td>
+        <td>45 MB (CI)</td>
+        <td>1</td>
+        <td>
+          Only clustered index exists. DisplayName avg 10.2 bytes, 227K distinct values. No additional indexes needed for this query pattern since Users is the dimension table being probed via hash joins.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Tags</strong></td>
+        <td>1,232</td>
+        <td>0.1 MB</td>
+        <td>1</td>
+        <td>
+          Tiny table, no compression (consider PAGE compression though benefit is negligible at 0.1MB). TagName avg 10.6 bytes. The entire table fits in a single data page extent — scan is appropriate.
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ========== VALIDATION ========== -->
+  <h2 id="validation">Validation Steps</h2>
+
+  <div class="card info">
+    <p>After implementing the recommended changes, validate performance improvements by comparing before/after metrics:</p>
+
+    <pre><code>-- Run BEFORE and AFTER applying changes
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+
+EXEC sp00060;
+
+SET STATISTICS IO OFF;
+SET STATISTICS TIME OFF;</code></pre>
+
+    <h4>Key Metrics to Compare</h4>
+    <ul>
+      <li><strong>Logical Reads</strong> — Expect a reduction from hundreds of thousands to low thousands</li>
+      <li><strong>CPU Time</strong> — Expect 90%+ reduction by eliminating the LIKE cross join</li>
+      <li><strong>Elapsed Time</strong> — Expect significant wall-clock improvement</li>
+      <li><strong>Memory Grant (KB)</strong> — Check actual vs granted in <code>sys.dm_exec_query_memory_grants</code>; expect reduction from ~5.6GB to &lt;200MB</li>
+      <li><strong>TempDB Spills</strong> — Check Sort and Hash warnings in the actual execution plan; expect elimination of spills</li>
+    </ul>
+
+    <h4>Additional Validation</h4>
+    <pre><code>-- Check for tempdb spills in actual plan
+SET STATISTICS XML ON;
+EXEC sp00060;
+SET STATISTICS XML OFF;
+-- Look for SpillToTempDb="1" in Sort and Hash operators
+
+-- Monitor memory grants
+SELECT 
+    session_id, 
+    requested_memory_kb, 
+    granted_memory_kb, 
+    used_memory_kb,
+    max_used_memory_kb
+FROM sys.dm_exec_query_memory_grants
+WHERE session_id = @@SPID;</code></pre>
+
+    <h4>Verify PostTags Bridge Table Accuracy</h4>
+    <pre><code>-- Spot-check: compare LIKE-based results with bridge table results
+SELECT TOP 100 p.Id, p.Tags, t.TagName
+FROM dbo.Posts p
+INNER JOIN dbo.PostTags pt ON p.Id = pt.PostId
+INNER JOIN dbo.Tags t ON pt.TagId = t.Id
+WHERE p.PostTypeId = 1
+ORDER BY p.Id;
+
+-- Count comparison
+SELECT COUNT(*) FROM dbo.PostTags;
+-- Should approximate the ~104K rows estimated by the LIKE join</code></pre>
+  </div>
+
+  <footer>
+    <p>Generated by AI SQL Tuner Studio using model <strong>claude-opus-4-6</strong> with reasoning effort <strong>low</strong>.</p>
+    <p><a href="https://aisqltuner.com">aisqltuner.com</a></p>
+    <p>Based on analysis as of 2026-04-18 18:42:38 UTC</p>
+  </footer>
+</main>
+
+</body>
+</html>

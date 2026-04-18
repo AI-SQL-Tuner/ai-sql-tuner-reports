@@ -1,0 +1,1652 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="AI SQL Tuner SQL Server health check report from April 13, 2026, generated with Claude Sonnet 4.6 (high effort). In-depth analysis of server configuration, performance metrics, and health diagnostics.">
+<title>SQL Server Health Check Report (Claude Sonnet 4.6 High) | AI SQL Tuner</title>
+<link rel="canonical" href="https://reports.aisqltuner.com/aisqltuner-server-health-check-20260413-sonnet-4-6-high.html">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SQL Server Health Check Report (Claude Sonnet 4.6 High)">
+<meta property="og:description" content="AI SQL Tuner SQL Server health check report from April 13, 2026, generated with Claude Sonnet 4.6 (high effort). In-depth analysis of server configuration, performance metrics, and health diagnostics.">
+<meta property="og:url" content="https://reports.aisqltuner.com/aisqltuner-server-health-check-20260413-sonnet-4-6-high.html">
+<meta property="og:site_name" content="AI SQL Tuner">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SQL Server Health Check Report (Claude Sonnet 4.6 High)">
+<meta name="twitter:description" content="AI SQL Tuner SQL Server health check report from April 13, 2026, generated with Claude Sonnet 4.6 (high effort). In-depth analysis of server configuration, performance metrics, and health diagnostics.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "SQL Server Health Check Report (Claude Sonnet 4.6 High)",
+  "description": "AI SQL Tuner SQL Server health check report from April 13, 2026, generated with Claude Sonnet 4.6 (high effort). In-depth analysis of server configuration, performance metrics, and health diagnostics.",
+  "url": "https://reports.aisqltuner.com/aisqltuner-server-health-check-20260413-sonnet-4-6-high.html",
+  "datePublished": "2026-04-13",
+  "publisher": {
+    "@type": "Organization",
+    "name": "AI SQL Tuner",
+    "url": "https://aisqltuner.com/"
+  }
+}
+</script>
+<style>
+  :root {
+    --accent-blue: #0071e3;
+    --dark-blue: #004aad;
+    --surface: #1a2a4a;
+    --surface-light: #1e3461;
+    --surface-card: #162040;
+    --white: #ffffff;
+    --text-muted: #a0b8d8;
+    --text-secondary: #c8d8ee;
+    --green: #30d158;
+    --yellow: #ffd60a;
+    --orange: #ff9f0a;
+    --red: #ff453a;
+    --code-bg: #0d1b33;
+    --border: rgba(0, 113, 227, 0.25);
+    --toc-width: 270px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+    background-color: #0a1628;
+    color: var(--white);
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ── */
+  #layout {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── TOC Sidebar ── */
+  #toc {
+    width: var(--toc-width);
+    min-width: var(--toc-width);
+    background: var(--surface-card);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 0 0 2rem 0;
+    flex-shrink: 0;
+  }
+
+  #toc-header {
+    background: var(--accent-blue);
+    padding: 1rem 1.1rem;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--white);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  #toc ul {
+    list-style: none;
+    padding: 0.5rem 0;
+  }
+
+  #toc ul li a {
+    display: block;
+    padding: 0.42rem 1.1rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    border-left: 3px solid transparent;
+    transition: all 0.15s ease;
+  }
+
+  #toc ul li a:hover {
+    color: var(--white);
+    background: rgba(0,113,227,0.12);
+    border-left-color: var(--accent-blue);
+  }
+
+  #toc ul li.toc-section > a {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding-top: 0.85rem;
+    cursor: default;
+    border-left-color: transparent !important;
+    background: none !important;
+  }
+
+  #toc ul li.toc-sub > a {
+    padding-left: 1.8rem;
+    font-size: 0.775rem;
+  }
+
+  /* ── Main Content ── */
+  #main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header Banner ── */
+  #header {
+    background: var(--accent-blue);
+    padding: 2rem 2.5rem 1.5rem;
+  }
+
+  #header h1 {
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--white);
+    margin-bottom: 0.3rem;
+  }
+
+  #header .goal-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 20px;
+    padding: 0.2rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: 0.9rem;
+  }
+
+  #header .meta-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+    margin-top: 0.8rem;
+  }
+
+  #header .meta-item {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.82);
+  }
+
+  #header .meta-item strong {
+    color: var(--white);
+    font-weight: 600;
+  }
+
+  /* ── Content Area ── */
+  #content {
+    padding: 2rem 2.5rem;
+    flex: 1;
+  }
+
+  /* ── Sections ── */
+  .section {
+    margin-bottom: 2.5rem;
+  }
+
+  h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--white);
+    border-bottom: 2px solid var(--accent-blue);
+    padding-bottom: 0.45rem;
+    margin-bottom: 1.1rem;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-size: 0.97rem;
+    font-weight: 700;
+    color: #7ec8ff;
+    margin: 1.1rem 0 0.5rem 0;
+    letter-spacing: 0.01em;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.6rem;
+  }
+
+  /* ── Priority Cards ── */
+  .priority-card {
+    background: var(--surface-light);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--accent-blue);
+  }
+
+  .priority-card.critical { border-left-color: var(--red); }
+  .priority-card.high     { border-left-color: var(--orange); }
+  .priority-card.medium   { border-left-color: var(--yellow); }
+  .priority-card.low      { border-left-color: var(--green); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .priority-badge {
+    font-size: 0.67rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.18rem 0.6rem;
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+
+  .badge-critical { background: rgba(255,69,58,0.22); color: #ff6b62; border: 1px solid rgba(255,69,58,0.4); }
+  .badge-high     { background: rgba(255,159,10,0.2); color: #ffb340; border: 1px solid rgba(255,159,10,0.4); }
+  .badge-medium   { background: rgba(255,214,10,0.15); color: #ffd60a; border: 1px solid rgba(255,214,10,0.35); }
+  .badge-low      { background: rgba(48,209,88,0.15); color: #4cd964; border: 1px solid rgba(48,209,88,0.3); }
+
+  .card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .card-body {
+    font-size: 0.855rem;
+    color: var(--text-secondary);
+  }
+
+  .card-body ul, .card-body ol {
+    margin-left: 1.3rem;
+    margin-top: 0.35rem;
+  }
+
+  .card-body li { margin-bottom: 0.25rem; }
+
+  .confidence {
+    display: inline-block;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+    font-style: italic;
+  }
+
+  /* ── Executive Summary ── */
+  .exec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .exec-stat {
+    background: var(--surface-light);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 0.9rem 1rem;
+    text-align: center;
+  }
+
+  .exec-stat .stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .exec-stat .stat-label {
+    font-size: 0.73rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.25rem;
+  }
+
+  .color-red    { color: var(--red); }
+  .color-orange { color: var(--orange); }
+  .color-yellow { color: var(--yellow); }
+  .color-green  { color: var(--green); }
+  .color-blue   { color: #7ec8ff; }
+
+  /* ── Ordered/Unordered lists ── */
+  ol.rec-list {
+    list-style: none;
+    counter-reset: rec-counter;
+    padding: 0;
+  }
+
+  ol.rec-list > li {
+    counter-increment: rec-counter;
+    margin-bottom: 1rem;
+  }
+
+  ul.bullet-list {
+    list-style: disc;
+    margin-left: 1.4rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+
+  ul.bullet-list li { margin-bottom: 0.3rem; }
+
+  /* ── Code blocks ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid rgba(0,113,227,0.3);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    overflow-x: auto;
+    margin: 0.7rem 0;
+  }
+
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #9fdbff;
+    line-height: 1.6;
+  }
+
+  /* ── Info Box ── */
+  .info-box {
+    background: rgba(0,113,227,0.1);
+    border: 1px solid rgba(0,113,227,0.35);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    font-size: 0.855rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.8rem;
+  }
+
+  .warn-box {
+    background: rgba(255,159,10,0.1);
+    border: 1px solid rgba(255,159,10,0.35);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    font-size: 0.855rem;
+    color: #ffc970;
+    margin-bottom: 0.8rem;
+  }
+
+  .ok-box {
+    background: rgba(48,209,88,0.08);
+    border: 1px solid rgba(48,209,88,0.3);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    font-size: 0.855rem;
+    color: #4cd964;
+    margin-bottom: 0.8rem;
+  }
+
+  /* ── Table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.83rem;
+    margin: 0.8rem 0;
+  }
+
+  th {
+    background: var(--dark-blue);
+    color: var(--white);
+    padding: 0.55rem 0.8rem;
+    text-align: left;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  td {
+    padding: 0.48rem 0.8rem;
+    border-bottom: 1px solid rgba(0,113,227,0.12);
+    color: var(--text-secondary);
+    vertical-align: top;
+  }
+
+  tr:hover td { background: rgba(0,113,227,0.06); }
+
+  /* ── Divider ── */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.5rem 0;
+  }
+
+  /* ── Footer ── */
+  footer {
+    background: var(--surface-card);
+    border-top: 1px solid var(--border);
+    padding: 1.1rem 2.5rem;
+    font-size: 0.775rem;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  footer a { color: #7ec8ff; text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ── Scrollbar ── */
+  #toc::-webkit-scrollbar { width: 4px; }
+  #toc::-webkit-scrollbar-track { background: transparent; }
+  #toc::-webkit-scrollbar-thumb { background: rgba(0,113,227,0.4); border-radius: 4px; }
+</style>
+</head>
+<body>
+<div id="layout">
+
+<!-- ═══════════════════════════ TOC Sidebar ═══════════════════════════ -->
+<nav id="toc" aria-label="Table of Contents">
+  <div id="toc-header">📋 Table of Contents</div>
+  <ul>
+    <li class="toc-section"><a>Overview</a></li>
+    <li class="toc-sub"><a href="#exec-summary">Executive Summary</a></li>
+    <li class="toc-sub"><a href="#top-priorities">Top Priorities</a></li>
+
+    <li class="toc-section"><a>Recommendations</a></li>
+    <li class="toc-sub"><a href="#sec-performance">1. Performance</a></li>
+    <li class="toc-sub"><a href="#sec-config">2. Configuration</a></li>
+    <li class="toc-sub"><a href="#sec-indexes">3. Index Optimization</a></li>
+    <li class="toc-sub"><a href="#sec-querystore">4. Query Store</a></li>
+    <li class="toc-sub"><a href="#sec-checkdb">5. Database Integrity</a></li>
+    <li class="toc-sub"><a href="#sec-security">6. Security</a></li>
+    <li class="toc-sub"><a href="#sec-concurrency">7. Concurrency</a></li>
+    <li class="toc-sub"><a href="#sec-backups">8. Backup &amp; Recovery</a></li>
+    <li class="toc-sub"><a href="#sec-operational">9. Operational Best Practices</a></li>
+    <li class="toc-sub"><a href="#sec-proactive">10. Proactive Maintenance</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════ Main Content ═══════════════════════════ -->
+<div id="main">
+
+<!-- Header -->
+<div id="header">
+  <h1>🧠 AI SQL Tuner Recommendations</h1>
+  <div class="goal-badge">⚙️ Tuning Goal: Server Health</div>
+  <div class="meta-grid">
+    <div class="meta-item"><strong>Server:</strong> RockyPC</div>
+    <div class="meta-item"><strong>Database:</strong> master (server-wide analysis)</div>
+    <div class="meta-item"><strong>Version:</strong> SQL Server 2022 (16.0.1170.5) — Developer Edition (64-bit)</div>
+    <div class="meta-item"><strong>Edition:</strong> Developer / Enterprise Engine</div>
+    <div class="meta-item"><strong>OS:</strong> Windows 10 Home (Hypervisor)</div>
+    <div class="meta-item"><strong>Uptime:</strong> 1 day</div>
+    <div class="meta-item"><strong>Memory:</strong> 32,527 MB physical / 23,168 MB max server</div>
+    <div class="meta-item"><strong>CPUs:</strong> 16 logical / 1 physical (HT)</div>
+  </div>
+</div>
+
+<div id="content">
+
+<!-- ═══════════════════════════ Executive Summary ═══════════════════════════ -->
+<div class="section" id="exec-summary">
+  <h2>Executive Summary</h2>
+
+  <div class="exec-grid">
+    <div class="exec-stat">
+      <div class="stat-value color-red">6</div>
+      <div class="stat-label">Critical Issues</div>
+    </div>
+    <div class="exec-stat">
+      <div class="stat-value color-orange">5</div>
+      <div class="stat-label">High Priority</div>
+    </div>
+    <div class="exec-stat">
+      <div class="stat-value color-yellow">6</div>
+      <div class="stat-label">Medium Priority</div>
+    </div>
+    <div class="exec-stat">
+      <div class="stat-value color-green">5</div>
+      <div class="stat-label">Low / Best Practice</div>
+    </div>
+    <div class="exec-stat">
+      <div class="stat-value color-red">6</div>
+      <div class="stat-label">DBs Missing CHECKDB</div>
+    </div>
+    <div class="exec-stat">
+      <div class="stat-value color-red">10</div>
+      <div class="stat-label">DBs with Backup Issues</div>
+    </div>
+    <div class="exec-stat">
+      <div class="stat-value color-green">0</div>
+      <div class="stat-label">Deadlocks (7 days)</div>
+    </div>
+    <div class="exec-stat">
+      <div class="stat-value color-green">0</div>
+      <div class="stat-label">High-Impact Missing Indexes</div>
+    </div>
+  </div>
+
+  <p>
+    <strong>RockyPC</strong> is a single-instance SQL Server 2022 Developer Edition running on a Windows 10 Home hypervisor
+    with a diverse set of databases (CRM, DigitsSolver, SQLStorm, tpcc, tpch, tpch10, WideWorldImporters).
+    The server has been running for only ~1 day, which limits some statistics, but several significant operational,
+    integrity, and backup concerns are already clearly visible.
+  </p>
+  <p>
+    The most urgent concerns are: <strong>six user databases have never had CHECKDB run</strong> (reporting epoch date 1900-01-01),
+    <strong>multiple databases have no full backup on record</strong> (including CRM, tpcc, tpch10, and all three system databases),
+    and <strong>several databases in FULL recovery model have no log backups</strong>, meaning transaction logs will grow without bound.
+    I/O performance is excellent (all latencies ≤1 ms average), wait statistics are dominated by expected background
+    sleeps, and no deadlocks or missing indexes are detected — the server is performing well workload-wise.
+    Configuration improvements such as enabling <strong>optimize for ad hoc workloads</strong>, enabling
+    <strong>backup compression</strong>, enabling <strong>backup checksum</strong>, and tuning
+    <strong>Query Store statistics collection intervals</strong> are quick wins.
+    Memory configuration is conservative and should be reviewed given the available 32 GB of physical RAM.
+  </p>
+
+  <div class="warn-box">
+    ⚠️ <strong>This is a Developer Edition instance on Windows 10 Home.</strong> Developer Edition has all Enterprise features
+    but is not licensed for production use. If this server hosts production data, a production license upgrade is required.
+  </div>
+</div>
+
+<!-- ═══════════════════════════ Top Priorities ═══════════════════════════ -->
+<div class="section" id="top-priorities">
+  <h2>🔥 Top Priorities at a Glance</h2>
+  <ol class="rec-list">
+
+    <li>
+      <div class="priority-card critical">
+        <div class="card-header">
+          <span class="priority-badge badge-critical">Critical</span>
+          <span class="card-title">#1 — Run DBCC CHECKDB on 6 Databases Immediately</span>
+        </div>
+        <div class="card-body">
+          WideWorldImporters, SQLStorm, tpcc, tpch, CRM, and tpch10 show a last-run date of <code>1900-01-01</code>,
+          indicating CHECKDB has never been executed. Undetected corruption is a data-loss risk.
+          <span class="confidence">Confidence: Very High (99%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card critical">
+        <div class="card-header">
+          <span class="priority-badge badge-critical">Critical</span>
+          <span class="card-title">#2 — Establish Full Backup Strategy for All Databases</span>
+        </div>
+        <div class="card-body">
+          CRM, tpcc, tpch10, DigitsSolver, master, model, and msdb have never been backed up.
+          WideWorldImporters last backup was 1,284 days ago. Data loss risk is severe.
+          <span class="confidence">Confidence: Very High (99%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card critical">
+        <div class="card-header">
+          <span class="priority-badge badge-critical">Critical</span>
+          <span class="card-title">#3 — Fix Log Backup Gap on FULL Recovery Databases</span>
+        </div>
+        <div class="card-body">
+          DigitsSolver, tpcc, tpch, CRM, tpch10, and model are in FULL recovery with no log backups.
+          Transaction logs will grow indefinitely and point-in-time recovery is impossible.
+          <span class="confidence">Confidence: Very High (99%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card high">
+        <div class="card-header">
+          <span class="priority-badge badge-high">High</span>
+          <span class="card-title">#4 — Enable Optimize for Ad Hoc Workloads</span>
+        </div>
+        <div class="card-body">
+          Currently disabled. This prevents single-use plan stubs from being cached, reducing plan cache memory pressure.
+          <span class="confidence">Confidence: High (95%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card high">
+        <div class="card-header">
+          <span class="priority-badge badge-high">High</span>
+          <span class="card-title">#5 — Enable Backup Compression and Checksum by Default</span>
+        </div>
+        <div class="card-body">
+          Both are disabled. Backup compression reduces backup size and duration; backup checksum enables early corruption detection.
+          <span class="confidence">Confidence: High (95%)</span>
+        </div>
+      </div>
+    </li>
+
+  </ol>
+</div>
+
+<hr>
+
+<!-- ═══════════════════════════ Section 1: Performance ═══════════════════════════ -->
+<div class="section" id="sec-performance">
+  <h2>1. Performance Improvements (CPU, Memory, I/O)</h2>
+
+  <ol class="rec-list">
+
+    <li>
+      <div class="priority-card medium">
+        <div class="card-header">
+          <span class="priority-badge badge-medium">Medium</span>
+          <span class="card-title">Review Max Server Memory Setting</span>
+        </div>
+        <div class="card-body">
+          <p>Max server memory is set to <strong>23,168 MB</strong> (~71% of 32 GB physical RAM) on a system with only
+          <strong>452 MB committed</strong> out of 23,168 MB target. This indicates very light current activity.
+          The <code>min server memory</code> running value of 16 MB is fine. However, with 16 logical CPUs and
+          multiple large databases (tpch, tpch10, WideWorldImporters), SQL Server may benefit from additional memory
+          during analytical workloads. The current cap of 23,168 MB reserves ~9 GB for the OS, which is generally
+          appropriate for Windows 10, but verify OS needs.</p>
+          <ul>
+            <li>Current committed memory: 452 MB — no immediate pressure.</li>
+            <li>Max server memory of 23,168 MB is reasonable given 32 GB physical, but re-evaluate if workload grows.</li>
+            <li>Consider raising to 26,000–27,000 MB if OS stability allows.</li>
+          </ul>
+          <span class="confidence">Confidence: Medium (70%) — low uptime limits memory profiling accuracy</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">I/O Performance Is Excellent — No Action Required</span>
+        </div>
+        <div class="card-body">
+          <p>All data and log file average latencies are ≤1 ms (data files) and 3–7 ms (log reads).
+          These are well within best-practice thresholds (&lt;10 ms data, &lt;5 ms log for writes).
+          Log write latencies are effectively 0 ms indicating fast storage. The total I/O stalls are
+          minimal given the activity levels.</p>
+          <div class="ok-box">✓ I/O subsystem is healthy. No tuning action needed at this time.</div>
+          <span class="confidence">Confidence: High (90%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Wait Statistics Are Benign — Background Waits Only</span>
+        </div>
+        <div class="card-body">
+          <p>Both top wait types (<code>QDS_PERSIST_TASK_MAIN_LOOP_SLEEP</code> and
+          <code>PWAIT_DIRECTLOGCONSUMER_GETNEXT</code>) are background infrastructure sleeps,
+          each representing ~50% of total waits — this is normal and expected behavior. These are
+          Query Store persistence and log consumer background threads sleeping between work intervals.
+          No user-query waits (CXPACKET, LCK_M_*, PAGEIOLATCH, SOS_SCHEDULER_YIELD) are detected.</p>
+          <div class="ok-box">✓ No actionable wait-based performance bottleneck detected.</div>
+          <span class="confidence">Confidence: High (92%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card medium">
+        <div class="card-header">
+          <span class="priority-badge badge-medium">Medium</span>
+          <span class="card-title">Enable tempdb Metadata Memory-Optimized Tables</span>
+        </div>
+        <div class="card-body">
+          <p>SQL Server 2019+ supports memory-optimized tempdb metadata, which can significantly reduce
+          system table contention on busy servers. Currently disabled. With 16 CPUs this feature
+          can improve scalability if tempdb system table contention ever becomes an issue.</p>
+          <pre><code>-- Enable memory-optimized tempdb metadata (requires restart)
+ALTER SERVER CONFIGURATION
+    SET MEMORY_OPTIMIZED TEMPDB_METADATA = ON;
+-- Verify: SERVERPROPERTY('IsTempdbMetadataMemoryOptimized')</code></pre>
+          <span class="confidence">Confidence: Medium (65%) — low current tempdb activity, proactive benefit</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card medium">
+        <div class="card-header">
+          <span class="priority-badge badge-medium">Medium</span>
+          <span class="card-title">Verify MAXDOP Configuration for Analytical Workloads</span>
+        </div>
+        <div class="card-body">
+          <p>MAXDOP is set to <strong>8</strong> on a 16-logical-CPU machine. This is a valid configuration
+          for mixed workloads, but for the analytical TPC-H and TPC-CH benchmark databases
+          (tpch, tpch10), allowing higher parallelism may improve query performance. The cost threshold
+          for parallelism at <strong>30</strong> is a reasonable starting point above the default of 5.</p>
+          <ul>
+            <li>Current MAXDOP: 8 (acceptable for OLTP-dominant mix)</li>
+            <li>For analytical databases, consider query-level MAXDOP hints or Resource Governor to allow higher DOP.</li>
+            <li>Cost threshold of 30 is appropriate for a mixed workload; consider 40–50 if plan cache shows many parallel plans.</li>
+          </ul>
+          <span class="confidence">Confidence: Medium (68%)</span>
+        </div>
+      </div>
+    </li>
+
+  </ol>
+</div>
+
+<!-- ═══════════════════════════ Section 2: Configuration ═══════════════════════════ -->
+<div class="section" id="sec-config">
+  <h2>2. Configuration Optimizations</h2>
+
+  <ol class="rec-list">
+
+    <li>
+      <div class="priority-card high">
+        <div class="card-header">
+          <span class="priority-badge badge-high">High</span>
+          <span class="card-title">Enable Optimize for Ad Hoc Workloads</span>
+        </div>
+        <div class="card-body">
+          <p>Currently <strong>disabled</strong>. This option causes SQL Server to store a small stub the
+          first time an ad hoc query executes rather than the full plan, saving significant plan cache
+          memory for single-use queries. This is a safe, always-recommended setting.</p>
+          <pre><code>EXEC sp_configure 'optimize for ad hoc workloads', 1;
+RECONFIGURE;</code></pre>
+          <span class="confidence">Confidence: Very High (98%) — universally recommended best practice</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card high">
+        <div class="card-header">
+          <span class="priority-badge badge-high">High</span>
+          <span class="card-title">Enable Backup Compression and Backup Checksum by Default</span>
+        </div>
+        <div class="card-body">
+          <p>Both <code>backup compression default</code> (0) and <code>backup checksum default</code> (0)
+          are disabled. Enabling compression reduces backup file size and duration; enabling checksum
+          validates data integrity during backup, allowing earlier detection of corruption.</p>
+          <pre><code>EXEC sp_configure 'backup compression default', 1;
+RECONFIGURE;
+
+EXEC sp_configure 'backup checksum default', 1;
+RECONFIGURE;</code></pre>
+          <span class="confidence">Confidence: Very High (97%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card medium">
+        <div class="card-header">
+          <span class="priority-badge badge-medium">Medium</span>
+          <span class="card-title">Enable Blocked Process Threshold Monitoring</span>
+        </div>
+        <div class="card-body">
+          <p>The <code>blocked process threshold</code> is set to <strong>0</strong> (disabled). Setting
+          it to 5–10 seconds enables the blocked process report event in Extended Events / SQL Trace,
+          which is invaluable for diagnosing blocking chains in OLTP workloads like tpcc.</p>
+          <pre><code>EXEC sp_configure 'blocked process threshold (s)', 5;
+RECONFIGURE;</code></pre>
+          <span class="confidence">Confidence: High (88%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card medium">
+        <div class="card-header">
+          <span class="priority-badge badge-medium">Medium</span>
+          <span class="card-title">Set Min Server Memory to a Reasonable Floor</span>
+        </div>
+        <div class="card-body">
+          <p>The configured <code>min server memory</code> is 0 MB (running: 16 MB). On a dedicated SQL Server,
+          setting a minimum floor prevents the OS from aggressively trimming the buffer pool during low-activity
+          periods, reducing plan/buffer cache churn after periods of inactivity.</p>
+          <pre><code>-- Set min server memory to ~2 GB for a lightly loaded dedicated server
+EXEC sp_configure 'min server memory (MB)', 2048;
+RECONFIGURE;</code></pre>
+          <span class="confidence">Confidence: Medium (72%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Upgrade to Latest SQL Server 2022 CU (KB5077465 is a GDR)</span>
+        </div>
+        <div class="card-body">
+          <p>The server is running <strong>16.0.1170.5 (RTM-GDR)</strong>, which is the General Distribution
+          Release security patch, not the latest Cumulative Update. CUs include bug fixes, stability improvements,
+          and IQP enhancements beyond GDR patches. For SQL Server 2022, the latest CU should be applied.</p>
+          <ul>
+            <li>Current: RTM-GDR (KB5077465) — security-focused patch only</li>
+            <li>Recommended: Apply the latest SQL Server 2022 CU for full bug fixes and performance improvements</li>
+            <li>Check: <a href="https://learn.microsoft.com/sql/sql-server/latest-updates-microsoft-sql-server" style="color:#7ec8ff">Microsoft SQL Server Latest Updates</a></li>
+          </ul>
+          <span class="confidence">Confidence: High (90%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Review WideWorldImporters Compatibility Level (130 vs 160)</span>
+        </div>
+        <div class="card-body">
+          <p>WideWorldImporters is running at compatibility level <strong>130</strong> (SQL Server 2016),
+          while all other user databases are at <strong>160</strong> (SQL Server 2022). This database misses
+          out on Intelligent Query Processing, Parameter Sensitive Plan optimization, DOP Feedback, and other
+          SQL 2022 engine improvements.</p>
+          <pre><code>-- Test thoroughly in a non-production environment first
+ALTER DATABASE WideWorldImporters
+    SET COMPATIBILITY_LEVEL = 160;
+
+-- Verify Query Store captures any plan regressions after change</code></pre>
+          <span class="confidence">Confidence: High (85%) — functional testing required before changing</span>
+        </div>
+      </div>
+    </li>
+
+  </ol>
+</div>
+
+<!-- ═══════════════════════════ Section 3: Index Optimization ═══════════════════════════ -->
+<div class="section" id="sec-indexes">
+  <h2>3. Index Optimization Opportunities</h2>
+
+  <div class="ok-box">
+    ✓ <strong>No high-impact missing indexes detected</strong> across all databases at this time.
+    This is expected given the short uptime (~1 day) — the missing index DMVs accumulate data over time.
+    Re-run index analysis after at least 3–7 days of representative workload.
+  </div>
+
+  <ol class="rec-list">
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Schedule Index Analysis After Representative Workload Accumulates</span>
+        </div>
+        <div class="card-body">
+          <p>With only 1 day of uptime, missing index and index usage statistics are not yet representative.
+          Re-run a full index analysis using the <strong>Index Tuning</strong> goal in AI SQL Tuner after
+          at least 7 days of typical workload for each database, particularly for SQLStorm (highest I/O),
+          WideWorldImporters, tpch, and tpch10.</p>
+          <ul>
+            <li>Priority databases for future index review: SQLStorm, WideWorldImporters, tpcc, CRM</li>
+            <li>Analytical databases (tpch, tpch10): consider columnstore indexes for aggregate query patterns (Enterprise feature available in Developer Edition)</li>
+          </ul>
+          <span class="confidence">Confidence: High (88%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Consider Columnstore Indexes for TPC-H Analytical Databases</span>
+        </div>
+        <div class="card-body">
+          <p>The tpch and tpch10 databases represent analytical workloads. SQL Server 2022 Developer Edition
+          (Enterprise engine) supports clustered and non-clustered columnstore indexes, which can provide
+          10–100x query acceleration for aggregation-heavy analytical queries.</p>
+          <ul>
+            <li>Evaluate adding non-clustered columnstore indexes on large fact tables in tpch and tpch10</li>
+            <li>Use Query Store to compare plan performance before and after</li>
+            <li>Batch mode processing is automatically leveraged with columnstore</li>
+          </ul>
+          <span class="confidence">Confidence: Medium (70%) — requires schema and workload review</span>
+        </div>
+      </div>
+    </li>
+
+  </ol>
+</div>
+
+<!-- ═══════════════════════════ Section 4: Query Store ═══════════════════════════ -->
+<div class="section" id="sec-querystore">
+  <h2>4. Query Store Optimization</h2>
+
+  <p>Query Store is <strong>enabled and READ_WRITE</strong> on all user databases — this is excellent.
+  Several configuration inconsistencies exist between WideWorldImporters and the other databases.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Database</th>
+        <th>Flush Interval</th>
+        <th>Stats Interval</th>
+        <th>Max Plans/Query</th>
+        <th>Storage Used</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>CRM</td><td>15 min</td><td>60 min</td><td>200</td><td>0.10%</td><td style="color:var(--green)">✓ OK</td></tr>
+      <tr><td>DigitsSolver</td><td>15 min</td><td>60 min</td><td>200</td><td>0.10%</td><td style="color:var(--green)">✓ OK</td></tr>
+      <tr><td>SQLStorm</td><td>15 min</td><td>60 min</td><td>200</td><td>1.40%</td><td style="color:var(--green)">✓ OK</td></tr>
+      <tr><td>tpcc</td><td>15 min</td><td>60 min</td><td>200</td><td>0.10%</td><td style="color:var(--green)">✓ OK</td></tr>
+      <tr><td>tpch</td><td>15 min</td><td>60 min</td><td>200</td><td>0.10%</td><td style="color:var(--green)">✓ OK</td></tr>
+      <tr><td>tpch10</td><td>15 min</td><td>60 min</td><td>200</td><td>0.10%</td><td style="color:var(--green)">✓ OK</td></tr>
+      <tr><td>WideWorldImporters</td><td>50 min ⚠️</td><td>15 min ⚠️</td><td>1,000 ⚠️</td><td>0.40%</td><td style="color:var(--orange)">⚠️ Review</td></tr>
+    </tbody>
+  </table>
+
+  <ol class="rec-list">
+
+    <li>
+      <div class="priority-card medium">
+        <div class="card-header">
+          <span class="priority-badge badge-medium">Medium</span>
+          <span class="card-title">Standardize WideWorldImporters Query Store Settings</span>
+        </div>
+        <div class="card-body">
+          <p>WideWorldImporters has non-standard Query Store settings: a 50-minute flush interval (vs 15 min standard),
+          15-minute stats interval (vs 60 min), and 1,000 max plans per query (vs 200). These may be intentional
+          but should be reviewed for consistency. A 50-minute flush interval increases data loss risk
+          on unexpected restart; 1,000 plans per query can consume significant storage for high-variation queries.</p>
+          <pre><code>-- Standardize WideWorldImporters Query Store settings
+ALTER DATABASE WideWorldImporters SET QUERY_STORE (
+    DATA_FLUSH_INTERVAL_SECONDS = 900,   -- 15 minutes
+    INTERVAL_LENGTH_MINUTES = 60,
+    MAX_PLANS_PER_QUERY = 200,
+    QUERY_CAPTURE_MODE = AUTO,
+    SIZE_BASED_CLEANUP_MODE = AUTO,
+    STALE_QUERY_THRESHOLD_DAYS = 30
+);</code></pre>
+          <span class="confidence">Confidence: Medium (75%) — verify if non-standard settings are intentional</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Leverage SQL Server 2022 IQP Features via Query Store</span>
+        </div>
+        <div class="card-body">
+          <p>With compatibility level 160 and Query Store enabled, databases automatically benefit from:</p>
+          <ul>
+            <li><strong>Parameter Sensitive Plan (PSP) optimization</strong> — multiple plans for skewed parameter distributions</li>
+            <li><strong>Degree of Parallelism Feedback</strong> — automatic MAXDOP adjustment based on observed performance</li>
+            <li><strong>Memory Grant Feedback</strong> — reduces over/under-grant memory issues</li>
+            <li><strong>Cardinality Estimation Feedback</strong> — improves estimates over time</li>
+          </ul>
+          <p>No action required — these are active automatically. Monitor Query Store for plan force overrides that may be needed.</p>
+          <span class="confidence">Confidence: High (90%)</span>
+        </div>
+      </div>
+    </li>
+
+  </ol>
+</div>
+
+<!-- ═══════════════════════════ Section 5: Database Integrity ═══════════════════════════ -->
+<div class="section" id="sec-checkdb">
+  <h2>5. Database Integrity Maintenance (CHECKDB)</h2>
+
+  <div class="warn-box">
+    ⚠️ <strong>CRITICAL:</strong> Six databases report a last CHECKDB date of January 1, 1900 — meaning
+    DBCC CHECKDB has <em>never been run</em> on these databases on this instance. This is a significant
+    data integrity risk. Undetected corruption can lead to silent data loss.
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Database</th>
+        <th>Last CHECKDB</th>
+        <th>Days Since</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>DigitsSolver</td><td>Apr 12 2026 6:33 PM</td><td>1</td><td style="color:var(--green)">✓ OK</td></tr>
+      <tr><td>WideWorldImporters</td><td>Jan 1 1900 (never)</td><td>46,123</td><td style="color:var(--red)">🚨 Critical</td></tr>
+      <tr><td>SQLStorm</td><td>Jan 1 1900 (never)</td><td>46,123</td><td style="color:var(--red)">🚨 Critical</td></tr>
+      <tr><td>tpcc</td><td>Jan 1 1900 (never)</td><td>46,123</td><td style="color:var(--red)">🚨 Critical</td></tr>
+      <tr><td>tpch</td><td>Jan 1 1900 (never)</td><td>46,123</td><td style="color:var(--red)">🚨 Critical</td></tr>
+      <tr><td>CRM</td><td>Jan 1 1900 (never)</td><td>46,123</td><td style="color:var(--red)">🚨 Critical</td></tr>
+      <tr><td>tpch10</td><td>Jan 1 1900 (never)</td><td>46,123</td><td style="color:var(--red)">🚨 Critical</td></tr>
+    </tbody>
+  </table>
+
+  <ol class="rec-list">
+
+    <li>
+      <div class="priority-card critical">
+        <div class="card-header">
+          <span class="priority-badge badge-critical">Critical</span>
+          <span class="card-title">Run DBCC CHECKDB Immediately on All 6 Affected Databases</span>
+        </div>
+        <div class="card-body">
+          <p>Schedule and execute CHECKDB on all six databases. For large databases (tpch10, WideWorldImporters),
+          use <code>PHYSICAL_ONLY</code> for a faster first pass, then schedule a full check.</p>
+          <pre><code>-- Quick physical check first (faster for large databases)
+DBCC CHECKDB ('WideWorldImporters') WITH PHYSICAL_ONLY, NO_INFOMSGS;
+DBCC CHECKDB ('SQLStorm') WITH PHYSICAL_ONLY, NO_INFOMSGS;
+DBCC CHECKDB ('tpcc') WITH PHYSICAL_ONLY, NO_INFOMSGS;
+DBCC CHECKDB ('tpch') WITH PHYSICAL_ONLY, NO_INFOMSGS;
+DBCC CHECKDB ('CRM') WITH PHYSICAL_ONLY, NO_INFOMSGS;
+DBCC CHECKDB ('tpch10') WITH PHYSICAL_ONLY, NO_INFOMSGS;
+
+-- Follow up with full logical check (can be scheduled during off-peak)
+DBCC CHECKDB ('WideWorldImporters') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+-- (repeat for each database)</code></pre>
+          <span class="confidence">Confidence: Very High (99%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card critical">
+        <div class="card-header">
+          <span class="priority-badge badge-critical">Critical</span>
+          <span class="card-title">Establish a Weekly CHECKDB Maintenance Schedule</span>
+        </div>
+        <div class="card-body">
+          <p>Implement a SQL Server Agent job or Ola Hallengren's maintenance solution to run CHECKDB
+          weekly on all user databases, with results logged to a maintenance log table.</p>
+          <pre><code>-- Example: Weekly CHECKDB using SQL Agent (run per database)
+USE msdb;
+EXEC sp_add_job @job_name = N'Weekly CHECKDB - All Databases';
+-- Configure steps to run DBCC CHECKDB for each user database
+-- Schedule: Weekly, Sunday 2:00 AM (or low-activity window)
+
+-- Recommended: Ola Hallengren's solution
+-- https://ola.hallengren.com/sql-server-integrity-check.html
+-- DatabaseIntegrityCheck @Databases = 'USER_DATABASES',
+--                         @CheckCommands = 'CHECKDB';</code></pre>
+          <span class="confidence">Confidence: Very High (99%)</span>
+        </div>
+      </div>
+    </li>
+
+  </ol>
+</div>
+
+<!-- ═══════════════════════════ Section 6: Security ═══════════════════════════ -->
+<div class="section" id="sec-security">
+  <h2>6. Security Enhancements</h2>
+
+  <ol class="rec-list">
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Unencrypted Telemetry Connection — Minimal Risk (Informational)</span>
+        </div>
+        <div class="card-body">
+          <p>The <code>NT SERVICE\SQLTELEMETRY</code> connection (SQLServerCEIP) is unencrypted and uses
+          shared memory transport. Per the analysis instructions, unencrypted telemetry connections are
+          minimal risk as no user data is exposed, and shared memory connections are local-only (no
+          network exposure). No action required.</p>
+          <div class="ok-box">✓ Telemetry connection via shared memory — local only, no user data. Acceptable.</div>
+          <span class="confidence">Confidence: High (92%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Sysadmin Membership Is Minimal — Appropriate</span>
+        </div>
+        <div class="card-body">
+          <p>Only <strong>RockyPC\k_a_f</strong> holds the sysadmin role. This is an excellent least-privilege
+          posture. As the server hosts multiple databases, continue ensuring application logins use
+          database-specific roles (db_datareader, db_datawriter, or custom roles) rather than sysadmin.</p>
+          <div class="ok-box">✓ 1 sysadmin member — minimal attack surface. Good practice maintained.</div>
+          <span class="confidence">Confidence: High (90%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card medium">
+        <div class="card-header">
+          <span class="priority-badge badge-medium">Medium</span>
+          <span class="card-title">Mixed Authentication Mode Enabled — Review if Needed</span>
+        </div>
+        <div class="card-body">
+          <p><code>Integrated Security Only</code> is <strong>No</strong>, meaning SQL Authentication is enabled
+          alongside Windows Authentication. If no SQL logins are actively used, consider switching to Windows-only
+          authentication to reduce the attack surface (especially important if this instance becomes network-accessible).</p>
+          <pre><code>-- Check for active SQL logins
+SELECT name, type_desc, is_disabled
+FROM sys.server_principals
+WHERE type = 'S'  -- SQL logins
+  AND name NOT IN ('sa', '##MS_PolicyEventProcessingLogin##',
+                   '##MS_PolicyTsqlExecutionLogin##')
+  AND is_disabled = 0;
+
+-- If none needed, switch to Windows-only auth
+-- (requires SQL Server restart, done via SSMS Server Properties > Security)</code></pre>
+          <span class="confidence">Confidence: Medium (75%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card medium">
+        <div class="card-header">
+          <span class="priority-badge badge-medium">Medium</span>
+          <span class="card-title">Verify 'sa' Login is Disabled and Renamed</span>
+        </div>
+        <div class="card-body">
+          <p>As a security best practice, the <code>sa</code> account should be disabled and renamed
+          to reduce brute-force risk. Given mixed-auth mode is enabled, this is especially important.</p>
+          <pre><code>-- Check sa login status
+SELECT name, is_disabled FROM sys.server_principals
+WHERE name = 'sa';
+
+-- Disable sa if not used
+ALTER LOGIN [sa] DISABLE;
+
+-- Or rename and disable for defense in depth
+ALTER LOGIN [sa] WITH NAME = [sa_disabled];
+ALTER LOGIN [sa_disabled] DISABLE;</code></pre>
+          <span class="confidence">Confidence: High (85%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card medium">
+        <div class="card-header">
+          <span class="priority-badge badge-medium">Medium</span>
+          <span class="card-title">Developer Edition Not Licensed for Production — Verify Usage</span>
+        </div>
+        <div class="card-body">
+          <p>SQL Server <strong>Developer Edition</strong> has all Enterprise features but is licensed
+          for development and testing only — not production use. If this server hosts any production
+          data or serves production applications, it must be upgraded to a production-licensed edition
+          (Standard or Enterprise).</p>
+          <div class="warn-box">⚠️ Confirm this server is development/test only. License compliance is a legal and business risk.</div>
+          <span class="confidence">Confidence: Very High (95%) — licensing terms are clear</span>
+        </div>
+      </div>
+    </li>
+
+  </ol>
+</div>
+
+<!-- ═══════════════════════════ Section 7: Concurrency ═══════════════════════════ -->
+<div class="section" id="sec-concurrency">
+  <h2>7. Concurrency Issues (Deadlocks, Locking)</h2>
+
+  <div class="ok-box">
+    ✓ <strong>No deadlocks detected</strong> in the past 7 days. No deadlock analysis action required.
+  </div>
+
+  <ol class="rec-list">
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Enable Read Committed Snapshot Isolation (RCSI) for OLTP Databases</span>
+        </div>
+        <div class="card-body">
+          <p>For OLTP databases like tpcc and CRM, Read Committed Snapshot Isolation (RCSI) eliminates
+          reader-writer blocking by using row versioning. This can dramatically reduce contention without
+          application code changes. WideWorldImporters typically ships with snapshot isolation enabled.</p>
+          <pre><code>-- Check current isolation settings
+SELECT name, is_read_committed_snapshot_on, snapshot_isolation_state_desc
+FROM sys.databases
+WHERE name IN ('tpcc', 'CRM', 'SQLStorm');
+
+-- Enable RCSI (requires brief database single-user mode or tempdb version store growth)
+-- Enable during low-activity window
+ALTER DATABASE tpcc
+    SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
+
+ALTER DATABASE CRM
+    SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;</code></pre>
+          <span class="confidence">Confidence: Medium (72%) — verify application compatibility first</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Set Up Extended Events Session for Blocking Monitoring</span>
+        </div>
+        <div class="card-body">
+          <p>With the blocked process threshold set to 5 seconds (recommended above), create an Extended
+          Events session to capture blocking chains for proactive monitoring, especially for the tpcc
+          OLTP workload.</p>
+          <pre><code>-- Create lightweight blocking monitor session
+CREATE EVENT SESSION [BlockedProcessMonitor]
+ON SERVER
+ADD EVENT sqlserver.blocked_process_report
+ADD TARGET package0.ring_buffer(SET max_memory = 51200)
+WITH (MAX_DISPATCH_LATENCY = 5 SECONDS);
+
+ALTER EVENT SESSION [BlockedProcessMonitor]
+    ON SERVER STATE = START;</code></pre>
+          <span class="confidence">Confidence: High (85%)</span>
+        </div>
+      </div>
+    </li>
+
+  </ol>
+</div>
+
+<!-- ═══════════════════════════ Section 8: Backups ═══════════════════════════ -->
+<div class="section" id="sec-backups">
+  <h2>8. Backup &amp; Recovery</h2>
+
+  <div class="warn-box">
+    ⚠️ <strong>Multiple critical backup gaps detected.</strong> Several databases have no recorded backup,
+    and FULL recovery databases are accumulating un-backed-up transaction log, which prevents log space reuse.
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Database</th>
+        <th>Recovery Model</th>
+        <th>Last Full Backup</th>
+        <th>Log Backups</th>
+        <th>Risk Level</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>master</td><td>SIMPLE</td><td>Never</td><td>N/A</td><td style="color:var(--red)">🚨 Critical</td></tr>
+      <tr><td>model</td><td>FULL</td><td>Never</td><td>None</td><td style="color:var(--red)">🚨 Critical</td></tr>
+      <tr><td>msdb</td><td>SIMPLE</td><td>Never</td><td>N/A</td><td style="color:var(--red)">🚨 Critical</td></tr>
+      <tr><td>DigitsSolver</td><td>FULL</td><td>Never</td><td>None</td><td style="color:var(--red)">🚨 Critical</td></tr>
+      <tr><td>CRM</td><td>FULL</td><td>Never</td><td>None</td><td style="color:var(--red)">🚨 Critical</td></tr>
+      <tr><td>tpcc</td><td>FULL</td><td>Never</td><td>None</td><td style="color:var(--red)">🚨 Critical</td></tr>
+      <tr><td>tpch10</td><td>FULL</td><td>Never</td><td>None</td><td style="color:var(--red)">🚨 Critical</td></tr>
+      <tr><td>tpch</td><td>FULL</td><td>142 days ago</td><td>None</td><td style="color:var(--orange)">High</td></tr>
+      <tr><td>SQLStorm</td><td>SIMPLE</td><td>170 days ago</td><td>N/A</td><td style="color:var(--orange)">High</td></tr>
+      <tr><td>WideWorldImporters</td><td>SIMPLE</td><td>1,284 days ago</td><td>N/A</td><td style="color:var(--red)">🚨 Critical</td></tr>
+    </tbody>
+  </table>
+
+  <ol class="rec-list">
+
+    <li>
+      <div class="priority-card critical">
+        <div class="card-header">
+          <span class="priority-badge badge-critical">Critical</span>
+          <span class="card-title">Take Immediate Full Backups of All Databases</span>
+        </div>
+        <div class="card-body">
+          <pre><code>-- Immediate full backup of all user and system databases
+BACKUP DATABASE [master]
+    TO DISK = N'C:\Backups\master_full.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP DATABASE [model]
+    TO DISK = N'C:\Backups\model_full.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP DATABASE [msdb]
+    TO DISK = N'C:\Backups\msdb_full.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP DATABASE [DigitsSolver]
+    TO DISK = N'C:\Backups\DigitsSolver_full.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP DATABASE [CRM]
+    TO DISK = N'C:\Backups\CRM_full.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP DATABASE [tpcc]
+    TO DISK = N'C:\Backups\tpcc_full.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP DATABASE [tpch]
+    TO DISK = N'C:\Backups\tpch_full.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP DATABASE [tpch10]
+    TO DISK = N'C:\Backups\tpch10_full.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP DATABASE [WideWorldImporters]
+    TO DISK = N'C:\Backups\WideWorldImporters_full.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP DATABASE [SQLStorm]
+    TO DISK = N'C:\Backups\SQLStorm_full.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;</code></pre>
+          <span class="confidence">Confidence: Very High (99%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card critical">
+        <div class="card-header">
+          <span class="priority-badge badge-critical">Critical</span>
+          <span class="card-title">Implement Log Backup Schedule for FULL Recovery Databases</span>
+        </div>
+        <div class="card-body">
+          <p>Databases in FULL recovery model <strong>must</strong> have regular log backups to maintain
+          the log backup chain, enable point-in-time recovery, and allow transaction log space reuse.
+          Without log backups, the transaction log will grow indefinitely.</p>
+          <pre><code>-- Take log backups for FULL recovery databases (after full backup exists)
+-- Run every 15-60 minutes via SQL Agent job
+
+BACKUP LOG [DigitsSolver]
+    TO DISK = N'C:\Backups\DigitsSolver_log.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP LOG [CRM]
+    TO DISK = N'C:\Backups\CRM_log.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP LOG [tpcc]
+    TO DISK = N'C:\Backups\tpcc_log.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP LOG [tpch]
+    TO DISK = N'C:\Backups\tpch_log.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP LOG [tpch10]
+    TO DISK = N'C:\Backups\tpch10_log.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+BACKUP LOG [model]
+    TO DISK = N'C:\Backups\model_log.bak'
+    WITH COMPRESSION, CHECKSUM, STATS = 10;</code></pre>
+          <div class="info-box">
+            💡 <strong>Alternative:</strong> If these are purely test/benchmark databases with no point-in-time
+            recovery requirement, consider switching to <code>SIMPLE</code> recovery model to avoid log growth without backups.
+            <pre><code>-- Only if no PITR is needed and data is expendable/reproducible
+ALTER DATABASE tpch SET RECOVERY SIMPLE;
+ALTER DATABASE tpch10 SET RECOVERY SIMPLE;
+-- (shrink log after switching)
+DBCC SHRINKFILE (N'tpch_log', 64);</code></pre>
+          </div>
+          <span class="confidence">Confidence: Very High (98%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card high">
+        <div class="card-header">
+          <span class="priority-badge badge-high">High</span>
+          <span class="card-title">Establish Automated Backup Schedule via SQL Server Agent</span>
+        </div>
+        <div class="card-body">
+          <p>Implement a comprehensive backup strategy using SQL Server Agent jobs or Ola Hallengren's
+          DatabaseBackup solution (recommended):</p>
+          <ul>
+            <li><strong>Full backups:</strong> Weekly (Sunday, off-hours)</li>
+            <li><strong>Differential backups:</strong> Daily (except full backup day)</li>
+            <li><strong>Log backups:</strong> Every 15–30 minutes for FULL recovery databases</li>
+            <li><strong>Backup verification:</strong> Weekly RESTORE VERIFYONLY on backup files</li>
+            <li><strong>Backup retention:</strong> Minimum 14 days; copy backups offsite or to Azure Blob Storage</li>
+          </ul>
+          <pre><code>-- Recommended: Ola Hallengren's backup solution
+-- https://ola.hallengren.com/sql-server-backup.html
+
+-- Example DatabaseBackup call for full backups
+EXECUTE dbo.DatabaseBackup
+    @Databases = 'USER_DATABASES',
+    @BackupType = 'FULL',
+    @Directory = N'C:\Backups',
+    @Compress = 'Y',
+    @Verify = 'Y',
+    @CheckSum = 'Y',
+    @CleanupTime = 336;  -- Keep 14 days</code></pre>
+          <span class="confidence">Confidence: Very High (98%)</span>
+        </div>
+      </div>
+    </li>
+
+  </ol>
+</div>
+
+<!-- ═══════════════════════════ Section 9: Operational ═══════════════════════════ -->
+<div class="section" id="sec-operational">
+  <h2>9. Operational Best Practices</h2>
+
+  <ol class="rec-list">
+
+    <li>
+      <div class="priority-card medium">
+        <div class="card-header">
+          <span class="priority-badge badge-medium">Medium</span>
+          <span class="card-title">Move System Database Files Off Data Drive (if Applicable)</span>
+        </div>
+        <div class="card-body">
+          <p>System databases (master, model, msdb, tempdb) share the <code>C:\Data\MSSQL16.MSSQLSERVER\MSSQL\DATA\</code>
+          path with user database data files on the same <code>C:\Data\</code> volume. While I/O performance is
+          currently excellent, mixing system and user databases on the same volume can complicate capacity management.
+          If disk space becomes constrained, consider separating system databases to their own volume.</p>
+          <span class="confidence">Confidence: Low (60%) — current I/O is healthy, low urgency</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card medium">
+        <div class="card-header">
+          <span class="priority-badge badge-medium">Medium</span>
+          <span class="card-title">Enable Database Mail for Alerting</span>
+        </div>
+        <div class="card-body">
+          <p>Database Mail XPs are disabled. Without email alerting, SQL Server Agent job failures,
+          blocked processes, and integrity check errors will go unnoticed. Enable Database Mail and
+          configure operator notifications for critical events.</p>
+          <pre><code>-- Enable Database Mail
+EXEC sp_configure 'Database Mail XPs', 1;
+RECONFIGURE;
+
+-- Configure via SSMS: Management > Database Mail > Configure Database Mail
+-- Then set up SQL Agent Operators and Alerts for:
+-- Severity 16+ errors, job failures, and integrity check results</code></pre>
+          <span class="confidence">Confidence: High (88%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Separate Log Files to a Dedicated Log Drive</span>
+        </div>
+        <div class="card-body">
+          <p>Transaction logs (*.ldf) are on <code>C:\Logs\</code> — separate from data files on
+          <code>C:\Data\</code>. This is good practice and is already implemented. Ensure the
+          Logs volume has sufficient free space to accommodate log growth, particularly for FULL
+          recovery databases pending log backup setup.</p>
+          <div class="ok-box">✓ Data and log files are on separate volumes — best practice maintained.</div>
+          <span class="confidence">Confidence: High (90%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Collation Consideration for New Databases</span>
+        </div>
+        <div class="card-body">
+          <p>Server collation is <code>SQL_Latin1_General_CP1_CI_AS</code>, which is the legacy default.
+          For new databases on SQL Server 2022, consider using <code>Latin1_General_100_CI_AS_SC_UTF8</code>
+          or another modern collation for better Unicode support. Existing databases should retain their
+          current collation unless a migration is planned.</p>
+          <span class="confidence">Confidence: Low (55%) — informational for new database creation only</span>
+        </div>
+      </div>
+    </li>
+
+  </ol>
+</div>
+
+<!-- ═══════════════════════════ Section 10: Proactive Maintenance ═══════════════════════════ -->
+<div class="section" id="sec-proactive">
+  <h2>10. Proactive Maintenance Suggestions</h2>
+
+  <ol class="rec-list">
+
+    <li>
+      <div class="priority-card medium">
+        <div class="card-header">
+          <span class="priority-badge badge-medium">Medium</span>
+          <span class="card-title">Implement Comprehensive Index Maintenance Schedule</span>
+        </div>
+        <div class="card-body">
+          <p>Establish automated index maintenance (rebuild/reorganize) and statistics updates.
+          Ola Hallengren's IndexOptimize is the industry standard:</p>
+          <ul>
+            <li>Rebuild indexes with fragmentation &gt;30%</li>
+            <li>Reorganize indexes with fragmentation 10–30%</li>
+            <li>Update statistics on tables not covered by index rebuild</li>
+            <li>Schedule weekly during maintenance window</li>
+          </ul>
+          <pre><code>-- Ola Hallengren IndexOptimize
+-- https://ola.hallengren.com/sql-server-index-and-statistics-maintenance.html
+EXECUTE dbo.IndexOptimize
+    @Databases = 'USER_DATABASES',
+    @FragmentationLow = NULL,
+    @FragmentationMedium = 'INDEX_REORGANIZE,INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
+    @FragmentationHigh = 'INDEX_REBUILD_ONLINE,INDEX_REBUILD_OFFLINE',
+    @FragmentationLevel1 = 10,
+    @FragmentationLevel2 = 30,
+    @UpdateStatistics = 'ALL',
+    @OnlyModifiedStatistics = 'Y';</code></pre>
+          <span class="confidence">Confidence: High (88%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card medium">
+        <div class="card-header">
+          <span class="priority-badge badge-medium">Medium</span>
+          <span class="card-title">Monitor tempdb Usage as Workload Grows</span>
+        </div>
+        <div class="card-body">
+          <p>tempdb has 8 data files (tempdev + temp2–temp8) which matches a standard recommendation
+          of number of files = min(logical CPUs, 8). This is already correctly configured.
+          Monitor for tempdb version store growth if RCSI is enabled on OLTP databases.</p>
+          <pre><code>-- Monitor tempdb version store usage
+SELECT SUM(version_store_reserved_page_count) * 8.0 / 1024 AS version_store_MB,
+       SUM(user_object_reserved_page_count) * 8.0 / 1024 AS user_objects_MB,
+       SUM(internal_object_reserved_page_count) * 8.0 / 1024 AS internal_objects_MB
+FROM sys.dm_db_file_space_usage;</code></pre>
+          <div class="ok-box">✓ tempdb file count (8) is appropriate for 16 logical CPUs.</div>
+          <span class="confidence">Confidence: High (87%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Enable SQL Server Audit for Sysadmin and DDL Activity</span>
+        </div>
+        <div class="card-body">
+          <p>As a developer instance with multiple databases, consider enabling SQL Server Audit to
+          track schema changes, permission escalations, and login activity. This provides an audit trail
+          for compliance and troubleshooting.</p>
+          <pre><code>-- Create server audit
+CREATE SERVER AUDIT [SecurityAudit]
+TO FILE (FILEPATH = N'C:\Logs\Audit\')
+WITH (ON_FAILURE = CONTINUE);
+
+ALTER SERVER AUDIT [SecurityAudit] WITH (STATE = ON);
+
+-- Create server audit specification for privileged activity
+CREATE SERVER AUDIT SPECIFICATION [PrivilegedActivity]
+FOR SERVER AUDIT [SecurityAudit]
+ADD (SERVER_ROLE_MEMBER_CHANGE_GROUP),
+ADD (SERVER_PERMISSION_CHANGE_GROUP),
+ADD (SUCCESSFUL_LOGIN_GROUP),
+ADD (FAILED_LOGIN_GROUP)
+WITH (STATE = ON);</code></pre>
+          <span class="confidence">Confidence: Medium (72%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Re-Run Full Server Health Analysis After 7+ Days of Workload</span>
+        </div>
+        <div class="card-body">
+          <p>Many DMV-based metrics (missing indexes, wait statistics, plan cache patterns, I/O patterns)
+          are most informative after sustained representative workload. With only 1 day of uptime, the
+          current baseline is limited. Schedule a full re-analysis after at least 7 days to:</p>
+          <ul>
+            <li>Identify missing index opportunities from accumulated DMV data</li>
+            <li>Review wait statistics for user-query bottlenecks</li>
+            <li>Assess plan cache efficiency post "optimize for ad hoc workloads" change</li>
+            <li>Validate backup and CHECKDB job execution success</li>
+          </ul>
+          <span class="confidence">Confidence: High (90%)</span>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <div class="priority-card low">
+        <div class="card-header">
+          <span class="priority-badge badge-low">Low</span>
+          <span class="card-title">Configure Disk-Level Monitoring and Alerting</span>
+        </div>
+        <div class="card-body">
+          <p>All databases reside on <code>C:\Data\</code> and <code>C:\Logs\</code>. Monitor disk
+          free space and set alerts at 20% and 10% thresholds. Transaction log growth from unbackedup
+          FULL recovery databases (tpcc, tpch, etc.) can rapidly consume disk space.</p>
+          <pre><code>-- Check drive free space
+EXEC xp_fixeddrives;
+
+-- Or use WMI/PowerShell-based monitoring
+-- Set alerts when C:\ drops below 20% free capacity</code></pre>
+          <span class="confidence">Confidence: High (88%)</span>
+        </div>
+      </div>
+    </li>
+
+  </ol>
+</div>
+
+</div><!-- end #content -->
+
+<!-- Footer -->
+<footer>
+  <div>
+    Generated by <strong>AI SQL Tuner Studio</strong> using model <strong>claude-sonnet-4-6</strong> with reasoning effort <strong>high</strong> |
+    <a href="https://aisqltuner.com" target="_blank" rel="noopener">aisqltuner.com</a>
+  </div>
+  <div>Based on analysis as of 2026-04-13 20:58:48 UTC</div>
+</footer>
+
+</div><!-- end #main -->
+</div><!-- end #layout -->
+</body>
+</html>
+```

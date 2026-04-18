@@ -20,4 +20,25 @@ Allow: /
 User-Agent: Google-Extended
 Allow: /
 
+User-Agent: Googlebot
+Allow: /
+
+User-Agent: bingbot
+Allow: /
+
+User-Agent: Amazonbot
+Allow: /
+
+User-Agent: CCBot
+Allow: /
+
+User-Agent: Bytespider
+Allow: /
+
+User-Agent: Applebot-Extended
+Allow: /
+
+User-Agent: FacebookExternalHit
+Allow: /
+
 Sitemap: https://reports.aisqltuner.com/sitemap.xml
