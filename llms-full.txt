@@ -1,6 +1,6 @@
 # AI SQL Tuner Sample Reports (Full)
 
-> Last updated: 2026-04-13
+> Last updated: 2026-05-05
 > Base URL: https://reports.aisqltuner.com/
 > Scope: Public sample reports for AI-assisted SQL Server diagnostics and tuning.
 
@@ -110,7 +110,29 @@ Target audience:
   - transaction concurrency tuning
   - wideworldimporters deadlock analysis
 
-### 5) Query Tuner Report 
+### 5) Locking and Blocking Analysis Report
+
+- URL: https://reports.aisqltuner.com/aisqltuner-locking-and-blocking-analysis-tpch10-20260504.html
+- Type: Active locking and blocking analysis
+- Tuning goal: Locking and Blocking Analysis
+- Server/DB in report header: RockyPC / tpch10
+- Summary:
+  - Confirms active blocking centered on dbo.orders and the o_orderdate_ind hotspot.
+  - Identifies an AFTER trigger MERGE path that re-reads dbo.orders inside the user transaction and amplifies lock contention.
+  - Prioritizes trigger redesign, batched updates, and READ_COMMITTED_SNAPSHOT as the main remediation path.
+  - Connects current blocking chains with a recent deadlock pattern, showing why the workload is deadlock-prone under sustained write pressure.
+- Common actionable themes:
+  - lead blocker identification
+  - blocking tree analysis
+  - trigger-side contention reduction
+  - batch update and row-versioning strategy
+- GEO keywords:
+  - sql server blocking analysis
+  - locking root cause analysis
+  - blocking chain diagnosis
+  - tpch10 concurrency hotspot
+
+### 6) Query Tuner Report
 
 - URL: https://reports.aisqltuner.com/aisqltuner-query-tuner-sp00060-20260328.html
 - Type: Query-level tuning recommendations
@@ -130,7 +152,7 @@ Target audience:
   - stored procedure optimization
   - execution plan improvement
 
-### 6) Index Tuning Report 
+### 7) Index Tuning Report
 
 - URL: https://reports.aisqltuner.com/aisqltuner--sqlstorm-index-tuning-20260319.html
 - Type: Index strategy and maintenance guidance

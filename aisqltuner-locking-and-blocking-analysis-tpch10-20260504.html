@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI SQL Tuner Recommendations</title>
+<style>
+  :root{
+    --bg:#0a84ff;
+    --panel:#1274db;
+    --panel2:#0b63c7;
+    --text:#ffffff;
+    --muted:#dbeaff;
+    --line:rgba(255,255,255,0.22);
+    --accent:#9fd0ff;
+    --good:#9ef0b8;
+    --warn:#ffe08a;
+    --bad:#ffb4b4;
+    --code:#0a3f7a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.45}
+  a{color:#ffffff}
+  .layout{display:flex;min-height:100vh}
+  .toc{
+    width:290px;flex:0 0 290px;position:sticky;top:0;align-self:flex-start;height:100vh;
+    padding:24px 20px;border-right:1px solid var(--line);background:rgba(0,0,0,0.08)
+  }
+  .toc h2{font-size:1rem;margin:0 0 14px 0}
+  .toc ul{list-style:none;padding:0;margin:0}
+  .toc li{margin:10px 0}
+  .toc a{text-decoration:none;color:var(--muted)}
+  .toc a:hover{color:#fff;text-decoration:underline}
+  .content{flex:1;padding:28px 34px 40px 34px;max-width:1400px}
+  h1{font-size:2rem;margin:0 0 6px 0}
+  .subtitle{color:var(--muted);margin-bottom:18px}
+  h2{margin-top:30px;padding-bottom:8px;border-bottom:1px solid var(--line);font-size:1.35rem}
+  h3{margin-top:22px;font-size:1.05rem}
+  p,li{font-size:0.97rem}
+  .meta, .card, .summary, table{
+    background:rgba(255,255,255,0.08);
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+  .meta{padding:16px 18px;margin-bottom:18px}
+  .summary{padding:18px 20px;margin:16px 0}
+  .card{padding:16px 18px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:14px}
+  .kpi{padding:14px 16px;background:rgba(255,255,255,0.10);border:1px solid var(--line);border-radius:12px}
+  .kpi .label{font-size:.84rem;color:var(--muted)}
+  .kpi .value{font-size:1.35rem;font-weight:700;margin-top:4px}
+  .tag{display:inline-block;padding:3px 8px;border-radius:999px;border:1px solid var(--line);font-size:.8rem;margin-right:8px}
+  .high{background:rgba(255,85,85,0.18);color:#fff}
+  .medium{background:rgba(255,200,0,0.18);color:#fff}
+  .low{background:rgba(0,200,120,0.18);color:#fff}
+  .good{color:var(--good)}
+  .warn{color:var(--warn)}
+  .bad{color:var(--bad)}
+  table{width:100%;border-collapse:collapse;overflow:hidden;margin:14px 0}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+  th{background:rgba(255,255,255,0.08)}
+  tr:last-child td{border-bottom:none}
+  pre{margin:10px 0 0 0;white-space:pre-wrap;word-break:break-word}
+  pre code{
+    display:block;padding:14px 16px;border-radius:10px;background:var(--code);color:#fff;border:1px solid rgba(255,255,255,0.16);
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:.9rem
+  }
+  .footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:.92rem}
+  .small{font-size:.9rem;color:var(--muted)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc">
+    <h2>Table of Contents</h2>
+    <ul>
+      <li><a href="#executive-summary">Executive Summary</a></li>
+      <li><a href="#environment">Environment</a></li>
+      <li><a href="#blocking-status">Blocking Status</a></li>
+      <li><a href="#blocking-tree">Blocking Tree</a></li>
+      <li><a href="#root-cause">Root Cause Classification</a></li>
+      <li><a href="#impact">Impact Metrics</a></li>
+      <li><a href="#recommendations">Detailed Prioritized Recommendations</a></li>
+      <li><a href="#code-changes">Code / Query Rewrite Guidance</a></li>
+      <li><a href="#historical-patterns">Historical Deadlocks & Long-Term Mitigations</a></li>
+      <li><a href="#monitoring">Monitoring & Evidence Quality</a></li>
+    </ul>
+  </nav>
+
+  <main class="content">
+    <header>
+      <h1>AI SQL Tuner Recommendations</h1>
+      <div class="subtitle">Tuning Goal: Locking and Blocking Analysis</div>
+      <div class="meta">
+        <div><strong>Server:</strong> RockyPC</div>
+        <div><strong>Database:</strong> tpch10</div>
+        <div><strong>Version:</strong> Microsoft SQL Server 2022 (RTM-GDR) (KB5084815) - 16.0.1175.1 (X64)</div>
+        <div><strong>Edition:</strong> Developer Edition (64-bit), Engine Edition: Enterprise</div>
+      </div>
+    </header>
+
+    <section id="executive-summary">
+      <h2>Executive Summary</h2>
+      <div class="summary">
+        <p><strong>Blocking is active and confirmed.</strong> The dominant pattern is a <strong>hotspot on <span class="mono">dbo.orders</span> / index <span class="mono">o_orderdate_ind</span></strong>, driven by a large date-range <strong>UPDATE</strong> and an <strong>AFTER trigger</strong> that immediately runs a <strong>MERGE</strong> back against <span class="mono">dbo.orders</span> to recompute customer aggregates. This creates mutual lock pressure on the same index pages and has already produced at least one recent deadlock in <span class="mono">tpch10</span>.</p>
+        <ol>
+          <li><strong>Top priority:</strong> remove or redesign the trigger work so it does not scan/re-read <span class="mono">dbo.orders</span> inside the user transaction.</li>
+          <li><strong>Second priority:</strong> batch the date-range order updates into smaller commits and avoid long page-lock accumulation.</li>
+          <li><strong>Third priority:</strong> enable <strong>READ_COMMITTED_SNAPSHOT</strong> for <span class="mono">tpch10</span> to reduce reader/writer blocking from trigger reads, while recognizing it will not remove writer/writer contention.</li>
+          <li><strong>Fourth priority:</strong> add a supporting index for the trigger aggregation path on <span class="mono">orders(o_custkey, o_orderdate)</span>; confirm final design with the Index Tuning goal for the specific schema and table.</li>
+        </ol>
+        <p><strong>Most important blocker:</strong> session <strong>62</strong> running trigger statement <span class="mono">MERGE dbo.CustomerOrderStats...</span>, because it blocks two UPDATE sessions and is part of a bidirectional blocking cycle with session 69.</p>
+      </div>
+
+      <div class="grid">
+        <div class="kpi">
+          <div class="label">Blocking Active</div>
+          <div class="value bad">Yes</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Lead Blocker Sessions</div>
+          <div class="value">62, 69</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Distinct Blocked Sessions</div>
+          <div class="value">3</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Longest Lock Wait</div>
+          <div class="value">25,118 ms</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Observed Cumulative Wait</div>
+          <div class="value">~63,733 ms</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Recent Deadlock in tpch10</div>
+          <div class="value bad">Yes</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="environment">
+      <h2>Environment</h2>
+      <ul>
+        <li>SQL Server 2022 Enterprise capabilities are available, including Intelligent Query Processing, Parameter Sensitive Plan optimization, and online operations.</li>
+        <li><strong>RCSI is OFF</strong> and <strong>Snapshot Isolation is OFF</strong>.</li>
+        <li>Table lock escalation is set to <strong>TABLE</strong> for <span class="mono">orders</span>, <span class="mono">lineitem</span>, and related tables.</li>
+        <li>Query Store is enabled and provided useful historical evidence.</li>
+        <li>Extended Events deadlock history is available and already captured deadlock evidence.</li>
+      </ul>
+    </section>
+
+    <section id="blocking-status">
+      <h2>Blocking Status</h2>
+      <div class="card">
+        <p><strong>Conclusion:</strong> blocking is active.</p>
+        <ul>
+          <li><strong>BlockingChains:</strong> session <span class="mono">62</span> blocks session <span class="mono">84</span> on <span class="mono">LCK_M_X</span> for <strong>25,118ms</strong>.</li>
+          <li><strong>BlockingChains:</strong> session <span class="mono">62</span> blocks session <span class="mono">69</span> on <span class="mono">LCK_M_X</span> for <strong>23,127ms</strong>.</li>
+          <li><strong>BlockingChains:</strong> session <span class="mono">69</span> blocks session <span class="mono">62</span> on <span class="mono">LCK_M_S</span> for <strong>1,403ms</strong>, showing bidirectional contention / deadlock-prone behavior.</li>
+          <li><strong>LockInventory:</strong> waiting locks are on <span class="mono">PAGE</span> resources for <span class="mono">tpch10.orders</span>, index <span class="mono">o_orderdate_ind</span>, with session 62 waiting on <span class="mono">S</span> and session 69 waiting on <span class="mono">X</span>.</li>
+          <li><strong>Long-Running Transactions:</strong> user transactions for sessions <span class="mono">69</span> and <span class="mono">84</span> have been open for <strong>28-29 seconds</strong>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="blocking-tree">
+      <h2>Blocking Tree</h2>
+      <div class="card">
+        <p><strong>Observed blocking tree:</strong></p>
+        <pre><code>Session 62 - MERGE in trigger dbo.trg_orders_UpdateCustomerStats
+  Statement:
+  WITH ChangedCustomers AS (...)
+  MERGE dbo.CustomerOrderStats AS tgt
+  USING (
+      SELECT o.o_custkey, COUNT(*), MAX(o.o_orderdate)
+      FROM dbo.orders AS o
+      JOIN ChangedCustomers AS c ON c.o_custkey = o.o_custkey
+      GROUP BY o.o_custkey
+  ) AS src ...
+  ├─ blocks Session 84 - UPDATE dbo.orders ... WHERE o_orderdate BETWEEN @FromDate AND @ToDate
+  └─ blocks Session 69 - UPDATE dbo.orders ... WHERE o_orderdate BETWEEN @FromDate AND @ToDate
+
+Session 69 - UPDATE dbo.orders ... WHERE o_orderdate BETWEEN @FromDate AND @ToDate
+  └─ blocks Session 62 - trigger MERGE waiting for S lock on PAGE in orders.o_orderdate_ind</code></pre>
+        <ul>
+          <li><strong>Lead blocker by fan-out:</strong> session <span class="mono">62</span>.</li>
+          <li><strong>Mutual blocker in cycle:</strong> session <span class="mono">69</span>.</li>
+          <li><strong>Most important waiter statement:</strong> session <span class="mono">84</span> running <span class="mono">UPDATE o SET o.o_comment = LEFT(CONCAT(...),79) FROM dbo.orders AS o WHERE o.o_orderdate BETWEEN @FromDate AND @ToDate</span>.</li>
+        </ul>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Session</th>
+            <th>Statement</th>
+            <th>Evidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Primary blocker</td>
+            <td>62</td>
+            <td>Trigger <span class="mono">MERGE dbo.CustomerOrderStats</span></td>
+            <td>BlockingChains shows 62 blocking 84 and 69; LockInventory shows session 62 holding/granting many X locks on <span class="mono">orders.o_orderdate_ind</span>.</td>
+          </tr>
+          <tr>
+            <td>Competing blocker</td>
+            <td>69</td>
+            <td><span class="mono">UPDATE dbo.orders ... WHERE o_orderdate BETWEEN @FromDate AND @ToDate</span></td>
+            <td>BlockingChains shows 69 blocking 62 on <span class="mono">LCK_M_S</span>; LockInventory shows session 69 with <strong>10,771</strong> granted X page locks on the same index.</td>
+          </tr>
+          <tr>
+            <td>Blocked waiter</td>
+            <td>84</td>
+            <td>Same UPDATE procedure</td>
+            <td>BlockingChains shows session 84 waiting on <span class="mono">LCK_M_X</span> for <strong>25,118ms</strong>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="root-cause">
+      <h2>Root Cause Classification</h2>
+      <div class="card">
+        <ul>
+          <li><span class="tag high">High Confidence</span> <strong>Hotspot table or index</strong> — concentrated contention on <span class="mono">orders</span> / <span class="mono">o_orderdate_ind</span>.
+            <ul>
+              <li><strong>Evidence:</strong> LockInventory repeatedly shows page locks on <span class="mono">orders</span>, index <span class="mono">o_orderdate_ind</span>, with waiting <span class="mono">S</span> and <span class="mono">X</span> requests and tens of thousands of granted X locks.</li>
+              <li><strong>Evidence:</strong> Both the UPDATE and the trigger MERGE touch <span class="mono">dbo.orders</span> in the same transaction window.</li>
+            </ul>
+          </li>
+          <li><span class="tag high">High Confidence</span> <strong>Long-running transaction</strong> — the user transaction stays open while trigger work executes.
+            <ul>
+              <li><strong>Evidence:</strong> Long-Running Transactions shows session 69 at <strong>29s</strong> and session 84 at <strong>28s</strong>.</li>
+              <li><strong>Evidence:</strong> Waiter batch context explicitly includes <span class="mono">BEGIN TRAN</span> in <span class="mono">dbo.usp_UpdateOrdersAndLineitem</span>.</li>
+            </ul>
+          </li>
+          <li><span class="tag high">High Confidence</span> <strong>Missing index causing lock amplification</strong> — no DMV recommendation appeared, but workload evidence strongly suggests a missing support path for the trigger aggregation by customer.
+            <ul>
+              <li><strong>Evidence:</strong> Trigger statement joins <span class="mono">ChangedCustomers</span> to <span class="mono">dbo.orders</span> on <span class="mono">o_custkey</span> and aggregates <span class="mono">COUNT(*)</span>, <span class="mono">MAX(o_orderdate)</span>.</li>
+              <li><strong>Evidence:</strong> IndexUsage shows <span class="mono">orders.o_orderdate_ind</span> exists, but no evidence of an efficient customer-based access path; Query Store for query 480 shows <strong>12,966,375</strong> and <strong>4,862,472</strong> logical reads for the trigger MERGE plans.</li>
+            </ul>
+          </li>
+          <li><span class="tag medium">Medium Confidence</span> <strong>Lock escalation risk</strong> — not explicitly observed as a granted table X lock in the snapshot, but escalation settings and page-lock volume materially increase risk.
+            <ul>
+              <li><strong>Evidence:</strong> Database Settings shows <span class="mono">orders</span> lock escalation = <strong>TABLE</strong>.</li>
+              <li><strong>Evidence:</strong> LockInventory shows session 69 with <strong>10,771</strong> X page locks and session 62 with thousands more on the same index.</li>
+            </ul>
+          </li>
+          <li><span class="tag medium">Medium Confidence</span> <strong>TempDB contention masquerading as blocking</strong> — not the primary issue.
+            <ul>
+              <li><strong>Evidence against primary TempDB cause:</strong> blocking waits are <span class="mono">LCK_M_X</span> and <span class="mono">LCK_M_S</span> on <span class="mono">orders.o_orderdate_ind</span>.</li>
+              <li><strong>Evidence of secondary contribution:</strong> TempDB shows heavy spill activity, including <strong>75,221</strong> spills for related MERGE/UPDATE queries, which can prolong transaction duration and therefore amplify blocking.</li>
+            </ul>
+          </li>
+          <li><span class="tag low">Low Confidence</span> <strong>Parameter sniffing causing large scans</strong> — possible but not provable from provided data because blocker plan XML is unavailable.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="impact">
+      <h2>Impact Metrics</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Value</th>
+            <th>Basis</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Total sessions blocked</td>
+            <td>3 distinct sessions observed</td>
+            <td>Sessions 62, 69, 84 appear as waiters in BlockingChains.</td>
+          </tr>
+          <tr>
+            <td>External blocked sessions</td>
+            <td>2</td>
+            <td>Sessions 69 and 84 are blocked by session 62; session 62 is also blocked by 69 in a cycle.</td>
+          </tr>
+          <tr>
+            <td>Longest wait</td>
+            <td>25,118 ms</td>
+            <td>BlockingChains waiter session 84, <span class="mono">LCK_M_X</span>.</td>
+          </tr>
+          <tr>
+            <td>Observed cumulative wait</td>
+            <td>~63,733 ms</td>
+            <td>25,118 + 23,127 + 1,403 + 1,402 + 1,352 + 1,331 ms from explicit lock waits shown.</td>
+          </tr>
+          <tr>
+            <td>Transaction age</td>
+            <td>28-29 seconds</td>
+            <td>Long-Running Transactions section.</td>
+          </tr>
+          <tr>
+            <td>Business impact estimate</td>
+            <td>Moderate to High</td>
+            <td>Concurrent batch maintenance/update procedures on a 15M-row orders table are serialized by trigger activity; recent deadlock indicates user-visible failures and retries are likely.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="recommendations">
+      <h2>Detailed Prioritized Recommendations</h2>
+
+      <ol>
+        <li>
+          <div class="card">
+            <h3>Redesign or remove the synchronous trigger aggregate maintenance on <span class="mono">dbo.orders</span></h3>
+            <ul>
+              <li><strong>Fix:</strong> Replace <span class="mono">dbo.trg_orders_UpdateCustomerStats</span> synchronous <span class="mono">MERGE dbo.CustomerOrderStats</span> logic with either:
+                <ul>
+                  <li>an asynchronous queue/process, or</li>
+                  <li>a narrow staging table of changed customer keys processed after commit, or</li>
+                  <li>a direct delta-based update that does not rescan <span class="mono">dbo.orders</span>.</li>
+                </ul>
+              </li>
+              <li><strong>Rationale:</strong> The trigger is the primary lead blocker and re-reads the hot table inside the same transaction.
+                <ul>
+                  <li><strong>BlockingChains:</strong> session 62 trigger MERGE blocks sessions 84 and 69.</li>
+                  <li><strong>BlockingChains:</strong> session 69 simultaneously blocks session 62, proving the trigger and base UPDATE are contending with each other.</li>
+                  <li><strong>Query Store:</strong> trigger query 480 consumed up to <strong>12,966,375</strong> logical reads and <strong>24,069ms</strong> duration for one plan, indicating large work for post-DML trigger logic.</li>
+                  <li><strong>LockInventory:</strong> trigger-related locks are on <span class="mono">orders.o_orderdate_ind</span>, the same hotspot resource as the base UPDATE.</li>
+                </ul>
+              </li>
+              <li><strong>Estimated risk:</strong> Medium. Functional behavior changes if downstream code expects immediate stats maintenance.</li>
+              <li><strong>Rollback plan:</strong> keep the existing trigger definition scripted; deploy alternative process behind feature flag or staged rollout; re-enable original trigger if validation fails.</li>
+              <li><strong>Confidence:</strong> High</li>
+              <li><strong>Estimated reduction in blocking:</strong> 55% to 75%</li>
+            </ul>
+          </div>
+        </li>
+
+        <li>
+          <div class="card">
+            <h3>Batch the date-range <span class="mono">UPDATE dbo.orders</span> into smaller commits</h3>
+            <ul>
+              <li><strong>Fix:</strong> Rewrite <span class="mono">dbo.usp_UpdateOrdersAndLineitem</span> to update orders in chunks by key or date/key ranges, committing every small batch.</li>
+              <li><strong>Rationale:</strong> Current code holds a single transaction for the whole window and accumulates many page X locks.
+                <ul>
+                  <li><strong>Batch context:</strong> procedure explicitly says <span class="mono">BEGIN TRAN</span> and performs multiple logical steps.</li>
+                  <li><strong>LockInventory:</strong> session 69 holds <strong>10,771</strong> granted X page locks on <span class="mono">orders.o_orderdate_ind</span>.</li>
+                  <li><strong>Query Store:</strong> query 476 (<span class="mono">UPDATE dbo.orders</span>) shows <strong>154,801ms</strong> total duration and <strong>19,024,647</strong> logical reads.</li>
+                </ul>
+              </li>
+              <li><strong>Estimated risk:</strong> Low to Medium. More commits may affect atomicity semantics and downstream expectations.</li>
+              <li><strong>Rollback plan:</strong> retain original stored procedure definition; revert procedure if chunking causes unacceptable application behavior.</li>
+              <li><strong>Confidence:</strong> High</li>
+              <li><strong>Estimated reduction in blocking:</strong> 35% to 60%</li>
+            </ul>
+          </div>
+        </li>
+
+        <li>
+          <div class="card">
+            <h3>Add a support index for trigger/customer aggregation on <span class="mono">dbo.orders</span></h3>
+            <ul>
+              <li><strong>Fix:</strong> Test an index such as <span class="mono">CREATE INDEX IX_orders_custkey_orderdate ON dbo.orders(o_custkey, o_orderdate)</span>.</li>
+              <li><strong>Rationale:</strong> The trigger groups by <span class="mono">o_custkey</span> and computes <span class="mono">MAX(o_orderdate)</span>, but the hotspot access path shown is the date index, not a customer-driven path.
+                <ul>
+                  <li><strong>Blocker Statement:</strong> trigger query joins <span class="mono">ChangedCustomers</span> to <span class="mono">dbo.orders AS o ON c.o_custkey = o.o_custkey</span> and groups by <span class="mono">o.o_custkey</span>.</li>
+                  <li><strong>IndexUsage:</strong> only notable orders index usage shown is <span class="mono">o_orderdate_ind</span> with row count about <strong>15,000,000</strong>.</li>
+                  <li><strong>Query Store:</strong> trigger MERGE is expensive in reads, suggesting broad re-access to orders.</li>
+                </ul>
+              </li>
+              <li><strong>Important note:</strong> No missing-index DMV recommendation was present, so validate with testing. Also confirm final design by running the <strong>Index Tuning</strong> goal specifically for schema/table <span class="mono">dbo.orders</span> for more comprehensive analysis.</li>
+              <li><strong>Estimated risk:</strong> Medium. Additional write overhead and storage usage.</li>
+              <li><strong>Rollback plan:</strong> create nonclustered index online if possible; if write overhead is too high, drop the index.</li>
+              <li><strong>Confidence:</strong> Medium</li>
+              <li><strong>Estimated reduction in blocking:</strong> 20% to 45%</li>
+            </ul>
+          </div>
+        </li>
+
+        <li>
+          <div class="card">
+            <h3>Enable <span class="mono">READ_COMMITTED_SNAPSHOT</span> for <span class="mono">tpch10</span></h3>
+            <ul>
+              <li><strong>Fix:</strong> Enable row-versioned read committed isolation.</li>
+              <li><strong>Rationale:</strong> The trigger MERGE requests shared locks while updates hold exclusive locks. RCSI can remove many read/write conflicts.
+                <ul>
+                  <li><strong>Database Settings:</strong> RCSI is <strong>OFF</strong>.</li>
+                  <li><strong>BlockingChains:</strong> session 62 waits on <span class="mono">LCK_M_S</span> behind session 69's update.</li>
+                  <li><strong>LockInventory:</strong> session 62 has waiting <span class="mono">S</span> lock on <span class="mono">orders.o_orderdate_ind</span>.</li>
+                </ul>
+              </li>
+              <li><strong>Limit:</strong> this will not eliminate writer/writer blocking such as update vs update, but it can materially reduce trigger read blocking.</li>
+              <li><strong>Estimated risk:</strong> Medium. Requires application review for row-versioning semantics and tempdb capacity planning.</li>
+              <li><strong>Rollback plan:</strong> disable RCSI if application behavior is impacted; monitor tempdb versioning after enablement.</li>
+              <li><strong>Confidence:</strong> High</li>
+              <li><strong>Estimated reduction in blocking:</strong> 15% to 35%</li>
+            </ul>
+          </div>
+        </li>
+
+        <li>
+          <div class="card">
+            <h3>Reduce or eliminate use of <span class="mono">MERGE</span> in triggers and maintenance statements</h3>
+            <ul>
+              <li><strong>Fix:</strong> Replace <span class="mono">MERGE</span> with separate <span class="mono">UPDATE</span>/<span class="mono">INSERT</span> statements against pre-aggregated input.</li>
+              <li><strong>Rationale:</strong> In this workload, MERGE is part of the blocking path and historical deadlock path.
+                <ul>
+                  <li><strong>BlockingChains:</strong> lead blocker command is <span class="mono">MERGE</span>.</li>
+                  <li><strong>Long-Running Transactions:</strong> one transaction is reported under trigger SQL/command MERGE.</li>
+                  <li><strong>Query Store:</strong> multiple MERGE statements are among top consumers, including query 470 and query 480.</li>
+                  <li><strong>Deadlock History:</strong> recent deadlock in <span class="mono">tpch10</span> occurred during the same workload window and involved page waits in a user transaction.</li>
+                </ul>
+              </li>
+              <li><strong>Estimated risk:</strong> Medium. Requires code change and regression test for correctness.</li>
+              <li><strong>Rollback plan:</strong> preserve original MERGE-based modules; revert if post-change totals diverge.</li>
+              <li><strong>Confidence:</strong> Medium</li>
+              <li><strong>Estimated reduction in blocking:</strong> 15% to 30%</li>
+            </ul>
+          </div>
+        </li>
+
+        <li>
+          <div class="card">
+            <h3>Address spill-heavy plans to shorten transaction time</h3>
+            <ul>
+              <li><strong>Fix:</strong> tune the spill-heavy statements, especially the lineitem update and trigger MERGE paths, by improving join/index access, considering smaller batches, and validating memory grant quality.</li>
+              <li><strong>Rationale:</strong> Spills are not the root lock cause but clearly extend statement runtime and lock duration.
+                <ul>
+                  <li><strong>TempDB Contention:</strong> top spilling queries include the trigger-style MERGE and lineitem UPDATE with <strong>75,221</strong> spills.</li>
+                  <li><strong>Query Store:</strong> lineitem update queries have extreme logical reads, up to <strong>76,510,570</strong>.</li>
+                </ul>
+              </li>
+              <li><strong>Estimated risk:</strong> Low to Medium.</li>
+              <li><strong>Rollback plan:</strong> revert individual tuning changes if regressions appear.</li>
+              <li><strong>Confidence:</strong> Medium</li>
+              <li><strong>Estimated reduction in blocking:</strong> 10% to 20%</li>
+            </ul>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="code-changes">
+      <h2>Code / Query Rewrite Guidance</h2>
+
+      <div class="card">
+        <h3>1) Rewrite the orders update into key-based chunks</h3>
+        <p><strong>Before</strong></p>
+        <pre><code>BEGIN TRAN;
+
+UPDATE o
+SET o.o_comment = LEFT(CONCAT(
+    o.o_comment,
+    ' | BATCH_UPDATE ',
+    CONVERT(varchar(10), @FromDate, 120),
+    '-',
+    CONVERT(varchar(10), @ToDate, 120)
+), 79)
+FROM dbo.orders AS o
+WHERE o.o_orderdate BETWEEN @FromDate AND @ToDate;
+
+-- more work here...
+
+COMMIT;</code></pre>
+
+        <p><strong>After</strong></p>
+        <pre><code>DECLARE @BatchSize int = 5000;
+
+WHILE 1 = 1
+BEGIN
+    ;WITH c AS
+    (
+        SELECT TOP (@BatchSize) o.o_orderkey
+        FROM dbo.orders AS o
+        WHERE o.o_orderdate BETWEEN @FromDate AND @ToDate
+          AND o.ProcessedFlag = 0   -- example batching predicate
+        ORDER BY o.o_orderkey
+    )
+    BEGIN TRAN;
+
+    UPDATE o
+    SET o.o_comment = LEFT(CONCAT(
+            o.o_comment,
+            ' | BATCH_UPDATE ',
+            CONVERT(varchar(10), @FromDate, 120),
+            '-',
+            CONVERT(varchar(10), @ToDate, 120)
+        ), 79),
+        o.ProcessedFlag = 1
+    FROM dbo.orders AS o
+    JOIN c ON c.o_orderkey = o.o_orderkey;
+
+    IF @@ROWCOUNT = 0
+    BEGIN
+        ROLLBACK;
+        BREAK;
+    END
+
+    COMMIT;
+END</code></pre>
+        <ul>
+          <li>Use a stable batching key such as <span class="mono">o_orderkey</span>.</li>
+          <li>Commit each batch to release locks early.</li>
+          <li>If a processing flag is not acceptable, use a temp table of target keys or a driving key-range approach.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>2) Rewrite trigger maintenance to avoid rescanning <span class="mono">orders</span> in the same transaction</h3>
+        <p><strong>Current blocker pattern</strong></p>
+        <pre><code>WITH ChangedCustomers AS (
+    SELECT o_custkey FROM inserted
+    UNION
+    SELECT o_custkey FROM deleted
+)
+MERGE dbo.CustomerOrderStats AS tgt
+USING (
+    SELECT o.o_custkey,
+           COUNT(*) AS order_count,
+           MAX(o.o_orderdate) AS last_orderdate
+    FROM dbo.orders AS o
+    JOIN ChangedCustomers AS c
+      ON c.o_custkey = o.o_custkey
+    GROUP BY o.o_custkey
+) AS src
+ON tgt.c_custkey = src.o_custkey
+...</code></pre>
+
+        <p><strong>Safer pattern: stage changed customers and process after commit</strong></p>
+        <pre><code>CREATE TABLE dbo.CustomerOrderStatsQueue
+(
+    c_custkey int NOT NULL PRIMARY KEY,
+    queued_at datetime2 NOT NULL DEFAULT sysdatetime()
+);
+
+-- Trigger keeps only narrow writes
+INSERT INTO dbo.CustomerOrderStatsQueue(c_custkey)
+SELECT DISTINCT o_custkey FROM inserted
+UNION
+SELECT DISTINCT o_custkey FROM deleted;</code></pre>
+
+        <p><strong>Then process asynchronously</strong></p>
+        <pre><code>;WITH src AS
+(
+    SELECT q.c_custkey,
+           COUNT_BIG(*) AS order_count,
+           MAX(o.o_orderdate) AS last_orderdate
+    FROM dbo.CustomerOrderStatsQueue AS q
+    JOIN dbo.orders AS o
+      ON o.o_custkey = q.c_custkey
+    GROUP BY q.c_custkey
+)
+UPDATE tgt
+SET tgt.order_count = src.order_count,
+    tgt.last_orderdate = src.last_orderdate
+FROM dbo.CustomerOrderStats AS tgt
+JOIN src ON src.c_custkey = tgt.c_custkey;
+
+INSERT INTO dbo.CustomerOrderStats(c_custkey, order_count, last_orderdate)
+SELECT src.c_custkey, src.order_count, src.last_orderdate
+FROM src
+WHERE NOT EXISTS
+(
+    SELECT 1
+    FROM dbo.CustomerOrderStats AS tgt
+    WHERE tgt.c_custkey = src.c_custkey
+);</code></pre>
+        <ul>
+          <li>This keeps the OLTP transaction narrow.</li>
+          <li>It removes immediate read-after-write pressure on the hot orders index pages.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>3) Support the trigger path with an index</h3>
+        <pre><code>CREATE INDEX IX_orders_custkey_orderdate
+ON dbo.orders (o_custkey, o_orderdate);</code></pre>
+        <ul>
+          <li>Purpose: improve customer-based aggregation and reduce broad scans/reads.</li>
+          <li>Validate this candidate with the <strong>Index Tuning</strong> goal for <span class="mono">dbo.orders</span> before finalizing.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="historical-patterns">
+      <h2>Historical Deadlocks &amp; Long-Term Mitigations</h2>
+      <div class="card">
+        <p><strong>Recurring pattern is confirmed.</strong></p>
+        <ul>
+          <li><strong>Deadlock History:</strong> a deadlock occurred at <strong>2026-05-05 00:35:47 UTC</strong> in <span class="mono">tpch10</span> during the same workload window, involving <span class="mono">PAGE</span> wait resources and a user transaction under <span class="mono">read committed</span>.</li>
+          <li><strong>BlockingChains + LockInventory:</strong> current waits are also page-level on <span class="mono">orders.o_orderdate_ind</span>, so this is not an isolated one-off.</li>
+          <li><strong>Query Store:</strong> the top resource consumers are the same family of batch UPDATE and MERGE maintenance statements.</li>
+        </ul>
+
+        <h3>Long-term mitigations</h3>
+        <ul>
+          <li>Move summary maintenance to asynchronous processing or scheduled ETL-style refresh.</li>
+          <li>Keep maintenance operations for <span class="mono">orders</span> and <span class="mono">lineitem</span> in separate, shorter transactions when business rules permit.</li>
+          <li>Consider application-level serialization for overlapping date windows if concurrency on the same date range is expected.</li>
+          <li>Use retry logic for deadlock victims, but only after reducing the lock cycle root cause.</li>
+          <li>Review whether the trigger-based design duplicates work already performed by the top Query Store MERGE maintenance statements for <span class="mono">OrderTotals</span> and <span class="mono">CustomerOrderStats</span>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="monitoring">
+      <h2>Monitoring &amp; Evidence Quality</h2>
+      <div class="card">
+        <ul>
+          <li><strong>Query Store:</strong> enabled and valuable here; it proved the recurring high-read statements and should remain on.</li>
+          <li><strong>Deadlock capture:</strong> already available through Extended Events / system_health; keep it enabled.</li>
+          <li><strong>BlockerPlans:</strong> <strong>no blocker plans found</strong> at collection time. Additional actual/estimated plans for session 62 and 69 would help confirm whether customer-based scans, memory grants, or parallel hash operations are driving the long trigger runtime.</li>
+          <li><strong>TempDB:</strong> current latch profile does <strong>not</strong> indicate primary TempDB allocation contention masquerading as blocking; PAGELATCH waits are small, and version store is <strong>0.0MB</strong>. The main issue is lock contention on user table pages, with spills acting as a duration multiplier.</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div>Based on analysis as of 2026-05-05 00:36:16 UTC</div>
+      <div>Generated by AI SQL Tuner Studio using model gpt-5.4 with reasoning effort low.</div>
+      <div><a href="https://aisqltuner.com">https://aisqltuner.com</a></div>
+    </footer>
+  </main>
+</div>
+</body>
+</html>

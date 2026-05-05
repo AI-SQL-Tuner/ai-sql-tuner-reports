@@ -3,12 +3,12 @@
 
   <url>
     <loc>https://reports.aisqltuner.com/</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-05</lastmod>
   </url>
 
   <url>
     <loc>https://reports.aisqltuner.com/index.html</loc>
-    <lastmod>2026-04-18</lastmod>
+    <lastmod>2026-05-05</lastmod>
   </url>
 
   <url>
@@ -54,6 +54,11 @@
   <url>
     <loc>https://reports.aisqltuner.com/aisqltuner-query-tuner-20260418-opus-4-6-low.html</loc>
     <lastmod>2026-04-18</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/aisqltuner-locking-and-blocking-analysis-tpch10-20260504.html</loc>
+    <lastmod>2026-05-04</lastmod>
   </url>
 
 </urlset>

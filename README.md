@@ -1,6 +1,6 @@
 # AI SQL Tuner Reports
 
-Public sample reports from AI SQL Tuner that demonstrate AI-assisted SQL Server analysis across server health, code quality, deadlock remediation, query tuning, and index optimization.
+Public sample reports from AI SQL Tuner that demonstrate AI-assisted SQL Server analysis across server health, code quality, deadlock remediation, locking and blocking analysis, query tuning, and index optimization.
 
 Primary site: https://reports.aisqltuner.com/
 Main AI SQL Tuner LLC site: https://aisqltuner.com/
@@ -25,6 +25,7 @@ Core topics covered:
 - SQL Server health checks
 - SQL code review and anti-pattern detection
 - deadlock analysis and fix strategies
+- locking and blocking root cause analysis
 - query tuning recommendations
 - index tuning recommendations
 
@@ -36,6 +37,7 @@ Core topics covered:
 - Server health check (Claude Sonnet 4.6 low reasoning): https://reports.aisqltuner.com/aisqltuner-server-health-check-20260412-sonnet-4-6-low.html
 - SQL code review: https://reports.aisqltuner.com/aisqltuner-code-review-20260301.html
 - Deadlock analysis and fix: https://reports.aisqltuner.com/aisqltuner-fix-deadlocks-20260320.html
+- Locking and blocking analysis: https://reports.aisqltuner.com/aisqltuner-locking-and-blocking-analysis-tpch10-20260504.html
 - Query tuner: https://reports.aisqltuner.com/aisqltuner-query-tuner-sp00060-20260328.html
 - Index tuning (SQLStorm): https://reports.aisqltuner.com/aisqltuner--sqlstorm-index-tuning-20260319.html
 
@@ -98,7 +100,7 @@ When adding or updating reports:
 
 ### What is AI SQL Tuner?
 
-AI SQL Tuner is a platform focused on SQL Server analysis and tuning workflows, including health checks, SQL code review, deadlock remediation, query tuning, and index optimization.
+AI SQL Tuner is a platform focused on SQL Server analysis and tuning workflows, including health checks, SQL code review, deadlock remediation, locking and blocking analysis, query tuning, and index optimization.
 
 Main website: https://aisqltuner.com/
 
@@ -110,6 +112,7 @@ These are sample reports intended to demonstrate analysis patterns, recommendati
 
 Start with the report index and then choose by use case:
 - health checks for broad environment posture
+- locking and blocking analysis for active wait chains and hotspot diagnosis
 - deadlock report for concurrency failures
 - query and index reports for performance tuning
 - code review report for logic and maintainability risks
