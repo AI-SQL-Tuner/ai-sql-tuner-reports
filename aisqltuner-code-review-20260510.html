@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SQL Server Code Review – RockyPC.SQLStorm – 2026-05-10</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --accent: #007AFF;
+    --accent-dark: #0051A8;
+    --panel: #0E5BB8;
+    --panel-2: #0A4A99;
+    --text: #FFFFFF;
+    --muted: #D6E4F5;
+    --code-bg: #07203F;
+    --code-border: #1E5FB0;
+    --warn: #FFD60A;
+    --bad: #FF6B6B;
+    --good: #5BE49B;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #007AFF;
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+  }
+  nav.toc {
+    background: var(--panel-2);
+    padding: 24px 18px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid rgba(255,255,255,0.15);
+  }
+  nav.toc h3 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  nav.toc ul { list-style: none; padding: 0; margin: 0; }
+  nav.toc li { margin: 6px 0; }
+  nav.toc a {
+    color: var(--text);
+    text-decoration: none;
+    display: block;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  nav.toc a:hover { background: rgba(255,255,255,0.12); }
+  main { padding: 32px 44px; max-width: 1100px; }
+  h1 {
+    font-size: 28px;
+    margin: 0 0 6px 0;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 6px; }
+  .meta { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  h2 {
+    font-size: 20px;
+    margin: 32px 0 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.25);
+    padding-bottom: 6px;
+  }
+  h3 { font-size: 16px; margin: 20px 0 8px; }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; color: #E6F0FF; }
+  ol, ul { padding-left: 22px; }
+  ol li, ul li { margin-bottom: 8px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 14px 0;
+  }
+  .pill {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-right: 6px;
+  }
+  .p-crit { background: var(--bad); color: #2A0000; }
+  .p-high { background: var(--warn); color: #3A2A00; }
+  .p-med  { background: #80C8FF; color: #003355; }
+  .p-low  { background: #B5C7DC; color: #1B2A3D; }
+  .conf {
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    padding: 2px 9px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-left: 4px;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.2); font-size: 14px; }
+  th { background: rgba(255,255,255,0.1); }
+  footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.25);
+    color: var(--muted);
+    font-size: 12px;
+  }
+  footer a { color: #BFE0FF; }
+  .kpi {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin: 10px 0 18px;
+  }
+  .kpi .box {
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .kpi .num { font-size: 22px; font-weight: 700; }
+  .kpi .lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "SQL Server Code Review – RockyPC.SQLStorm – 2026-05-10",
+  "datePublished": "2026-05-10",
+  "about": "T-SQL stored procedure code review for RockyPC / SQLStorm (SQL Server 2022 Developer Edition)",
+  "author": { "@type": "Organization", "name": "AI SQL Tuner Studio" }
+}
+</script>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc">
+    <h3>Contents</h3>
+    <ul>
+      <li><a href="#summary">Executive Summary</a></li>
+      <li><a href="#scope">Review Scope &amp; Counts</a></li>
+      <li><a href="#priorities">Top Priorities</a></li>
+      <li><a href="#recs">Detailed Recommendations</a></li>
+      <li><a href="#r1">1. Long-Held Transaction</a></li>
+      <li><a href="#r2">2. NEWID() Random Picks</a></li>
+      <li><a href="#r3">3. Cartesian / CROSS JOIN Bugs</a></li>
+      <li><a href="#r4">4. Wrong-Key JOIN Bugs</a></li>
+      <li><a href="#r5">5. LIKE on Tags</a></li>
+      <li><a href="#r6">6. Pre-Aggregate vs LEFT JOIN Fan-out</a></li>
+      <li><a href="#r7">7. Date Math Anti-Patterns</a></li>
+      <li><a href="#r8">8. Correlated Subqueries</a></li>
+      <li><a href="#r9">9. Missing Indexes</a></li>
+      <li><a href="#r10">10. ORDER BY in CTE / Misuse</a></li>
+      <li><a href="#r11">11. Reserved Words &amp; Style</a></li>
+      <li><a href="#r12">12. SET Options &amp; Error Handling</a></li>
+      <li><a href="#r13">13. SQL 2022 Features</a></li>
+      <li><a href="#r14">14. Naming &amp; Maintainability</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <h1>SQL Server Code Review – RockyPC.SQLStorm – 2026-05-10</h1>
+    <div class="subtitle">Tuning Goal: <strong>Code Review</strong></div>
+    <div class="meta">
+      Server: <strong>RockyPC</strong> &nbsp;|&nbsp;
+      Database: <strong>SQLStorm</strong> &nbsp;|&nbsp;
+      Version: <strong>Microsoft SQL Server 2022 (RTM-GDR) 16.0.1175.1 – Developer Edition (64-bit)</strong>
+    </div>
+
+    <section id="summary">
+      <h2>Executive Summary</h2>
+      <p>
+        The reviewed objects are predominantly read-only reporting procedures over a Stack Exchange-shaped schema
+        (<code>Posts</code>, <code>Users</code>, <code>Votes</code>, <code>Comments</code>, <code>PostHistory</code>, <code>Badges</code>).
+        The code base shows consistent anti-patterns: full-table aggregations followed by <code>TOP N</code>, fan-out joins between
+        multiple one-to-many tables (causing duplicate-row inflation), <code>LIKE '%tag%'</code> scans of <code>Posts.Tags</code>,
+        join-on-display-name (non-unique), and several outright correctness bugs (Cartesian joins, wrong key joins,
+        joining <code>Users.Id</code> to <code>Posts.Id</code>). One write procedure
+        (<code>usp_UpdateTablesWithDelay</code>) intentionally holds an open transaction with <code>WAITFOR DELAY '00:00:05'</code>,
+        which is the most dangerous item in the set: it serializes all readers/writers blocked behind it for 5+ seconds per call,
+        amplified by the calling looper <code>usp_UpdateTablesInLoop</code>.
+      </p>
+      <div class="kpi">
+        <div class="box"><div class="num">94</div><div class="lbl">Stored Procedures Reviewed</div></div>
+        <div class="box"><div class="num">0</div><div class="lbl">Functions / Triggers / Views Provided</div></div>
+        <div class="box"><div class="num">8</div><div class="lbl">Tables &gt; 1,000 Rows</div></div>
+        <div class="box"><div class="num">14</div><div class="lbl">Prioritized Findings</div></div>
+      </div>
+      <p style="color:var(--muted);font-size:13px">
+        Note: Only the most recent stored procedures were provided; older objects, functions, triggers, and views were not in scope.
+      </p>
+    </section>
+
+    <section id="scope">
+      <h2>Review Scope &amp; Object Counts</h2>
+      <table>
+        <thead><tr><th>Object Type</th><th>Count Reviewed</th></tr></thead>
+        <tbody>
+          <tr><td>SQL_STORED_PROCEDURE</td><td>94</td></tr>
+          <tr><td>SQL_SCALAR_FUNCTION / TVF</td><td>0 (none provided)</td></tr>
+          <tr><td>VIEW</td><td>0 (none provided)</td></tr>
+          <tr><td>TRIGGER</td><td>0 (none provided)</td></tr>
+        </tbody>
+      </table>
+      <p style="color:var(--muted);font-size:13px">Only the most recent objects were available for review.</p>
+    </section>
+
+    <section id="priorities">
+      <h2>Top Priorities (in order)</h2>
+      <ol>
+        <li><span class="pill p-crit">Critical</span> Eliminate the 5-second <code>WAITFOR</code> inside an open transaction in <code>usp_UpdateTablesWithDelay</code>; refactor the calling loop <code>usp_UpdateTablesInLoop</code>.</li>
+        <li><span class="pill p-crit">Critical</span> Fix correctness bugs: Cartesian joins (<code>sp09974</code>, <code>sp09895</code>, <code>sp09833</code>, <code>sp09881</code>), wrong-key join in <code>sp09826</code> (<code>Posts.Id = Users.Id</code>), <code>sp00990</code> (<code>RankedPosts.PostId = UserReputation.UserId</code>), <code>sp09833</code> (<code>RankedPosts.PostId IS NOT NULL</code> as join key), and join-by-DisplayName in many procs.</li>
+        <li><span class="pill p-high">High</span> Replace <code>SELECT TOP 1 ... ORDER BY NEWID()</code> per iteration in <code>usp_UpdateTablesInLoop</code> (full scans of <code>Users</code> and <code>Posts</code> per call).</li>
+        <li><span class="pill p-high">High</span> Stop fan-out: pre-aggregate <code>Votes</code>, <code>Comments</code>, <code>PostHistory</code>, <code>Badges</code> in CTEs <em>before</em> joining (e.g., <code>sp09994</code>, <code>sp09991</code>, <code>sp09972</code>, <code>sp09907</code>, <code>sp09851</code>).</li>
+        <li><span class="pill p-high">High</span> Replace <code>p.Tags LIKE '%' + t.TagName + '%'</code> with a normalized <code>PostTags</code> bridge table (<code>sp09982</code>, <code>sp09990</code>, <code>sp00992</code>, <code>sp09881</code>, <code>sp09886</code>).</li>
+        <li><span class="pill p-med">Medium</span> Repair broken date arithmetic: <code>CAST('2024-10-01 ...' AS DATETIME) - DATEADD(YEAR, 1, 0)</code> does not mean "one year ago" (<code>sp09978</code>, <code>sp09921</code>, <code>sp09905</code>, <code>sp09844</code>).</li>
+        <li><span class="pill p-med">Medium</span> Add targeted indexes (see §9). The existing <code>IX_Posts_OwnerUserId_Covering</code> is unused — confirm/clean.</li>
+      </ol>
+    </section>
+
+    <section id="recs">
+      <h2>Detailed Prioritized Recommendations</h2>
+
+      <div class="card" id="r1">
+        <h3>1. <span class="pill p-crit">Critical</span> Long-held transaction with <code>WAITFOR DELAY</code> <span class="conf">Confidence: Very High</span></h3>
+        <p>
+          <code>dbo.usp_UpdateTablesWithDelay</code> holds an explicit transaction open for 5+ seconds while
+          <code>UPDATE Users</code> and <code>UPDATE Posts</code> retain <strong>X locks on the modified key(s)</strong>
+          (and U-locks during seek). With <code>XACT_ABORT ON</code> + <code>BEGIN TRAN</code>,
+          any reader using default RC will block. <code>usp_UpdateTablesInLoop</code> magnifies this by calling it
+          repeatedly, while itself doing <code>ORDER BY NEWID()</code> against multi-million-row tables.
+        </p>
+        <p><strong>Fix:</strong> Never wait inside a transaction. If you must simulate latency, do it outside.</p>
+<pre><code>-- Refactored
+CREATE OR ALTER PROCEDURE dbo.usp_UpdateTablesWithDelay
+    @UserId INT, @NewReputation INT, @PostId INT, @NewScore INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRAN;
+            UPDATE dbo.Users
+               SET Reputation = @NewReputation, LastAccessDate = SYSUTCDATETIME()
+             WHERE Id = @UserId;
+
+            UPDATE dbo.Posts
+               SET Score = @NewScore, LastActivityDate = SYSUTCDATETIME()
+             WHERE Id = @PostId;
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT &gt; 0 ROLLBACK;
+        THROW;
+    END CATCH;
+
+    -- Optional pacing OUTSIDE the transaction
+    -- WAITFOR DELAY '00:00:05';
+END;</code></pre>
+        <p>Also enable <code>READ_COMMITTED_SNAPSHOT</code> on <code>SQLStorm</code> to reduce reader/writer blocking globally, and avoid <code>PRINT</code> in hot procedures (it forces network round-trips).</p>
+      </div>
+
+      <div class="card" id="r2">
+        <h3>2. <span class="pill p-high">High</span> <code>ORDER BY NEWID()</code> for random picks <span class="conf">Confidence: Very High</span></h3>
+        <p>In <code>usp_UpdateTablesInLoop</code>:</p>
+<pre><code>SELECT TOP 1 @RandomUserId = Id FROM dbo.Users    ORDER BY NEWID();   -- full scan, 267k rows
+SELECT TOP 1 @RandomPostId = Id FROM dbo.Posts    ORDER BY NEWID();   -- full scan, 246k rows</code></pre>
+        <p>Each iteration scans both tables. Use <code>TABLESAMPLE</code> or a key-range pick:</p>
+<pre><code>DECLARE @MaxUserId INT = (SELECT MAX(Id) FROM dbo.Users);
+DECLARE @MaxPostId INT = (SELECT MAX(Id) FROM dbo.Posts);
+
+SELECT TOP (1) @RandomUserId = Id
+FROM dbo.Users
+WHERE Id &gt;= ABS(CHECKSUM(NEWID())) % @MaxUserId
+ORDER BY Id;</code></pre>
+      </div>
+
+      <div class="card" id="r3">
+        <h3>3. <span class="pill p-crit">Critical</span> Cartesian / CROSS JOIN correctness bugs <span class="conf">Confidence: High</span></h3>
+        <ul>
+          <li><code>sp09974</code>: <code>UserStats CROSS JOIN PopularPosts</code> — every user × every popular post (10× row inflation, no filter).</li>
+          <li><code>sp09895</code>: same anti-pattern with a redundantly duplicated inner query.</li>
+          <li><code>sp09833</code>: <code>BadgeDistribution bd ON bd.Reputation &gt; 0</code> — a non-equi predicate that yields a Cartesian-like product.</li>
+          <li><code>sp09881</code>: <code>UserVoteSummary u CROSS JOIN PopularTags t</code> then joined by display name (also wrong, see #4).</li>
+          <li><code>sp09982</code>: <code>JOIN TagSummary ts ON ts.PostCount &gt; 5</code> — non-correlated predicate, Cartesian.</li>
+          <li><code>sp09861</code>, <code>sp09909</code>, <code>sp09823</code>, <code>sp00990</code>: similar non-correlated <code>ON</code> clauses (e.g., <code>ON UA.PostsChanged &gt; 0</code>, <code>ON ups.PostCount &gt; 5</code>).</li>
+        </ul>
+        <p><strong>Fix:</strong> Every <code>JOIN ... ON</code> must include an equality predicate between the two tables. If you really need a "Top 10 tags overall × Top 10 users", do that explicitly and document it; otherwise add the missing equi-join.</p>
+      </div>
+
+      <div class="card" id="r4">
+        <h3>4. <span class="pill p-crit">Critical</span> Wrong-key joins <span class="conf">Confidence: High</span></h3>
+        <ul>
+          <li><code>sp09826</code>: <code>JOIN Users u ON tp.PostId = u.Id</code> — joins post id to user id; results are coincidental matches.</li>
+          <li><code>sp00990</code>: <code>JOIN UserReputation ur ON rp.PostId = ur.UserId</code> — same class of bug.</li>
+          <li><code>sp09909</code>, <code>sp09867</code>, <code>sp09895</code>, <code>sp09886</code>, <code>sp09831</code>, <code>sp09828</code>, <code>sp09824</code>, <code>sp09815</code>: join on <code>DisplayName</code>, which is <strong>not unique</strong> in <code>Users</code> and produces duplicate/incorrect results.</li>
+          <li><code>sp09891</code>: <code>LEFT JOIN PostTypes pt ON tp.PostId = pt.Id</code> — joins post id to post-type id (1..7).</li>
+          <li><code>sp09833</code>: <code>JOIN PostTypes pt ON rp.PostId IS NOT NULL</code> — no predicate.</li>
+          <li><code>sp09825</code>: subquery <code>SELECT TOP 1 DisplayName FROM Users WHERE Id = b.UserId</code> referencing the outer alias <code>b</code> incorrectly.</li>
+        </ul>
+        <p><strong>Fix:</strong> Always join on surrogate keys. Add a <code>UNIQUE</code> constraint or accept that <code>DisplayName</code> is non-unique and never join on it.</p>
+      </div>
+
+      <div class="card" id="r5">
+        <h3>5. <span class="pill p-high">High</span> <code>p.Tags LIKE '%' + TagName + '%'</code> <span class="conf">Confidence: Very High</span></h3>
+        <p>Used in <code>sp09982</code>, <code>sp09990</code>, <code>sp00992</code>, <code>sp09881</code>, <code>sp09886</code>, <code>sp09915</code>. This pattern is unsargable, scans all 246k Posts per Tag row, and is functionally incorrect (e.g., <code>sql</code> matches <code>mssql</code>).</p>
+        <p><strong>Fix:</strong> Normalize tags into a bridge:</p>
+<pre><code>CREATE TABLE dbo.PostTags(
+    PostId INT NOT NULL,
+    TagId  INT NOT NULL,
+    CONSTRAINT PK_PostTags PRIMARY KEY (PostId, TagId)
+);
+CREATE INDEX IX_PostTags_TagId_PostId ON dbo.PostTags(TagId, PostId);
+
+-- Or, if you must keep Posts.Tags '|sql|tsql|', use STRING_SPLIT in 2022
+-- with proper bracket boundaries and an exact match, not LIKE '%...%'.</code></pre>
+      </div>
+
+      <div class="card" id="r6">
+        <h3>6. <span class="pill p-high">High</span> Pre-aggregate to avoid fan-out <span class="conf">Confidence: Very High</span></h3>
+        <p>Many procedures <code>LEFT JOIN</code> <code>Posts</code>, <code>Comments</code>, <code>Votes</code>, and <code>Badges</code> in one shot, then <code>GROUP BY u.Id</code>. With Votes (926k) and PostHistory (847k), this multiplies row counts by 10–100×. Examples: <code>sp09991</code>, <code>sp09972</code>, <code>sp09994</code>, <code>sp09907</code>, <code>sp09851</code>, <code>sp09908</code>, <code>sp09812</code>, <code>sp09955</code>.</p>
+<pre><code>-- Wrong (fan-out: posts × votes × badges)
+FROM Users u
+LEFT JOIN Posts  p ON u.Id = p.OwnerUserId
+LEFT JOIN Votes  v ON p.Id = v.PostId
+LEFT JOIN Badges b ON u.Id = b.UserId
+GROUP BY u.Id;
+
+-- Right (independent aggregates, then join)
+;WITH P AS (SELECT OwnerUserId AS UserId, COUNT(*) AS PostCnt FROM Posts GROUP BY OwnerUserId),
+      V AS (SELECT p.OwnerUserId AS UserId,
+                   SUM(CASE WHEN v.VoteTypeId=2 THEN 1 ELSE 0 END) AS Up,
+                   SUM(CASE WHEN v.VoteTypeId=3 THEN 1 ELSE 0 END) AS Down
+            FROM Votes v JOIN Posts p ON p.Id=v.PostId
+            GROUP BY p.OwnerUserId),
+      B AS (SELECT UserId, COUNT(*) AS BadgeCnt FROM Badges GROUP BY UserId)
+SELECT u.Id, u.DisplayName, P.PostCnt, V.Up, V.Down, B.BadgeCnt
+FROM Users u
+LEFT JOIN P ON P.UserId=u.Id
+LEFT JOIN V ON V.UserId=u.Id
+LEFT JOIN B ON B.UserId=u.Id;</code></pre>
+        <p><code>sp00060Fixed</code> already follows this pattern correctly and is a good template.</p>
+      </div>
+
+      <div class="card" id="r7">
+        <h3>7. <span class="pill p-high">High</span> Broken date arithmetic <span class="conf">Confidence: Very High</span></h3>
+        <p>Several procs use:</p>
+<pre><code>p.CreationDate &gt;= CAST('2024-10-01 12:34:56' AS DATETIME) - DATEADD(YEAR, 1, 0)
+-- DATEADD(YEAR,1,0) =&gt; '1901-01-01'
+-- DATETIME - DATETIME treats RHS as a number of days, producing nonsense.</code></pre>
+        <p>Found in <code>sp09978</code>, <code>sp09921</code>, <code>sp09905</code>, <code>sp09844</code>, <code>sp09963</code>, <code>sp00990</code> (similar). Replace with:</p>
+<pre><code>p.CreationDate &gt;= DATEADD(YEAR, -1, CAST('2024-10-01 12:34:56' AS datetime2(0)))</code></pre>
+        <p>Also remove hard-coded "current date" literals — parameterize <code>@AsOf</code>.</p>
+      </div>
+
+      <div class="card" id="r8">
+        <h3>8. <span class="pill p-med">Medium</span> Correlated subqueries instead of joins <span class="conf">Confidence: High</span></h3>
+        <p><code>sp09974</code>, <code>sp09946</code>, <code>sp09940</code>, <code>sp09904</code>, <code>sp09908</code>, <code>sp09891</code>, <code>sp09099</code>: multiple per-row <code>(SELECT COUNT(*) FROM Votes WHERE PostId = ...)</code> calls cause 1 scan per outer row. Use a single grouped CTE joined once. <code>sp09908</code>'s <code>STRING_AGG</code> over Votes×Users for every top post will be especially expensive on 926k Votes.</p>
+      </div>
+
+      <div class="card" id="r9">
+        <h3>9. <span class="pill p-med">Medium</span> Indexing recommendations <span class="conf">Confidence: Medium</span></h3>
+        <p>Usage stats show all listed nonclustered indexes have 0 seeks/scans, suggesting the workload either runs cold or lookups are missing. Validate, then ensure these exist:</p>
+<pre><code>-- Posts: most queries filter by OwnerUserId, PostTypeId, CreationDate
+CREATE INDEX IX_Posts_OwnerUserId_Type_Date
+    ON dbo.Posts(OwnerUserId, PostTypeId, CreationDate)
+    INCLUDE (Score, ViewCount, Title, AnswerCount, CommentCount, AcceptedAnswerId)
+    WITH (DATA_COMPRESSION = PAGE);
+
+CREATE INDEX IX_Posts_CreationDate_Type
+    ON dbo.Posts(CreationDate, PostTypeId)
+    INCLUDE (Score, ViewCount, OwnerUserId, Title)
+    WITH (DATA_COMPRESSION = PAGE);
+
+-- Votes: extreme fan-out source
+CREATE INDEX IX_Votes_PostId_VoteTypeId      ON dbo.Votes(PostId, VoteTypeId)
+    INCLUDE (UserId, BountyAmount) WITH (DATA_COMPRESSION = PAGE);
+CREATE INDEX IX_Votes_UserId_VoteTypeId      ON dbo.Votes(UserId, VoteTypeId)
+    WITH (DATA_COMPRESSION = PAGE);
+
+-- Comments
+CREATE INDEX IX_Comments_PostId  ON dbo.Comments(PostId)  INCLUDE (UserId, Score, CreationDate);
+CREATE INDEX IX_Comments_UserId  ON dbo.Comments(UserId)  INCLUDE (PostId, Score, CreationDate);
+
+-- Badges
+CREATE INDEX IX_Badges_UserId_Class ON dbo.Badges(UserId, Class) INCLUDE (Date, Name);
+
+-- PostHistory (847k rows, 820 MB — biggest object)
+CREATE INDEX IX_PostHistory_PostId_Type_Date
+    ON dbo.PostHistory(PostId, PostHistoryTypeId, CreationDate) INCLUDE (UserId);
+
+-- Consider columnstore for analytical procs (Enterprise/Developer Edition)
+CREATE NONCLUSTERED COLUMNSTORE INDEX NCCI_Posts
+    ON dbo.Posts(OwnerUserId, PostTypeId, Score, ViewCount, AnswerCount, CommentCount, CreationDate);</code></pre>
+        <p>Investigate why <code>IX_Posts_OwnerUserId_Covering</code> shows 0 seeks despite many procs filtering on <code>OwnerUserId</code> — likely the queries are scanning the clustered index due to <code>SELECT *</code>-style projections or non-sargable predicates.</p>
+      </div>
+
+      <div class="card" id="r10">
+        <h3>10. <span class="pill p-med">Medium</span> Misuse of <code>ORDER BY</code> in CTE / inline TOP <span class="conf">Confidence: Very High</span></h3>
+        <p><code>sp09886</code>, <code>sp09895</code> contain <code>ORDER BY</code> in a CTE without <code>TOP</code>/<code>OFFSET</code> — this is invalid or non-deterministic. <code>sp09950</code>, <code>sp09923</code>, <code>sp09929</code>… use <code>RANK()</code>/<code>ROW_NUMBER()</code> over a single key with no tiebreaker, producing non-deterministic ordering across runs. Always include a tiebreaker (e.g., <code>... ORDER BY Score DESC, Id DESC</code>).</p>
+        <p><code>sp09971</code>: <code>ROW_NUMBER() OVER (PARTITION BY p.Id ORDER BY p.CreationDate DESC)</code> over the primary key always returns 1 — the partition is pointless.</p>
+      </div>
+
+      <div class="card" id="r11">
+        <h3>11. <span class="pill p-med">Medium</span> Reserved words and style hazards <span class="conf">Confidence: High</span></h3>
+        <ul>
+          <li><code>Rank</code> is a reserved built-in function name; many procs use it as a column alias (<code>sp09994</code>, <code>sp09908</code>, <code>sp09887</code>, <code>sp09947</code>, etc.). Rename to <code>RankNo</code>/<code>PostRank</code> and bracket if necessary.</li>
+          <li>Mixed case for the same column (<code>p.ANSWERCOUNT</code> in <code>sp09995</code>) — works but defeats text matching, plan cache, and casing consistency on case-sensitive collations.</li>
+          <li><code>SELECT *</code> from CTEs (<code>sp09837</code>, <code>sp09891</code>, <code>sp09889</code>, <code>sp09820</code>) — fragile and wastes I/O.</li>
+        </ul>
+      </div>
+
+      <div class="card" id="r12">
+        <h3>12. <span class="pill p-med">Medium</span> SET options &amp; error handling <span class="conf">Confidence: High</span></h3>
+        <ul>
+          <li>All SELECT procs include <code>SET NOCOUNT ON</code> ✅, but none set <code>SET XACT_ABORT ON</code> (good for read-only) and none specify <code>SET TRANSACTION ISOLATION LEVEL READ COMMITTED SNAPSHOT</code>/<code>SNAPSHOT</code> as appropriate. Enable RCSI database-wide to make these heavy reporters non-blocking against OLTP writers.</li>
+          <li><code>usp_UpdateTablesWithDelay</code> uses <code>SELECT ... AS Status</code> to communicate errors <em>and</em> <code>THROW</code>. Pick one — do not return result sets from CATCH; let the exception propagate.</li>
+          <li><code>usp_UpdateTablesInLoop</code> swallows errors with <code>BEGIN CATCH ... PRINT ...</code>. Log to a table or rethrow categorically.</li>
+        </ul>
+      </div>
+
+      <div class="card" id="r13">
+        <h3>13. <span class="pill p-low">Low</span> Leverage SQL Server 2022 features <span class="conf">Confidence: Medium</span></h3>
+        <ul>
+          <li>These reporting procs vary heavily by parameter (often none, but joining different filters via constants) — once parameterized, <strong>Parameter Sensitive Plan optimization (PSP)</strong> will adapt for skewed predicates like <code>OwnerUserId</code> and <code>PostTypeId</code> automatically.</li>
+          <li><strong>DOP feedback</strong> and <strong>memory grant feedback (percentile)</strong> in 2022 will benefit the large GROUP BY / RANK procs over Votes/PostHistory; ensure database <code>COMPATIBILITY_LEVEL = 160</code>.</li>
+          <li>Use <code>GENERATE_SERIES</code>, <code>STRING_SPLIT(... , separator, enable_ordinal)</code> for tag parsing if you keep the denormalized <code>Posts.Tags</code> column.</li>
+          <li>Consider <strong>Nonclustered Columnstore</strong> on <code>Posts</code>, <code>Votes</code>, <code>PostHistory</code> (Developer/Enterprise edition is licensed for it) — the workload is exactly what columnstore wins at (large GROUP BY, COUNT/SUM, top-N).</li>
+        </ul>
+      </div>
+
+      <div class="card" id="r14">
+        <h3>14. <span class="pill p-low">Low</span> Naming and maintainability <span class="conf">Confidence: High</span></h3>
+        <ul>
+          <li>Procedure names like <code>sp09994</code> are opaque. Use a verb-noun convention: <code>usp_Report_TopUsersByReputation</code>.</li>
+          <li>Avoid the <code>sp_</code>/<code>sp00...</code> prefix — SQL Server scans master first for objects starting with <code>sp_</code>, and the numeric prefix invites confusion with system procedures.</li>
+          <li>Many procs hard-code <code>'2024-10-01 12:34:56'</code>. Parameterize <code>@AsOfDate datetime2(0)</code> and <code>@TopN int</code> so the plan cache is reused and the report is repeatable.</li>
+          <li>Several procs (<code>sp09994</code>, <code>sp09940</code>, <code>sp09824</code>) embed <code>(SELECT OwnerUserId FROM Posts WHERE Id = tp.PostId)</code> — fragile if duplicates emerge; replace with a proper join using surrogate keys.</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      Based on analysis as of 2026-05-10 12:52:53 UTC.<br>
+      Generated by AI SQL Tuner Studio v1.0.0.0 using model claude-opus-4-7 with reasoning effort low.<br>
+      <a href="https://aisqltuner.com">https://aisqltuner.com</a>
+    </footer>
+  </main>
+</div>
+</body>
+</html>
