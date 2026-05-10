@@ -3,12 +3,12 @@
 
   <url>
     <loc>https://reports.aisqltuner.com/</loc>
-    <lastmod>2026-05-05</lastmod>
+    <lastmod>2026-05-10</lastmod>
   </url>
 
   <url>
     <loc>https://reports.aisqltuner.com/index.html</loc>
-    <lastmod>2026-05-05</lastmod>
+    <lastmod>2026-05-10</lastmod>
   </url>
 
   <url>
@@ -59,6 +59,16 @@
   <url>
     <loc>https://reports.aisqltuner.com/aisqltuner-locking-and-blocking-analysis-tpch10-20260504.html</loc>
     <lastmod>2026-05-04</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/aisqltuner-code-review-20260510.html</loc>
+    <lastmod>2026-05-10</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/sql-server-deadlock-analysis-rockypc-tpch10-dbo-orders-2026-05-05.html</loc>
+    <lastmod>2026-05-05</lastmod>
   </url>
 
 </urlset>

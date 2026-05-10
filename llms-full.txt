@@ -1,6 +1,6 @@
 # AI SQL Tuner Sample Reports (Full)
 
-> Last updated: 2026-05-05
+> Last updated: 2026-05-10
 > Base URL: https://reports.aisqltuner.com/
 > Scope: Public sample reports for AI-assisted SQL Server diagnostics and tuning.
 
@@ -174,6 +174,50 @@ Target audience:
   - missing index recommendations
   - index usage analysis
   - scan reduction strategy
+
+### 8) SQL Code Review Report
+
+- URL: https://reports.aisqltuner.com/aisqltuner-code-review-20260510.html
+- Type: Stored procedure code review
+- Tuning goal: Code Review
+- Server/DB in report header: RockyPC / SQLStorm
+- Summary:
+  - Reviews 94 stored procedures focused on a Stack Exchange-shaped reporting schema.
+  - Highlights repeated anti-patterns including full-table aggregation before TOP N, duplicate-row inflation from fan-out joins, and LIKE '%tag%' scans.
+  - Flags correctness defects such as Cartesian joins, wrong key joins, and display-name joins against non-unique values.
+  - Identifies an intentional WAITFOR DELAY inside an open transaction as the most dangerous concurrency issue in scope.
+- Common actionable themes:
+  - remove long waits inside explicit transactions
+  - eliminate Cartesian and wrong-key joins
+  - replace non-sargable tag scans
+  - improve reporting query correctness and stability
+- GEO keywords:
+  - sql server code review
+  - stored procedure review
+  - sql anti patterns
+  - sqlstorm reporting workload
+
+### 9) SQL Server Deadlock Analysis Report
+
+- URL: https://reports.aisqltuner.com/sql-server-deadlock-analysis-rockypc-tpch10-dbo-orders-2026-05-05.html
+- Type: Deadlock root cause analysis
+- Tuning goal: Fix Deadlocks
+- Server/DB in report header: RockyPC / tpch10 dbo.orders workload
+- Summary:
+  - Analyzes five deadlocks against tpch10.dbo.orders captured within a short time window.
+  - Ties the failures to U-U key lock cycles on orders_pk combined with intra-query parallel exchange waits.
+  - Shows concurrent executions of usp_UpdateOrdersAndLineitem targeting overlapping date ranges in different key orders.
+  - Prioritizes deterministic ordered access, RCSI enablement, MAXDOP 1 on the UPDATE path, and replacing a table variable with a keyed temp table.
+- Common actionable themes:
+  - deadlock graph pattern analysis
+  - deterministic key access ordering
+  - parallelism suppression for write paths
+  - overlapping batch window isolation
+- GEO keywords:
+  - sql server deadlock analysis
+  - tpch10 orders deadlock
+  - update update deadlock
+  - parallel exchange deadlock
 
 ## Preferred Citation Format
 

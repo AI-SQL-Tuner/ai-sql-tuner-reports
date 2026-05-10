@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="AI SQL Tuner deadlock analysis for RockyPC and tpch10.dbo.orders, dated May 5, 2026. Covers clustered key deadlocks, parallelism, and remediation steps.">
+<title>SQL Server Deadlock Analysis – RockyPC / tpch10.dbo.orders – 2026-05-05</title>
+<link rel="canonical" href="https://reports.aisqltuner.com/sql-server-deadlock-analysis-rockypc-tpch10-dbo-orders-2026-05-05.html">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SQL Server Deadlock Analysis – RockyPC / tpch10.dbo.orders – 2026-05-05">
+<meta property="og:description" content="AI SQL Tuner deadlock analysis for RockyPC and tpch10.dbo.orders, dated May 5, 2026. Covers clustered key deadlocks, parallelism, and remediation steps.">
+<meta property="og:url" content="https://reports.aisqltuner.com/sql-server-deadlock-analysis-rockypc-tpch10-dbo-orders-2026-05-05.html">
+<meta property="og:site_name" content="AI SQL Tuner">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SQL Server Deadlock Analysis – RockyPC / tpch10.dbo.orders – 2026-05-05">
+<meta name="twitter:description" content="AI SQL Tuner deadlock analysis for RockyPC and tpch10.dbo.orders, dated May 5, 2026. Covers clustered key deadlocks, parallelism, and remediation steps.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "SQL Server Deadlock Analysis – RockyPC / tpch10.dbo.orders – 2026-05-05",
+  "description": "AI SQL Tuner deadlock analysis for RockyPC and tpch10.dbo.orders, dated May 5, 2026. Covers clustered key deadlocks, parallelism, and remediation steps.",
+  "datePublished": "2026-05-05",
+  "url": "https://reports.aisqltuner.com/sql-server-deadlock-analysis-rockypc-tpch10-dbo-orders-2026-05-05.html",
+  "about": {
+    "@type": "SoftwareApplication",
+    "name": "Microsoft SQL Server 2022 Developer Edition",
+    "softwareVersion": "16.0.1175.1"
+  },
+  "keywords": ["SQL Server", "Deadlock", "tpch10", "usp_UpdateOrdersAndLineitem", "Parallelism", "Intra-query"],
+  "publisher": {
+    "@type": "Organization",
+    "name": "AI SQL Tuner",
+    "url": "https://aisqltuner.com/"
+  }
+}
+</script>
+<style>
+  :root {
+    --accent: #0A84FF;          /* macOS accent blue */
+    --accent-dark: #0860B8;
+    --text: #FFFFFF;
+    --muted: #E6F0FF;
+    --panel: rgba(0,0,0,0.18);
+    --panel-border: rgba(255,255,255,0.18);
+    --code-bg: #0B254A;
+    --warn: #FFD60A;
+    --good: #30D158;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--accent);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+  }
+  nav.toc {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px 18px;
+    background: rgba(0,0,0,0.22);
+    border-right: 1px solid var(--panel-border);
+  }
+  nav.toc h3 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+  }
+  nav.toc ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  nav.toc li { margin: 6px 0; }
+  nav.toc a {
+    color: var(--text);
+    text-decoration: none;
+    display: block;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  nav.toc a:hover { background: rgba(255,255,255,0.12); }
+  main {
+    padding: 32px 40px 60px 40px;
+    max-width: 1100px;
+  }
+  header.report-header {
+    border-bottom: 1px solid var(--panel-border);
+    padding-bottom: 18px;
+    margin-bottom: 24px;
+  }
+  h1 {
+    font-size: 28px;
+    margin: 0 0 8px 0;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+  }
+  .tuning-goal {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid var(--panel-border);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  .meta {
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+  .meta span { margin-right: 14px; }
+  h2 {
+    font-size: 20px;
+    margin: 32px 0 12px 0;
+    border-left: 4px solid #FFFFFF;
+    padding-left: 10px;
+  }
+  h3 {
+    font-size: 16px;
+    margin: 20px 0 8px 0;
+    color: #FFFFFF;
+  }
+  ol, ul { padding-left: 22px; }
+  li { margin: 6px 0; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 14px 0;
+  }
+  .pill {
+    display: inline-block;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-right: 6px;
+    border: 1px solid var(--panel-border);
+  }
+  .pill.high { background: #B30021; }
+  .pill.med  { background: #B36B00; }
+  .pill.low  { background: #1E6F3E; }
+  .conf {
+    font-size: 12.5px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    color: #EAF2FF;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--panel-border);
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: rgba(0,0,0,0.18); }
+  footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--panel-border);
+    color: var(--muted);
+    font-size: 13px;
+  }
+  footer a { color: #FFFFFF; }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.toc { position: relative; height: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="Table of contents">
+    <h3>Contents</h3>
+    <ol>
+      <li><a href="#summary">Executive Summary</a></li>
+      <li><a href="#findings">Key Findings</a></li>
+      <li><a href="#root-cause">Root Cause Analysis</a></li>
+      <li><a href="#recommendations">Prioritized Recommendations</a></li>
+      <li><a href="#code-fixes">Code &amp; Index Fixes</a></li>
+      <li><a href="#monitoring">Validation &amp; Monitoring</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="report-header">
+      <h1>SQL Server Deadlock Analysis – RockyPC / tpch10.dbo.orders – 2026-05-05</h1>
+      <div class="tuning-goal">Tuning Goal: Fix Deadlocks</div>
+      <div class="meta">
+        <span><strong>Server:</strong> RockyPC</span>
+        <span><strong>Version:</strong> SQL Server 2022 (16.0.1175.1) Developer Edition</span>
+        <span><strong>Database:</strong> master (deadlocks occurred in <code>tpch10</code>)</span>
+      </div>
+    </header>
+
+    <section id="summary">
+      <h2>Executive Summary</h2>
+      <div class="panel">
+        <p>All five deadlocks captured between 2026-05-05 01:21:56 UTC and 01:22:40 UTC involve the same statement: the <code>UPDATE dbo.orders</code> in stored procedure <code>tpch10.dbo.usp_UpdateOrdersAndLineitem</code> joining a <code>@BatchOrders</code> table variable. The deadlocks are <strong>U-U key lock cycles on the clustered index <code>orders_pk</code></strong> combined with <strong>intra-query parallelism exchange-event waits</strong> (parallel worker threads on the same SPID forming part of the cycle). Multiple SQLCMD sessions execute the same procedure concurrently with overlapping date ranges, so they target overlapping <code>o_orderkey</code> rows but in different orders.</p>
+        <p><strong>Top priorities to eliminate these deadlocks:</strong></p>
+        <ol>
+          <li><span class="pill high">P1</span> Force a deterministic, ordered access path to <code>orders</code> (process keys in sorted order) and serialize the update using <code>WITH (UPDLOCK, HOLDLOCK)</code> on the driving set, eliminating the U/U conversion race. <span class="conf">Confidence: High</span></li>
+          <li><span class="pill high">P1</span> Enable <strong>Read Committed Snapshot Isolation (RCSI)</strong> on <code>tpch10</code> to remove unnecessary read/U-lock contention from the same and other workloads. <span class="conf">Confidence: High</span></li>
+          <li><span class="pill high">P1</span> Suppress parallelism on this UPDATE statement (<code>OPTION (MAXDOP 1)</code>) — every captured deadlock graph contains parallel <code>e_waitPortOpen</code> exchange events, which is the proximate amplifier. <span class="conf">Confidence: High</span></li>
+          <li><span class="pill med">P2</span> Replace the <code>@BatchOrders</code> table variable with a <strong>temp table that has a clustered PK on <code>o_orderkey</code></strong>, providing the optimizer with cardinality and ordering it currently lacks. <span class="conf">Confidence: High</span></li>
+          <li><span class="pill med">P2</span> Partition concurrent jobs by <strong>non-overlapping date ranges</strong> and/or serialize via <code>sp_getapplock</code>; current 1995-01-01–03-31 vs. 1995-02-15–05-15 ranges overlap. <span class="conf">Confidence: High</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="findings">
+      <h2>Key Findings</h2>
+      <div class="panel">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Timestamp (UTC)</th><th>Victim</th><th>Resource</th><th>Pattern</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>2026-05-05 01:22:40</td><td>process140206ad468 (spid 69, ecid 7)</td><td>KEY on orders_pk</td><td>U↔U + parallel exchange</td></tr>
+            <tr><td>2</td><td>2026-05-05 01:22:03</td><td>process140d354cca8 (spid 86, ecid 7)</td><td>KEY on orders_pk</td><td>4-process U-cycle + exchange</td></tr>
+            <tr><td>3</td><td>2026-05-05 01:22:00</td><td>process14152bfa4e8 (spid 84, ecid 5)</td><td>KEY on orders_pk</td><td>U↔U + exchange</td></tr>
+            <tr><td>4</td><td>2026-05-05 01:21:59</td><td>process1415f41a8c8 (spid 86, ecid 5)</td><td>KEY on orders_pk</td><td>U↔U + 2 exchange events</td></tr>
+            <tr><td>5</td><td>2026-05-05 01:21:56</td><td>process13e78d1aca8 (spid 85, ecid 7)</td><td>KEY on orders_pk</td><td>U↔U + exchange</td></tr>
+          </tbody>
+        </table>
+        <ul>
+          <li>All processes ran the same statement at <code>tpch10.dbo.usp_UpdateOrdersAndLineitem</code> line 53.</li>
+          <li>All processes use <code>read committed (2)</code> isolation; <strong>RCSI is disabled</strong>.</li>
+          <li>All wait resources are <code>KEY: 11:72057594047102976</code> on index <code>orders_pk</code> (clustered PK on <code>dbo.orders</code>).</li>
+          <li>Every graph includes one or more <code>exchangeEvent … e_waitPortOpen</code> entries — the UPDATE goes parallel, and parallel sibling threads (different <code>ecid</code>, same <code>spid</code>) are part of the cycle.</li>
+          <li>Two callers used overlapping ranges: <code>1995-01-01..1995-03-31</code> and <code>1995-02-15..1995-05-15</code>.</li>
+          <li>Lock mode is <code>U</code> on both owner and waiter sides — classic update-scan/seek convert race when different workers hit the same keys via different orders.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="root-cause">
+      <h2>Root Cause Analysis</h2>
+      <div class="panel">
+        <h3>1. Non-deterministic key access order under parallel UPDATE</h3>
+        <p>The UPDATE joins <code>dbo.orders</code> to a <code>@BatchOrders</code> table variable. Because table variables expose <strong>cardinality 1</strong> to the optimizer (no statistics), the planner often chooses a parallel plan with <strong>nested loop / hash join</strong> and an unordered driving stream. Multiple concurrent executions therefore acquire U locks on the same <code>orders_pk</code> keys in different orders, producing a classic deadlock cycle.</p>
+
+        <h3>2. Parallelism amplifies the cycle</h3>
+        <p>Every deadlock graph includes <code>exchangeEvent</code> resources of type <code>e_waitPortOpen</code> with multiple <code>ecid</code> entries on the same <code>spid</code>. This is <strong>intra-query parallel deadlock</strong>: one parallel worker holds a U lock another worker (in the same plan) is waiting for, while a different session is mirrored on the opposite side. Removing parallelism on this statement alone usually eliminates this class of deadlock.</p>
+
+        <h3>3. Read Committed without RCSI</h3>
+        <p>RCSI is disabled, so any concurrent reader/UPDATE on overlapping rows takes shared/U key locks instead of using row versioning. This significantly increases U-U conflict probability on hotspot rows.</p>
+
+        <h3>4. Overlapping date partitions across callers</h3>
+        <p>Sessions execute with <code>@FromDate</code>/<code>@ToDate</code> ranges that overlap (Jan–Mar vs. Feb–May 1995). They therefore write into the same <code>o_orderkey</code> set, guaranteeing contention.</p>
+
+        <h3>5. Long-lived "user_transaction"</h3>
+        <p>The graphs show <code>transactionname="user_transaction"</code> with a multi-second <code>lasttranstarted</code> gap. The procedure is doing additional work (likely also the lineitem update) inside the same transaction, holding U locks on <code>orders</code> longer than necessary.</p>
+      </div>
+    </section>
+
+    <section id="recommendations">
+      <h2>Prioritized Recommendations</h2>
+
+      <ol>
+        <li>
+          <span class="pill high">P1 – Highest impact</span>
+          <strong>Force MAXDOP 1 on the offending UPDATE</strong>
+          <div class="panel">
+            <p>The intra-query parallel exchange events in every graph are a strong indicator. For an UPDATE that touches a relatively small filtered set joined to a table variable, parallelism rarely helps and creates deadlock surface area.</p>
+            <pre><code>UPDATE o
+   SET o.o_comment = LEFT(CONCAT(o.o_comment, ' | BATCH_UPDATE ',
+        CONVERT(varchar(10), @FromDate, 120), '-',
+        CONVERT(varchar(10), @ToDate, 120)), 79)
+FROM dbo.orders AS o
+JOIN @BatchOrders AS bo
+  ON bo.o_orderkey = o.o_orderkey
+OPTION (MAXDOP 1);</code></pre>
+            <p class="conf">Confidence: High. Direct mitigation of exchange-event deadlocks.</p>
+          </div>
+        </li>
+
+        <li>
+          <span class="pill high">P1</span>
+          <strong>Enable RCSI on tpch10</strong>
+          <div class="panel">
+            <p>RCSI removes shared lock contention for readers and reduces conversion contention. It does not eliminate U-U writer conflicts but materially reduces deadlock frequency.</p>
+            <pre><code>-- Quiesce, then:
+ALTER DATABASE tpch10 SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
+-- Verify:
+SELECT name, is_read_committed_snapshot_on FROM sys.databases WHERE name = 'tpch10';</code></pre>
+            <p>Ensure <code>tempdb</code> has sufficient space and IO; monitor <code>version_store</code> usage. SQL Server 2022 + Enterprise tolerates this well.</p>
+            <p class="conf">Confidence: High.</p>
+          </div>
+        </li>
+
+        <li>
+          <span class="pill high">P1</span>
+          <strong>Process keys in deterministic order with explicit U-lock acquisition</strong>
+          <div class="panel">
+            <p>Materialize the target keys, sort them, and lock with <code>UPDLOCK, HOLDLOCK</code> in that order so all sessions take locks in the same sequence. This converts a deadlock-prone pattern into a blocking-only pattern.</p>
+            <pre><code>-- Inside usp_UpdateOrdersAndLineitem
+DECLARE @KeysToUpdate TABLE (o_orderkey BIGINT PRIMARY KEY);
+
+INSERT INTO @KeysToUpdate (o_orderkey)
+SELECT bo.o_orderkey
+FROM @BatchOrders AS bo
+ORDER BY bo.o_orderkey;   -- deterministic order
+
+UPDATE o
+   SET o.o_comment = LEFT(CONCAT(o.o_comment, ' | BATCH_UPDATE ',
+        CONVERT(varchar(10), @FromDate, 120), '-',
+        CONVERT(varchar(10), @ToDate, 120)), 79)
+FROM dbo.orders AS o WITH (UPDLOCK, HOLDLOCK, ROWLOCK)
+JOIN @KeysToUpdate AS k
+  ON k.o_orderkey = o.o_orderkey
+OPTION (MAXDOP 1, FORCE ORDER);</code></pre>
+            <p class="conf">Confidence: High. Combined with P1.1 + P1.2 this typically eliminates the cycle entirely.</p>
+          </div>
+        </li>
+
+        <li>
+          <span class="pill med">P2</span>
+          <strong>Replace @BatchOrders table variable with a #temp table having a clustered PK</strong>
+          <div class="panel">
+            <p>Table variables expose 1-row cardinality to the optimizer (unless you use trace flag 2453 / <code>OPTION (RECOMPILE)</code>). This drives bad join orders and parallel plans that contribute to deadlocks. A <code>#temp</code> table with a clustered PK on <code>o_orderkey</code> gives accurate stats and a sorted seek into <code>orders</code>.</p>
+            <pre><code>CREATE TABLE #BatchOrders (o_orderkey BIGINT NOT NULL PRIMARY KEY CLUSTERED);
+INSERT INTO #BatchOrders (o_orderkey)
+SELECT o_orderkey FROM dbo.orders
+WHERE o_orderdate >= @FromDate AND o_orderdate < DATEADD(day,1,@ToDate);</code></pre>
+            <p class="conf">Confidence: High.</p>
+          </div>
+        </li>
+
+        <li>
+          <span class="pill med">P2</span>
+          <strong>Eliminate overlapping ranges across callers</strong>
+          <div class="panel">
+            <p>The captured workloads overlap (Jan–Mar vs. Feb–May 1995). Either:</p>
+            <ul>
+              <li>Use non-overlapping date partitions per caller, or</li>
+              <li>Serialize concurrent invocations with an application lock so only one update of the same logical partition runs at a time:</li>
+            </ul>
+            <pre><code>BEGIN TRAN;
+DECLARE @rc INT;
+EXEC @rc = sp_getapplock
+     @Resource    = N'usp_UpdateOrdersAndLineitem',
+     @LockMode    = N'Exclusive',
+     @LockOwner   = N'Transaction',
+     @LockTimeout = 60000;
+IF @rc < 0
+BEGIN
+   ROLLBACK; THROW 51000, 'Could not acquire applock for batch update.', 1;
+END
+-- ... do the update ...
+COMMIT;</code></pre>
+            <p class="conf">Confidence: High.</p>
+          </div>
+        </li>
+
+        <li>
+          <span class="pill med">P2</span>
+          <strong>Shorten transaction scope &amp; batch the update</strong>
+          <div class="panel">
+            <p>If the procedure also updates <code>lineitem</code> in the same transaction, split work into smaller, ordered batches (e.g., 1,000–10,000 keys per commit). Smaller transactions hold fewer U locks and reduce the deadlock window.</p>
+            <pre><code>-- pseudo-pattern
+WHILE EXISTS (SELECT 1 FROM #BatchOrders)
+BEGIN
+   BEGIN TRAN;
+
+   ;WITH cte AS (
+       SELECT TOP (5000) o_orderkey
+       FROM #BatchOrders
+       ORDER BY o_orderkey
+   )
+   DELETE FROM cte
+   OUTPUT deleted.o_orderkey INTO #Slice (o_orderkey);
+
+   UPDATE o
+      SET o.o_comment = ...
+   FROM dbo.orders AS o WITH (UPDLOCK, HOLDLOCK, ROWLOCK)
+   JOIN #Slice s ON s.o_orderkey = o.o_orderkey
+   OPTION (MAXDOP 1);
+
+   TRUNCATE TABLE #Slice;
+   COMMIT;
+END</code></pre>
+            <p class="conf">Confidence: Medium-High.</p>
+          </div>
+        </li>
+
+        <li>
+          <span class="pill low">P3</span>
+          <strong>Plan-level safety net: lock hint to disable lock escalation surprises</strong>
+          <div class="panel">
+            <p>Confirm <code>orders</code> does not escalate to TABLE locks under load:</p>
+            <pre><code>SELECT name, lock_escalation_desc
+FROM sys.tables WHERE name = 'orders';
+-- If anything other than TABLE/AUTO is unintended, leave AUTO.
+-- For very large batches, consider:
+ALTER TABLE dbo.orders SET (LOCK_ESCALATION = AUTO);</code></pre>
+            <p class="conf">Confidence: Medium. Diagnostic; only act if escalation is observed in extended events.</p>
+          </div>
+        </li>
+
+        <li>
+          <span class="pill low">P3</span>
+          <strong>Set deadlock priority for batch jobs</strong>
+          <div class="panel">
+            <p>If after the above changes occasional deadlocks remain, mark the batch jobs as the preferred victim so OLTP traffic wins:</p>
+            <pre><code>SET DEADLOCK_PRIORITY LOW;</code></pre>
+            <p>Combine with retry logic (see next).</p>
+            <p class="conf">Confidence: Medium.</p>
+          </div>
+        </li>
+
+        <li>
+          <span class="pill low">P3</span>
+          <strong>Implement deterministic retry on error 1205</strong>
+          <div class="panel">
+            <pre><code>DECLARE @attempt INT = 0;
+WHILE (1=1)
+BEGIN
+   BEGIN TRY
+      BEGIN TRAN;
+      EXEC dbo.usp_UpdateOrdersAndLineitem @FromDate=@FromDate, @ToDate=@ToDate;
+      COMMIT;
+      BREAK;
+   END TRY
+   BEGIN CATCH
+      IF XACT_STATE() <> 0 ROLLBACK;
+      IF ERROR_NUMBER() = 1205 AND @attempt < 5
+      BEGIN
+         SET @attempt += 1;
+         WAITFOR DELAY '00:00:00.250';
+         CONTINUE;
+      END
+      THROW;
+   END CATCH
+END</code></pre>
+            <p class="conf">Confidence: High as a defensive control; not a substitute for P1 fixes.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="code-fixes">
+      <h2>Recommended Refactor of <code>usp_UpdateOrdersAndLineitem</code></h2>
+      <div class="panel">
+        <p>Consolidated pattern incorporating P1 + P2 recommendations:</p>
+        <pre><code>CREATE OR ALTER PROCEDURE dbo.usp_UpdateOrdersAndLineitem
+    @FromDate date,
+    @ToDate   date
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    -- 1) Materialize keys with statistics + ordering
+    CREATE TABLE #BatchOrders (o_orderkey BIGINT NOT NULL PRIMARY KEY CLUSTERED);
+
+    INSERT INTO #BatchOrders (o_orderkey)
+    SELECT o_orderkey
+    FROM dbo.orders
+    WHERE o_orderdate >= @FromDate
+      AND o_orderdate <  DATEADD(day, 1, @ToDate);
+
+    -- 2) Serialize on logical partition (optional but strongly recommended)
+    BEGIN TRAN;
+
+    DECLARE @rc INT;
+    EXEC @rc = sp_getapplock
+         @Resource    = N'usp_UpdateOrdersAndLineitem',
+         @LockMode    = N'Exclusive',
+         @LockOwner   = N'Transaction',
+         @LockTimeout = 60000;
+    IF @rc < 0
+    BEGIN
+        ROLLBACK;
+        THROW 51000, 'Could not acquire applock.', 1;
+    END
+
+    -- 3) Update orders in deterministic key order, no parallelism
+    UPDATE o
+       SET o.o_comment = LEFT(CONCAT(o.o_comment, ' | BATCH_UPDATE ',
+              CONVERT(varchar(10), @FromDate, 120), '-',
+              CONVERT(varchar(10), @ToDate, 120)), 79)
+    FROM dbo.orders AS o WITH (UPDLOCK, HOLDLOCK, ROWLOCK)
+    JOIN #BatchOrders AS b
+      ON b.o_orderkey = o.o_orderkey
+    OPTION (MAXDOP 1, FORCE ORDER);
+
+    -- 4) Lineitem update should also key-order and MAXDOP 1
+    -- UPDATE l ... FROM dbo.lineitem l WITH (UPDLOCK, HOLDLOCK, ROWLOCK)
+    --   JOIN #BatchOrders b ON b.o_orderkey = l.l_orderkey
+    --   OPTION (MAXDOP 1);
+
+    COMMIT;
+END
+GO</code></pre>
+      </div>
+    </section>
+
+    <section id="monitoring">
+      <h2>Validation &amp; Monitoring</h2>
+      <div class="panel">
+        <ul>
+          <li>Confirm RCSI is on: <code>SELECT is_read_committed_snapshot_on FROM sys.databases WHERE name='tpch10';</code></li>
+          <li>Confirm parallel UPDATE no longer occurs — examine actual plan or query store: no <code>Parallelism (Gather Streams)</code> on the UPDATE node.</li>
+          <li>Track deadlocks via the <code>system_health</code> XEvent session:
+            <pre><code>SELECT XEvent.value('(@timestamp)[1]', 'datetime2') AS ts,
+       XEvent.query('.') AS deadlock_xml
+FROM (
+    SELECT CAST(target_data AS XML) AS td
+    FROM sys.dm_xe_session_targets t
+    JOIN sys.dm_xe_sessions s ON s.address = t.event_session_address
+    WHERE s.name = 'system_health' AND t.target_name = 'ring_buffer'
+) x
+CROSS APPLY x.td.nodes('//RingBufferTarget/event[@name="xml_deadlock_report"]') AS X(XEvent)
+ORDER BY ts DESC;</code></pre>
+          </li>
+          <li>Watch <code>sys.dm_tran_version_store_space_usage</code> after enabling RCSI.</li>
+          <li>Track <code>sys.dm_exec_query_stats</code> / Query Store regressions on the UPDATE after MAXDOP 1; expected to be neutral or positive.</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      <div>Based on analysis as of 2026-05-10 15:49:46 UTC.</div>
+      <div>Generated by AI SQL Tuner Studio v1.0.37.0 using model claude-opus-4-7 with reasoning effort low.</div>
+      <div><a href="https://aisqltuner.com" target="_blank" rel="noopener">https://aisqltuner.com</a></div>
+    </footer>
+  </main>
+</div>
+</body>
+</html>
