@@ -3,12 +3,12 @@
 
   <url>
     <loc>https://reports.aisqltuner.com/</loc>
-    <lastmod>2026-05-10</lastmod>
+    <lastmod>2026-05-13</lastmod>
   </url>
 
   <url>
     <loc>https://reports.aisqltuner.com/index.html</loc>
-    <lastmod>2026-05-10</lastmod>
+    <lastmod>2026-05-13</lastmod>
   </url>
 
   <url>
@@ -69,6 +69,21 @@
   <url>
     <loc>https://reports.aisqltuner.com/sql-server-deadlock-analysis-rockypc-tpch10-dbo-orders-2026-05-05.html</loc>
     <lastmod>2026-05-05</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-dbo-votes-2026-05-12-03-04-35-utc.html</loc>
+    <lastmod>2026-05-12</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/index-tuning-report-gpt-5-4-rockypc-sqlstorm-2026-05-13.html</loc>
+    <lastmod>2026-05-13</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/index-tuning-report-sqlstorm-rockypc-2026-05-13.html</loc>
+    <lastmod>2026-05-13</lastmod>
   </url>
 
 </urlset>

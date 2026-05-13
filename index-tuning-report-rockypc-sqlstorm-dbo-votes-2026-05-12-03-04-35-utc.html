@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="AI SQL Tuner index tuning report for RockyPC, SQLStorm, and dbo.Votes, dated May 12, 2026. Covers table-specific indexing, scan reduction, and statistics guidance.">
+  <title>Index Tuning Report – RockyPC / SQLStorm / dbo.Votes – 2026-05-12 03:04:35 UTC</title>
+  <link rel="canonical" href="https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-dbo-votes-2026-05-12-03-04-35-utc.html">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Index Tuning Report – RockyPC / SQLStorm / dbo.Votes – 2026-05-12 03:04:35 UTC">
+  <meta property="og:description" content="AI SQL Tuner index tuning report for RockyPC, SQLStorm, and dbo.Votes, dated May 12, 2026. Covers table-specific indexing, scan reduction, and statistics guidance.">
+  <meta property="og:url" content="https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-dbo-votes-2026-05-12-03-04-35-utc.html">
+  <meta property="og:site_name" content="AI SQL Tuner">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Index Tuning Report – RockyPC / SQLStorm / dbo.Votes – 2026-05-12 03:04:35 UTC">
+  <meta name="twitter:description" content="AI SQL Tuner index tuning report for RockyPC, SQLStorm, and dbo.Votes, dated May 12, 2026. Covers table-specific indexing, scan reduction, and statistics guidance.">
+  <style>
+    :root{
+      --bg:#FFFFFF;
+      --panel:#F6F8F9;
+      --text:#111827;
+      --muted:#6B7280;
+      --teal:#0B6E6E;
+      --teal-soft:#EFF7F7;
+      --border:#D9E3E6;
+      --code:#0F172A;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+      line-height:1.5;
+    }
+    .layout{
+      display:grid;
+      grid-template-columns: 290px 1fr;
+      min-height:100vh;
+    }
+    .sidebar{
+      background:var(--panel);
+      border-right:1px solid var(--border);
+      padding:24px 20px;
+      position:sticky;
+      top:0;
+      height:100vh;
+      overflow:auto;
+    }
+    .content{
+      padding:32px 40px 24px 40px;
+      max-width:1200px;
+    }
+    h1,h2,h3{
+      color:var(--teal);
+      margin-top:0;
+    }
+    h1{
+      font-size:2rem;
+      margin-bottom:8px;
+    }
+    h2{
+      font-size:1.35rem;
+      border-bottom:2px solid var(--border);
+      padding-bottom:8px;
+      margin-top:34px;
+    }
+    h3{
+      font-size:1.05rem;
+      margin-top:24px;
+    }
+    p, li, td, th{
+      font-size:0.96rem;
+    }
+    .muted{
+      color:var(--muted);
+    }
+    .toc h2{
+      font-size:1.05rem;
+      border:none;
+      padding:0;
+      margin-bottom:10px;
+    }
+    .toc ul{
+      list-style:none;
+      padding-left:0;
+      margin:0;
+    }
+    .toc li{
+      margin:8px 0;
+    }
+    a{
+      color:var(--teal);
+      text-decoration:none;
+    }
+    a:hover{text-decoration:underline}
+    .meta{
+      display:grid;
+      grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
+      gap:12px;
+      margin:18px 0 24px 0;
+    }
+    .card{
+      background:#fff;
+      border:1px solid var(--border);
+      border-left:4px solid var(--teal);
+      border-radius:8px;
+      padding:14px 16px;
+    }
+    .summary{
+      background:var(--teal-soft);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:18px 20px;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin:12px 0 18px 0;
+    }
+    th,td{
+      border:1px solid var(--border);
+      padding:10px 12px;
+      text-align:left;
+      vertical-align:top;
+    }
+    th{
+      background:var(--panel);
+      color:var(--teal);
+    }
+    pre{
+      background:var(--teal-soft);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:14px;
+      overflow:auto;
+      color:var(--code);
+      font-size:0.9rem;
+    }
+    code{
+      font-family: Consolas, "Courier New", monospace;
+      white-space:pre-wrap;
+    }
+    .priority{
+      font-weight:700;
+      color:var(--teal);
+    }
+    .badge{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      background:var(--teal-soft);
+      border:1px solid var(--border);
+      color:var(--teal);
+      font-size:0.85rem;
+      margin-right:8px;
+    }
+    footer{
+      border-top:1px solid var(--border);
+      margin-top:36px;
+      padding-top:18px;
+      color:var(--muted);
+      font-size:0.9rem;
+    }
+    .small{font-size:0.9rem}
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Report",
+    "headline":"Index Tuning Report – RockyPC / SQLStorm / dbo.Votes – 2026-05-12 03:04:35 UTC",
+    "datePublished":"2026-05-12T03:04:35Z",
+    "author":{
+      "@type":"Organization",
+      "name":"AI SQL Tuner Studio"
+    },
+    "about":{
+      "@type":"SoftwareApplication",
+      "name":"Microsoft SQL Server 2022"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <nav class="toc">
+        <h2>Table of Contents</h2>
+        <ul>
+          <li><a href="#executive-summary">Executive Summary</a></li>
+          <li><a href="#environment">Environment & Scope</a></li>
+          <li><a href="#detailed-recommendations">Detailed Prioritized Recommendations</a></li>
+          <li><a href="#workload-evidence">Workload Evidence</a></li>
+          <li><a href="#index-health">Index Health Review</a></li>
+          <li><a href="#stats-and-auto-tuning">Statistics & Automatic Tuning</a></li>
+          <li><a href="#scripts">Scripts</a></li>
+          <li><a href="#confidence">Confidence Levels</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <header>
+        <h1>Index Tuning Report – RockyPC / SQLStorm / dbo.Votes – 2026-05-12 03:04:35 UTC</h1>
+        <p class="muted">Tuning goal: <strong>Index Tuning</strong></p>
+
+        <div class="meta">
+          <div class="card">
+            <div><strong>Server</strong></div>
+            <div>RockyPC</div>
+          </div>
+          <div class="card">
+            <div><strong>Database</strong></div>
+            <div>SQLStorm</div>
+          </div>
+          <div class="card">
+            <div><strong>Version</strong></div>
+            <div>SQL Server 2022 (16.x), 16.0.1175.1, RTM-GDR</div>
+          </div>
+          <div class="card">
+            <div><strong>Edition / Engine</strong></div>
+            <div>Developer Edition (64-bit) / Enterprise</div>
+          </div>
+          <div class="card">
+            <div><strong>Analysis Scope</strong></div>
+            <div>Object-scoped to <strong>[dbo].[Votes]</strong></div>
+          </div>
+          <div class="card">
+            <div><strong>Platform Features</strong></div>
+            <div>Columnstore, online index operations, advanced compression, partition switching, SQL Server 2022 IQP features</div>
+          </div>
+        </div>
+      </header>
+
+      <section id="executive-summary">
+        <h2>Executive Summary</h2>
+        <div class="summary">
+          <ol>
+            <li>
+              <span class="priority">Top priority: make no new index additions on [dbo].[Votes] at this time.</span>
+              There are <strong>no missing index recommendations</strong>, no qualifying workload statements against <strong>dbo.Votes</strong> from plan cache or Query Store, and the only observed index on the table shows <strong>very light read activity</strong> with <strong>0 updates</strong>.
+            </li>
+            <li>
+              <span class="priority">Retain the current clustered primary key as-is.</span>
+              The clustered PK on <strong>Id</strong> is healthy: <strong>99.83% page density</strong>, <strong>0.33% fragmentation</strong>, and <strong>PAGE compression</strong> already enabled. No rebuild, reorganize, fill factor reduction, or compression change is justified.
+            </li>
+            <li>
+              <span class="priority">Do not add rowstore foreign key helper indexes yet.</span>
+              Although <strong>UserId</strong> and <strong>VoteTypeId</strong> are foreign keys, there is no observed workload evidence showing RI-check bottlenecks, joins, or filters needing support. Adding such indexes now would introduce maintenance overhead without demonstrated benefit.
+            </li>
+            <li>
+              <span class="priority">Do not recommend columnstore.</span>
+              The table has approximately <strong>926,084 rows</strong>, below the stated threshold for considering columnstore (&gt; 1,000,000 rows), and there is no analytic scan workload on dbo.Votes to justify it.
+            </li>
+            <li>
+              <span class="priority">Low-priority maintenance only: refresh statistics on dbo.Votes if row distribution has changed.</span>
+              Database auto-stats settings are enabled and healthy, but a targeted manual stats refresh can be beneficial after bulk loads or major data churn.
+            </li>
+            <li>
+              <span class="priority">Automatic tuning is already correctly configured.</span>
+              <strong>FORCE_LAST_GOOD_PLAN</strong> is <strong>Desired = ON</strong> and <strong>Actual = ON</strong>. No action required.
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="environment">
+        <h2>Environment &amp; Scope</h2>
+        <ul>
+          <li>Analyzed table: <strong>[dbo].[Votes]</strong></li>
+          <li>Observed row count from index physical stats: <strong>926,084</strong></li>
+          <li>Current index footprint reviewed: clustered PK only</li>
+          <li>Missing index DMV: <strong>no recommendations returned</strong></li>
+          <li>Query Store forced plan failures: <strong>none detected</strong></li>
+          <li>Automatic tuning: <strong>FORCE_LAST_GOOD_PLAN enabled and aligned with desired state</strong></li>
+        </ul>
+      </section>
+
+      <section id="detailed-recommendations">
+        <h2>Detailed Prioritized Recommendations</h2>
+
+        <ol>
+          <li>
+            <h3>Priority 1 — No index create recommendation for [dbo].[Votes]</h3>
+            <ul>
+              <li><strong>Recommendation:</strong> Do not add nonclustered indexes now.</li>
+              <li><strong>Why:</strong>
+                <ul>
+                  <li>No missing index recommendations were produced.</li>
+                  <li>Plan cache and Query Store do not show user queries filtering, joining, grouping, or ordering on dbo.Votes.</li>
+                  <li>The current clustered PK has only <strong>2 scans</strong>, <strong>0 seeks</strong>, <strong>0 lookups</strong>, and <strong>0 updates</strong>; this is not evidence of unmet indexing demand.</li>
+                  <li>Adding indexes on <strong>PostId</strong>, <strong>UserId</strong>, <strong>VoteTypeId</strong>, or composites purely from cardinality would be speculative and would increase write, storage, and maintenance cost.</li>
+                </ul>
+              </li>
+              <li><strong>Cardinality observations:</strong>
+                <ul>
+                  <li><strong>PostId</strong> is high cardinality (~242,634 distinct) and would be a strong candidate only if recurring seeks/joins on PostId appear.</li>
+                  <li><strong>CreationDate</strong> is moderately selective (~5,405 distinct).</li>
+                  <li><strong>UserId</strong> (~929 distinct) is modestly selective.</li>
+                  <li><strong>VoteTypeId</strong> (~13 distinct) and <strong>BountyAmount</strong> (~12 distinct) are low-cardinality standalone columns and are not good standalone index leaders.</li>
+                </ul>
+              </li>
+              <li><strong>Assessment:</strong> Wait for workload evidence before creating indexes.</li>
+            </ul>
+          </li>
+
+          <li>
+            <h3>Priority 2 — Keep the clustered primary key unchanged</h3>
+            <ul>
+              <li><strong>Recommendation:</strong> Retain <strong>PK__Votes__3214EC07006169CE</strong> on <strong>Id</strong> exactly as implemented.</li>
+              <li><strong>Why:</strong>
+                <ul>
+                  <li>Compression is already optimal for this observed state: <strong>PAGE</strong>.</li>
+                  <li>Physical health is excellent: <strong>99.83% avg page density</strong>, <strong>0.33% fragmentation</strong>.</li>
+                  <li>No evidence of page split pressure or low page utilization.</li>
+                  <li>No evidence supports changing fill factor from its effective current state.</li>
+                </ul>
+              </li>
+              <li><strong>Assessment:</strong> No rebuild/reorg needed now.</li>
+            </ul>
+          </li>
+
+          <li>
+            <h3>Priority 3 — Do not add foreign-key support indexes without workload evidence</h3>
+            <ul>
+              <li><strong>Reviewed constraints:</strong>
+                <ul>
+                  <li><strong>FK__Votes__UserId__5EBF139D</strong> on <strong>UserId</strong> → <strong>dbo.Users(Id)</strong></li>
+                  <li><strong>FK__Votes__VoteTypeI__5DCAEF64</strong> on <strong>VoteTypeId</strong> → <strong>dbo.VoteTypes(Id)</strong></li>
+                </ul>
+              </li>
+              <li><strong>Recommendation:</strong> Do not create FK helper indexes at this time.</li>
+              <li><strong>Why:</strong>
+                <ul>
+                  <li>There is no observed delete/update pressure on parent tables causing RI-check scans against dbo.Votes.</li>
+                  <li>No query text in the provided workload shows joins on these columns.</li>
+                  <li><strong>VoteTypeId</strong> is low cardinality and would likely have weak standalone usefulness.</li>
+                </ul>
+              </li>
+              <li><strong>Conditional future candidate only if workload appears:</strong> <strong>(PostId, VoteTypeId)</strong> or <strong>(PostId)</strong> would be more promising than standalone <strong>VoteTypeId</strong>, based on higher combined distinctness.</li>
+            </ul>
+          </li>
+
+          <li>
+            <h3>Priority 4 — No columnstore recommendation</h3>
+            <ul>
+              <li><strong>Recommendation:</strong> Do not add clustered or nonclustered columnstore.</li>
+              <li><strong>Why:</strong>
+                <ul>
+                  <li>Table size is <strong>926,084 rows</strong>, below the stated threshold for considering columnstore.</li>
+                  <li>No analytic aggregation workload on dbo.Votes was captured.</li>
+                  <li>A columnstore index would add storage and DML complexity without demonstrated benefit.</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+
+          <li>
+            <h3>Priority 5 — Low-priority statistics maintenance on dbo.Votes</h3>
+            <ul>
+              <li><strong>Recommendation:</strong> Run targeted statistics refresh on dbo.Votes during a maintenance window if recent data changes were significant.</li>
+              <li><strong>Why:</strong>
+                <ul>
+                  <li>Auto Create Stats and Auto Update Stats are already enabled and appropriate.</li>
+                  <li>No stale-stats symptom is directly visible in the supplied workload, but a large table with changing skew can still benefit from periodic manual refresh.</li>
+                </ul>
+              </li>
+              <li><strong>Recommendation:</strong> Keep <strong>AUTO_UPDATE_STATISTICS_ASYNC = OFF</strong> unless compile blocking due to stats refresh is confirmed elsewhere; nothing in this evidence set requires a change.</li>
+            </ul>
+          </li>
+
+          <li>
+            <h3>Priority 6 — No action required for forced plans or automatic tuning</h3>
+            <ul>
+              <li><strong>Forced plan failures:</strong> none detected.</li>
+              <li><strong>Automatic tuning:</strong> <strong>FORCE_LAST_GOOD_PLAN</strong> is ON and matches desired state.</li>
+              <li><strong>Recommendation:</strong> No remediation needed.</li>
+            </ul>
+          </li>
+        </ol>
+      </section>
+
+      <section id="workload-evidence">
+        <h2>Workload Evidence</h2>
+
+        <h3>Observed plan cache statements</h3>
+        <ul>
+          <li>The top captured plan cache statements are metadata/reporting queries against DMVs and catalog views, not business workload against <strong>dbo.Votes</strong>.</li>
+          <li>Examples include:
+            <ul>
+              <li><strong>Query Hash 51643155D72AC80E</strong> — query against <code>sys.dm_db_missing_index_%</code></li>
+              <li><strong>Query Hash E90AC64A1205B68D</strong> — query reading <code>sys.index_columns</code>, <code>sys.columns</code>, and catalog metadata</li>
+              <li><strong>Query Hash 21D4DDCF73AF10BE</strong> — environment introspection query using <code>@@SERVERNAME</code> and <code>@@VERSION</code></li>
+            </ul>
+          </li>
+          <li><strong>Conclusion:</strong> no captured statement can be tied to a new dbo.Votes index recommendation with confidence.</li>
+        </ul>
+
+        <h3>Query Store workload insights</h3>
+        <ul>
+          <li>The highest-cost Query Store statements are also metadata discovery queries, for example:
+            <ul>
+              <li><code>SELECT db_id() AS database_id, o.[type] as ModuleType, COUNT_BIG(*) ... FROM sys.objects ...</code></li>
+              <li><code>SELECT TOP 50 ... FROM sys.dm_db_index_physical_stats(DB_ID(), NULL, NULL, NULL, 'SAMPLED') ...</code></li>
+              <li><code>SELECT AVG(cells_per_object) ... FROM sys.spatial_index_tessellations ...</code></li>
+            </ul>
+          </li>
+          <li>No Query Store item in the supplied data shows a recurring predicate on <strong>dbo.Votes</strong>.</li>
+          <li><strong>Result:</strong> index creation on dbo.Votes would be unsupported by observed workload.</li>
+        </ul>
+      </section>
+
+      <section id="index-health">
+        <h2>Index Health Review</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Table</th>
+              <th>Index</th>
+              <th>Type</th>
+              <th>Reads</th>
+              <th>Writes</th>
+              <th>Size</th>
+              <th>Compression</th>
+              <th>Page Density</th>
+              <th>Fragmentation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>dbo.Votes</td>
+              <td>PK__Votes__3214EC07006169CE</td>
+              <td>CLUSTERED</td>
+              <td>seeks=0, scans=2, lookups=0</td>
+              <td>updates=0</td>
+              <td>11.8 MB</td>
+              <td>PAGE</td>
+              <td>99.83%</td>
+              <td>0.33%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <ul>
+          <li><strong>No drop recommendation:</strong> the clustered PK is required and healthy.</li>
+          <li><strong>No modify recommendation:</strong> there is no evidence supporting key changes, includes, compression changes, or fill factor changes.</li>
+          <li><strong>No rebuild recommendation:</strong> fragmentation and density are already excellent.</li>
+        </ul>
+      </section>
+
+      <section id="stats-and-auto-tuning">
+        <h2>Statistics &amp; Automatic Tuning</h2>
+
+        <h3>Statistics</h3>
+        <ul>
+          <li><strong>Auto Create Stats:</strong> True</li>
+          <li><strong>Auto Update Stats:</strong> True</li>
+          <li><strong>Auto Update Stats Async:</strong> False</li>
+        </ul>
+        <p>No statistics drops or custom statistics creation are recommended from the supplied evidence. A targeted update of existing statistics on <strong>dbo.Votes</strong> is the only low-risk maintenance action worth considering.</p>
+
+        <h3>Automatic tuning and plan forcing</h3>
+        <ul>
+          <li><strong>FORCE_LAST_GOOD_PLAN:</strong> Desired ON, Actual ON</li>
+          <li><strong>Forced plan failures:</strong> none</li>
+        </ul>
+        <p>No corrective action is needed here.</p>
+      </section>
+
+      <section id="scripts">
+        <h2>Scripts</h2>
+
+        <h3>1. Recommended maintenance script — targeted statistics refresh on dbo.Votes</h3>
+        <pre><code>USE [SQLStorm];
+GO
+
+UPDATE STATISTICS [dbo].[Votes] WITH FULLSCAN;
+GO</code></pre>
+
+        <h3>2. Optional verification script — confirm current index and stats health before any future changes</h3>
+        <pre><code>USE [SQLStorm];
+GO
+
+SELECT
+    s.name AS SchemaName,
+    o.name AS TableName,
+    i.name AS IndexName,
+    i.type_desc,
+    i.fill_factor,
+    i.is_padded,
+    p.rows AS RowCount,
+    ips.avg_fragmentation_in_percent,
+    ips.avg_page_space_used_in_percent,
+    ips.page_count
+FROM sys.objects o
+JOIN sys.schemas s
+    ON o.schema_id = s.schema_id
+JOIN sys.indexes i
+    ON o.object_id = i.object_id
+JOIN sys.partitions p
+    ON i.object_id = p.object_id
+   AND i.index_id = p.index_id
+CROSS APPLY sys.dm_db_index_physical_stats(DB_ID(), o.object_id, i.index_id, NULL, 'SAMPLED') ips
+WHERE s.name = N'dbo'
+  AND o.name = N'Votes'
+  AND o.type = 'U';
+
+SELECT
+    st.name AS StatsName,
+    sp.last_updated,
+    sp.rows,
+    sp.rows_sampled,
+    sp.modification_counter
+FROM sys.stats st
+CROSS APPLY sys.dm_db_stats_properties(st.object_id, st.stats_id) sp
+WHERE st.object_id = OBJECT_ID(N'dbo.Votes')
+ORDER BY st.name;
+GO</code></pre>
+
+        <h3>3. Explicit no-op on index creation</h3>
+        <p class="small">No CREATE INDEX, DROP INDEX, or ALTER INDEX statement is recommended for dbo.Votes from the supplied evidence set.</p>
+      </section>
+
+      <section id="confidence">
+        <h2>Confidence Levels</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Recommendation</th>
+              <th>Confidence</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>No new nonclustered indexes on dbo.Votes</td>
+              <td>High</td>
+              <td>No missing index signal, no user workload evidence, and no user_updates/read imbalance suggesting overlooked access paths.</td>
+            </tr>
+            <tr>
+              <td>Keep clustered PK unchanged</td>
+              <td>High</td>
+              <td>Very high page density, negligible fragmentation, existing PAGE compression, and no workload issue tied to the index.</td>
+            </tr>
+            <tr>
+              <td>No FK helper indexes yet</td>
+              <td>Medium-High</td>
+              <td>Potentially useful in some systems, but unsupported by observed queries, RI-check pain, or parent-table maintenance evidence here.</td>
+            </tr>
+            <tr>
+              <td>No columnstore</td>
+              <td>High</td>
+              <td>Row count below threshold and no analytic scan pattern captured.</td>
+            </tr>
+            <tr>
+              <td>Targeted stats refresh only if recent data change occurred</td>
+              <td>Medium</td>
+              <td>Safe maintenance action, but direct stale-stat symptoms were not provided.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <footer>
+        <div>Based on analysis as of 2026-05-12 03:04:35 UTC</div>
+        <div>Generated by AI SQL Tuner Studio v1.0.37.0 using model gpt-5.4 with reasoning effort low.</div>
+        <div><a href="https://aisqltuner.com">https://aisqltuner.com</a></div>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

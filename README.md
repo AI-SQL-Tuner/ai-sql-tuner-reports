@@ -42,6 +42,9 @@ Core topics covered:
 - Locking and Blocking Analysis Report - tpch10 Database - 2026-05-04: https://reports.aisqltuner.com/aisqltuner-locking-and-blocking-analysis-tpch10-20260504.html
 - Query Tuning Report - Procedure SP00060 in SQLStorm - 2026-03-28: https://reports.aisqltuner.com/aisqltuner-query-tuner-sp00060-20260328.html
 - Index Tuning Report - SQLStorm Database - 2026-03-19: https://reports.aisqltuner.com/aisqltuner--sqlstorm-index-tuning-20260319.html
+- Index Tuning Report - RockyPC / SQLStorm / dbo.Votes - 2026-05-12 03:04:35 UTC: https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-dbo-votes-2026-05-12-03-04-35-utc.html
+- Index Tuning Report - RockyPC / SQLStorm - 2026-05-13: https://reports.aisqltuner.com/index-tuning-report-gpt-5-4-rockypc-sqlstorm-2026-05-13.html
+- Index Tuning Report - SQLStorm (RockyPC) - 2026-05-13: https://reports.aisqltuner.com/index-tuning-report-sqlstorm-rockypc-2026-05-13.html
 
 ## SEO And GEO Assets
 

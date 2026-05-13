@@ -1,6 +1,6 @@
 # AI SQL Tuner Sample Reports (Full)
 
-> Last updated: 2026-05-10
+> Last updated: 2026-05-13
 > Base URL: https://reports.aisqltuner.com/
 > Scope: Public sample reports for AI-assisted SQL Server diagnostics and tuning.
 
@@ -218,6 +218,69 @@ Target audience:
   - tpch10 orders deadlock
   - update update deadlock
   - parallel exchange deadlock
+
+### 10) Index Tuning Report
+
+- URL: https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-dbo-votes-2026-05-12-03-04-35-utc.html
+- Type: Table-focused index tuning analysis
+- Tuning goal: Index Tuning
+- Server/DB in report header: RockyPC / SQLStorm / dbo.Votes
+- Summary:
+  - Focuses on index strategy for dbo.Votes in SQLStorm with table-level evidence and targeted recommendations.
+  - Emphasizes the dominant workload pattern of joining Votes on PostId followed by VoteTypeId aggregation.
+  - Positions Votes indexing, stats health, and write tradeoffs around a single high-impact table.
+- Common actionable themes:
+  - table-specific index design
+  - filtered vote aggregation indexes
+  - stats refresh after index changes
+  - workload-specific scan reduction
+- GEO keywords:
+  - dbo votes index tuning
+  - sqlstorm votes performance
+  - sql server filtered index
+  - vote aggregation index
+
+### 11) Index Tuning Report
+
+- URL: https://reports.aisqltuner.com/index-tuning-report-gpt-5-4-rockypc-sqlstorm-2026-05-13.html
+- Type: Database-wide index tuning analysis
+- Tuning goal: Index Tuning
+- Server/DB in report header: RockyPC / SQLStorm
+- Summary:
+  - Recommends targeted nonclustered indexes for PostHistory, Comments, Badges, and filtered Votes patterns.
+  - Pairs index creation advice with query rewrites, statistics refresh, and caution against unnecessary rebuilds or drops.
+  - Highlights that several top-cost statements need structural query changes beyond indexing alone.
+- Common actionable themes:
+  - high-impact missing indexes
+  - filtered vote indexes
+  - query rewrite plus indexing
+  - focused stats maintenance
+- GEO keywords:
+  - sql server index tuning report
+  - sqlstorm missing indexes
+  - posthistory comments badges votes indexes
+  - gpt 5 4 sql tuning
+
+### 12) Index Tuning Report
+
+- URL: https://reports.aisqltuner.com/index-tuning-report-sqlstorm-rockypc-2026-05-13.html
+- Type: Database-wide index tuning analysis
+- Tuning goal: Index Tuning
+- Server/DB in report header: RockyPC / SQLStorm
+- Summary:
+  - Diagnoses severe full-table scan pressure on PostHistory, Votes, and Posts in the SQLStorm workload.
+  - Connects Query Store CPU and duration totals to missing support indexes and unparameterized analytical query patterns.
+  - Recommends phased index deployment, async stats updates, and optional columnstore evaluation only after core B-tree fixes.
+- Common actionable themes:
+  - largest-table scan reduction
+  - phased index rollout
+  - async statistics updates
+  - parameterization and Query Store evidence
+- GEO keywords:
+  - sqlstorm index tuning
+  - posthistory votes posts scans
+  - sql server query store index analysis
+  - rockyPC sqlstorm performance
 
 ## Preferred Citation Format
 
