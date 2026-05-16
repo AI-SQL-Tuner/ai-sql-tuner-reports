@@ -1,0 +1,1936 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Server Health Report – RockyPC – 2026-05-16</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Server Health Report – RockyPC – 2026-05-16",
+    "description": "Comprehensive SQL Server health analysis for RockyPC covering performance, configuration, security, backup, integrity, and operational recommendations.",
+    "datePublished": "2026-05-16T00:27:38Z",
+    "author": {
+      "@type": "SoftwareApplication",
+      "name": "AI SQL Tuner Studio",
+      "version": "1.0.38.0",
+      "url": "https://aisqltuner.com"
+    },
+    "about": {
+      "@type": "SoftwareApplication",
+      "name": "Microsoft SQL Server 2022 Developer Edition",
+      "version": "16.0.1180.1"
+    }
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #111827;
+      background: #FFFFFF;
+      display: flex;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+
+    a { color: #0B6E6E; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Layout ── */
+    .page-wrapper {
+      display: flex;
+      flex: 1;
+    }
+
+    /* ── Sidebar ── */
+    nav#toc {
+      width: 270px;
+      min-width: 270px;
+      background: #F6F8F9;
+      border-right: 1px solid #E2E8EE;
+      padding: 2rem 1.25rem 2rem 1.5rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    nav#toc .toc-brand {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #0B6E6E;
+      margin-bottom: 1.25rem;
+      display: block;
+    }
+
+    nav#toc h2 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6B7280;
+      margin: 1.25rem 0 0.5rem;
+      border: none;
+    }
+
+    nav#toc ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    nav#toc ul li { margin-bottom: 0.3rem; }
+
+    nav#toc ul li a {
+      font-size: 0.84rem;
+      color: #374151;
+      display: block;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    nav#toc ul li a:hover {
+      background: #DFF0F0;
+      color: #0B6E6E;
+      text-decoration: none;
+    }
+
+    nav#toc ul li a.active {
+      background: #0B6E6E;
+      color: #FFFFFF;
+    }
+
+    /* ── Main content ── */
+    main {
+      flex: 1;
+      padding: 2.5rem 3rem 3rem 3rem;
+      max-width: 1020px;
+    }
+
+    /* ── Report header ── */
+    .report-header {
+      border-bottom: 3px solid #0B6E6E;
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .report-header h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: #0B6E6E;
+      line-height: 1.3;
+    }
+
+    .report-header .goal-badge {
+      display: inline-block;
+      margin-top: 0.5rem;
+      background: #EFF7F7;
+      border: 1px solid #A3D4D4;
+      color: #0B6E6E;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+    }
+
+    .report-meta {
+      margin-top: 0.85rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .report-meta .meta-item {
+      font-size: 0.82rem;
+      color: #6B7280;
+    }
+
+    .report-meta .meta-item strong {
+      color: #111827;
+      font-weight: 600;
+    }
+
+    /* ── Section headings ── */
+    h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0B6E6E;
+      margin: 2.25rem 0 0.85rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 2px solid #EFF7F7;
+    }
+
+    h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1F3A3A;
+      margin: 1.5rem 0 0.5rem;
+    }
+
+    h4 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #374151;
+      margin: 1.1rem 0 0.35rem;
+    }
+
+    p { margin-bottom: 0.85rem; }
+
+    /* ── Lists ── */
+    ol, ul {
+      padding-left: 1.4rem;
+      margin-bottom: 0.85rem;
+    }
+
+    ol li, ul li {
+      margin-bottom: 0.45rem;
+    }
+
+    /* ── Code ── */
+    code {
+      font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+      font-size: 0.83rem;
+      background: #EFF7F7;
+      border: 1px solid #C8E6E6;
+      border-radius: 3px;
+      padding: 0.1em 0.35em;
+      color: #0B4F4F;
+    }
+
+    pre {
+      background: #EFF7F7;
+      border: 1px solid #C8E6E6;
+      border-radius: 6px;
+      padding: 1.1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0.75rem 0 1.25rem;
+    }
+
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.82rem;
+      color: #0B4F4F;
+      line-height: 1.6;
+    }
+
+    /* ── Callout boxes ── */
+    .callout {
+      border-left: 4px solid;
+      border-radius: 0 6px 6px 0;
+      padding: 0.85rem 1.1rem;
+      margin: 1rem 0;
+      font-size: 0.88rem;
+    }
+
+    .callout-critical {
+      border-color: #DC2626;
+      background: #FEF2F2;
+      color: #7F1D1D;
+    }
+
+    .callout-warning {
+      border-color: #D97706;
+      background: #FFFBEB;
+      color: #78350F;
+    }
+
+    .callout-info {
+      border-color: #0B6E6E;
+      background: #EFF7F7;
+      color: #0B3D3D;
+    }
+
+    .callout-ok {
+      border-color: #059669;
+      background: #ECFDF5;
+      color: #064E3B;
+    }
+
+    .callout strong { font-weight: 700; }
+
+    /* ── Priority items ── */
+    .priority-item {
+      background: #FAFAFA;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .priority-item .p-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.55rem;
+      border-radius: 12px;
+    }
+
+    .badge-critical { background: #FEE2E2; color: #B91C1C; }
+    .badge-high     { background: #FEF3C7; color: #92400E; }
+    .badge-medium   { background: #DBEAFE; color: #1E40AF; }
+    .badge-low      { background: #F3F4F6; color: #374151; }
+
+    .badge-confidence {
+      font-size: 0.68rem;
+      font-weight: 600;
+      background: #F0FDF4;
+      color: #166534;
+      border: 1px solid #BBF7D0;
+      padding: 0.18rem 0.5rem;
+      border-radius: 10px;
+    }
+
+    .p-title {
+      font-weight: 700;
+      color: #111827;
+      font-size: 0.95rem;
+    }
+
+    .p-body {
+      color: #374151;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    /* ── Summary table ── */
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.85rem;
+    }
+
+    .summary-table th {
+      background: #0B6E6E;
+      color: #FFFFFF;
+      padding: 0.6rem 0.85rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+    }
+
+    .summary-table td {
+      padding: 0.55rem 0.85rem;
+      border-bottom: 1px solid #E5E7EB;
+      vertical-align: top;
+    }
+
+    .summary-table tr:nth-child(even) td { background: #F9FAFB; }
+    .summary-table tr:hover td { background: #EFF7F7; }
+
+    /* ── Footer ── */
+    footer {
+      background: #F6F8F9;
+      border-top: 1px solid #E2E8EE;
+      padding: 1.25rem 3rem;
+      font-size: 0.78rem;
+      color: #6B7280;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    footer a { color: #0B6E6E; }
+
+    /* ── Responsive ── */
+    @media (max-width: 860px) {
+      nav#toc { display: none; }
+      main { padding: 1.5rem; }
+      footer { padding: 1rem 1.5rem; }
+    }
+
+    /* Divider */
+    hr { border: none; border-top: 1px solid #E5E7EB; margin: 2rem 0; }
+  </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+
+  <!-- ══════════════ SIDEBAR TOC ══════════════ -->
+  <nav id="toc" aria-label="Table of contents">
+    <span class="toc-brand">AI SQL Tuner Studio</span>
+
+    <h2>Navigation</h2>
+    <ul>
+      <li><a href="#executive-summary">Executive Summary</a></li>
+      <li><a href="#top-priorities">Top Priorities</a></li>
+    </ul>
+
+    <h2>Recommendations</h2>
+    <ul>
+      <li><a href="#rec-performance">1. Performance</a></li>
+      <li><a href="#rec-configuration">2. Configuration</a></li>
+      <li><a href="#rec-indexes">3. Index Optimization</a></li>
+      <li><a href="#rec-querystore">4. Query Store</a></li>
+      <li><a href="#rec-checkdb">5. Database Integrity</a></li>
+      <li><a href="#rec-security">6. Security</a></li>
+      <li><a href="#rec-concurrency">7. Concurrency</a></li>
+      <li><a href="#rec-backup">8. Backup &amp; Recovery</a></li>
+      <li><a href="#rec-operational">9. Operational Best Practices</a></li>
+    </ul>
+
+    <h2>Reference</h2>
+    <ul>
+      <li><a href="#wait-analysis">Wait Analysis</a></li>
+      <li><a href="#io-analysis">I/O Analysis</a></li>
+      <li><a href="#scripts">Scripts</a></li>
+    </ul>
+  </nav>
+
+  <!-- ══════════════ MAIN CONTENT ══════════════ -->
+  <main>
+
+    <!-- Report Header -->
+    <div class="report-header">
+      <h1>Server Health Report – RockyPC – 2026-05-16</h1>
+      <span class="goal-badge">🎯 Tuning Goal: Server Health</span>
+      <div class="report-meta">
+        <div class="meta-item"><strong>Server:</strong> RockyPC (default instance)</div>
+        <div class="meta-item"><strong>Version:</strong> SQL Server 2022 (RTM-GDR) 16.0.1180.1</div>
+        <div class="meta-item"><strong>Edition:</strong> Developer Edition (64-bit) / Enterprise Engine</div>
+        <div class="meta-item"><strong>OS:</strong> Windows 10 Home (Build 26200) — Hypervisor</div>
+        <div class="meta-item"><strong>Database:</strong> master (server-wide scope)</div>
+        <div class="meta-item"><strong>Uptime:</strong> &lt; 1 day (recently restarted)</div>
+        <div class="meta-item"><strong>Report Date:</strong> 2026-05-16 00:27:38 UTC</div>
+      </div>
+    </div>
+
+    <!-- ══════ EXECUTIVE SUMMARY ══════ -->
+    <section id="executive-summary">
+      <h2>Executive Summary</h2>
+
+      <p>
+        This report analyzes the overall health of <strong>RockyPC</strong>, a single-instance SQL Server 2022
+        Developer Edition running on a 16-core Windows 10 workstation with 32 GB RAM. The instance hosts several
+        databases including <em>SQLStorm</em>, <em>WideWorldImporters</em>, <em>tpch</em>, <em>tpch10</em>,
+        <em>tpcc</em>, <em>CRM</em>, and <em>DigitsSolver</em>.
+      </p>
+
+      <p>
+        The server has been online for less than one day, so wait statistics and I/O metrics reflect a short
+        observation window. Despite this, several significant operational, integrity, and configuration concerns
+        were identified. The most urgent findings are:
+      </p>
+
+      <div class="callout callout-critical">
+        <strong>🔴 CRITICAL – Database Integrity:</strong> All 7 user databases show CHECKDB has either
+        <strong>never been run</strong> (reporting 1900-01-01) or is overdue (&gt;30 days). This is the highest
+        operational risk on the server and must be addressed immediately.
+      </div>
+
+      <div class="callout callout-critical">
+        <strong>🔴 CRITICAL – Backup Coverage:</strong> The majority of databases have <strong>no recorded
+        backups</strong>. Five databases with FULL recovery model have no log backups, meaning transaction logs
+        are growing unchecked and point-in-time recovery is impossible.
+      </div>
+
+      <div class="callout callout-warning">
+        <strong>🟡 HIGH – Configuration:</strong> Three important server settings are sub-optimal:
+        <em>optimize for ad hoc workloads</em> is disabled, <em>backup compression default</em> is off, and
+        <em>backup checksum default</em> is off.
+      </div>
+
+      <div class="callout callout-warning">
+        <strong>🟡 MEDIUM – Query Store:</strong> <em>WideWorldImporters</em> has a non-standard Query Store
+        configuration (flush interval 50 min, stats interval 15 min, max plans 1000) and runs at compatibility
+        level 130, missing SQL Server 2022 IQP features. All other databases could benefit from reduced flush
+        intervals for tighter workload visibility.
+      </div>
+
+      <div class="callout callout-info">
+        <strong>🔵 LOW – Wait Statistics:</strong> All top waits (<code>PWAIT_DIRECTLOGCONSUMER_GETNEXT</code>,
+        <code>QDS_PERSIST_TASK_MAIN_LOOP_SLEEP</code>, <code>QDS_ASYNC_QUEUE</code>) are benign background
+        waits. <code>HTMEMO</code> (1.65%) is a normal in-memory hash join wait. No user-query blocking
+        patterns detected.
+      </div>
+
+      <div class="callout callout-ok">
+        <strong>✅ Positive Findings:</strong> I/O latencies are excellent across all files (&lt;2 ms),
+        no missing indexes detected, no deadlocks in 7 days, only 1 sysadmin member, all active connections
+        are encrypted (the single unencrypted telemetry session via shared memory is minimal risk), and
+        Query Store is enabled on all databases.
+      </div>
+    </section>
+
+    <!-- ══════ TOP PRIORITIES ══════ -->
+    <section id="top-priorities">
+      <h2>Top Priorities</h2>
+
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Issue</th>
+            <th>Severity</th>
+            <th>Category</th>
+            <th>Confidence</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>CHECKDB never run or overdue on all 7 user databases</td>
+            <td><span class="badge badge-critical">Critical</span></td>
+            <td>Integrity</td>
+            <td><span class="badge-confidence">High 95%</span></td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>No backups for most databases; FULL recovery databases have no log backups</td>
+            <td><span class="badge badge-critical">Critical</span></td>
+            <td>Backup/Recovery</td>
+            <td><span class="badge-confidence">High 95%</span></td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>WideWorldImporters on compatibility level 130 — missing SQL 2022 IQP features</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td>Configuration</td>
+            <td><span class="badge-confidence">High 90%</span></td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><em>optimize for ad hoc workloads</em> disabled — plan cache pollution risk</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td>Configuration</td>
+            <td><span class="badge-confidence">High 92%</span></td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>Backup compression and checksum defaults disabled</td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td>Configuration</td>
+            <td><span class="badge-confidence">High 95%</span></td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>WideWorldImporters last full backup is 1,316 days old</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td>Backup/Recovery</td>
+            <td><span class="badge-confidence">High 95%</span></td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>Query Store flush interval non-standard on WideWorldImporters (50 min)</td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td>Query Store</td>
+            <td><span class="badge-confidence">Medium 85%</span></td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>tempdb metadata memory-optimized disabled — potential contention under load</td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td>Performance</td>
+            <td><span class="badge-confidence">Medium 80%</span></td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td>SQL Server 2022 at RTM-GDR (KB5091158) — verify patch currency</td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td>Operational</td>
+            <td><span class="badge-confidence">Medium 80%</span></td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td>System databases (master, msdb, model) have no backups recorded</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td>Backup/Recovery</td>
+            <td><span class="badge-confidence">High 95%</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <hr />
+
+    <!-- ══════════════════════════════════════════ -->
+    <!--  DETAILED RECOMMENDATIONS                  -->
+    <!-- ══════════════════════════════════════════ -->
+
+    <!-- 1. PERFORMANCE -->
+    <section id="rec-performance">
+      <h2>1. Performance Improvements</h2>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-medium">Medium</span>
+          <span class="p-title">Enable Memory-Optimized TempDB Metadata</span>
+          <span class="badge-confidence">Confidence 80%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            The setting <code>tempdb metadata memory-optimized</code> is currently <strong>disabled (0)</strong>.
+            On SQL Server 2022 with an Enterprise engine, enabling this feature moves system table metadata
+            (such as <code>sysobjects</code>, <code>sysrowsets</code>, <code>sysallocunits</code>) to
+            memory-optimized tables, dramatically reducing latch contention under heavy tempdb usage.
+            While current tempdb I/O is very low, enabling this proactively prevents future bottlenecks as
+            workloads grow.
+          </p>
+          <p>
+            <strong>Action:</strong> Enable via <code>sp_configure</code> and restart the SQL Server service.
+            See the <a href="#scripts">Scripts section</a> for the configuration change.
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-low">Low</span>
+          <span class="p-title">Wait Statistics — Background Waits Only (Healthy)</span>
+          <span class="badge-confidence">Confidence 95%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            The top four wait types are all normal background waits with no user query impact:
+          </p>
+          <ul>
+            <li><strong>PWAIT_DIRECTLOGCONSUMER_GETNEXT (42.56%):</strong> Query Store log consumer waiting
+            for new log records. Normal and expected when Query Store is active.</li>
+            <li><strong>QDS_PERSIST_TASK_MAIN_LOOP_SLEEP (42.37%):</strong> Query Store persistence task
+            sleeping between flush cycles. Completely benign.</li>
+            <li><strong>QDS_ASYNC_QUEUE (12.48%):</strong> Query Store asynchronous background queue.
+            Normal when Query Store is enabled.</li>
+            <li><strong>HTMEMO (1.65%):</strong> In-memory hash join memoization wait. Normal for
+            analytical queries (tpch/tpcc/tpch10 workloads).</li>
+          </ul>
+          <p>
+            No CPU pressure, memory pressure, or I/O bottleneck waits are present. The server is in excellent
+            performance health during this short observation window.
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-low">Low</span>
+          <span class="p-title">I/O Subsystem — Excellent Latencies</span>
+          <span class="badge-confidence">Confidence 95%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            All database files show average I/O latencies of 0–1 ms, well within best-practice thresholds
+            (&lt;5 ms for SSD, &lt;20 ms for spinning disk). Data and log files are appropriately separated
+            between <code>C:\Data\</code> and <code>C:\Logs\</code>. The <strong>SQLStorm</strong> MDF file
+            has the highest read volume (128 MB, 1,554 reads) and remains at 1 ms average — no concern.
+          </p>
+          <p>
+            <strong>Observation:</strong> System database files (master, msdb, model, tempdb) are all stored
+            under <code>C:\Data\MSSQL16.MSSQLSERVER\MSSQL\DATA\</code> on the same volume as user databases.
+            This is acceptable for a developer workstation but would be a concern in production.
+          </p>
+          <p>
+            <strong>tempdb Configuration:</strong> 8 data files (tempdev + temp2–temp8) are configured,
+            which is excellent and matches the logical CPU count guideline (8 = max recommended for 16 cores).
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-medium">Medium</span>
+          <span class="p-title">Max Server Memory — Review Ceiling</span>
+          <span class="badge-confidence">Confidence 75%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            <strong>max server memory</strong> is set to <strong>23,168 MB</strong> (~71% of 32,527 MB total
+            RAM). Current committed memory is only <strong>1,510 MB</strong> (committed target: 7,872 MB),
+            reflecting the recent restart. The 23 GB ceiling is reasonable for a developer machine that also
+            runs an OS and other applications. No action required unless memory pressure appears after
+            workloads warm up. Monitor <code>sys.dm_os_memory_clerks</code> after the instance has been
+            running for several hours.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. CONFIGURATION -->
+    <section id="rec-configuration">
+      <h2>2. Configuration Optimizations</h2>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-high">High</span>
+          <span class="p-title">Enable "Optimize for Ad Hoc Workloads"</span>
+          <span class="badge-confidence">Confidence 92%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            Currently set to <strong>0 (disabled)</strong>. When disabled, the first execution of any ad hoc
+            query stores the full compiled plan in the plan cache, consuming buffer pool memory even for
+            single-use queries. Enabling this setting stores only a stub on first execution, dramatically
+            reducing plan cache bloat — a universal best practice with zero negative impact.
+          </p>
+          <p><strong>Action:</strong> See <a href="#scripts">Scripts</a> — "Enable Optimize for Ad Hoc Workloads".</p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-high">High</span>
+          <span class="p-title">Enable Backup Compression Default</span>
+          <span class="badge-confidence">Confidence 95%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            <code>backup compression default</code> is <strong>disabled (0)</strong>. Compressed backups
+            are significantly smaller (typically 50–70% reduction) and complete faster due to reduced I/O.
+            On SQL Server 2022 with the default algorithm (VDI-based), the CPU overhead is minimal on modern
+            hardware. This is a best-practice setting for all editions that support it.
+          </p>
+          <p><strong>Action:</strong> See <a href="#scripts">Scripts</a> — "Enable Backup Compression and Checksum Defaults".</p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-high">High</span>
+          <span class="p-title">Enable Backup Checksum Default</span>
+          <span class="badge-confidence">Confidence 95%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            <code>backup checksum default</code> is <strong>disabled (0)</strong>. Backup checksums validate
+            backup integrity during both backup creation and restore verification, catching I/O corruption
+            early. This is a critical reliability feature with negligible performance impact.
+          </p>
+          <p><strong>Action:</strong> Included in the "Enable Backup Compression and Checksum Defaults" script.</p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-high">High</span>
+          <span class="p-title">Upgrade WideWorldImporters Compatibility Level to 160</span>
+          <span class="badge-confidence">Confidence 90%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            <strong>WideWorldImporters</strong> is running at compatibility level <strong>130</strong>
+            (SQL Server 2016). All other user databases are at 160 (SQL Server 2022). At level 130, this
+            database misses out on significant features available in levels 140–160:
+          </p>
+          <ul>
+            <li>Adaptive Query Processing (level 140+): adaptive joins, interleaved execution, memory grant feedback</li>
+            <li>Intelligent Query Processing (level 150+): table variable deferred compilation, scalar UDF inlining, batch mode on rowstore</li>
+            <li>SQL Server 2022 IQP (level 160): Parameter Sensitive Plan optimization, DOP feedback, CE feedback</li>
+          </ul>
+          <p>
+            <strong>Action:</strong> Test the workload in a staging environment first, then upgrade.
+            See <a href="#scripts">Scripts</a> — "Upgrade WideWorldImporters Compatibility Level".
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-medium">Medium</span>
+          <span class="p-title">Cost Threshold for Parallelism — Consider Increasing</span>
+          <span class="badge-confidence">Confidence 70%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            <code>cost threshold for parallelism</code> is set to <strong>30</strong> (non-default; the
+            default is 5). This is already a positive improvement over the default. For mixed OLTP/analytical
+            workloads (tpcc + tpch), a value of 30–50 is commonly recommended. The current value of 30
+            appears appropriate. Monitor for excessive parallelism under concurrent load and consider
+            increasing to 50 if needed.
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-medium">Medium</span>
+          <span class="p-title">Max Degree of Parallelism — Verify for Workload</span>
+          <span class="badge-confidence">Confidence 75%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            <code>MAXDOP</code> is set to <strong>8</strong> on a 16-logical-core, single-socket machine.
+            This follows the standard Microsoft recommendation (cap at 8 for single-socket systems). No
+            changes needed unless specific query performance issues arise. DOP feedback (SQL 2022 level 160)
+            will automatically adjust per-query DOP over time for Query Store-tracked databases.
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-low">Low</span>
+          <span class="p-title">Enable "Blocked Process Threshold" Monitoring</span>
+          <span class="badge-confidence">Confidence 80%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            <code>blocked process threshold</code> is set to <strong>0 (disabled)</strong>. Setting this
+            to 5–10 seconds enables the Blocked Process Report extended event, which provides automatic
+            detection and reporting of blocking chains. Recommended for any active OLTP workload.
+          </p>
+          <p><strong>Action:</strong> See <a href="#scripts">Scripts</a> — "Enable Blocked Process Threshold".</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. INDEX OPTIMIZATION -->
+    <section id="rec-indexes">
+      <h2>3. Index Optimization Opportunities</h2>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-low">Low</span>
+          <span class="p-title">No High-Value Missing Indexes Detected</span>
+          <span class="badge-confidence">Confidence 90%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            The missing index DMV analysis across all databases returned <strong>no high-impact missing
+            indexes</strong>. This is consistent with the server having been online for less than one day —
+            the DMVs reset on service restart and insufficient query volume has accumulated to generate
+            meaningful recommendations.
+          </p>
+          <p>
+            <strong>Recommendation:</strong> Re-run the Index Tuning goal analysis after the server has been
+            under representative workload for at least 24–72 hours. At that point, the missing index DMVs
+            will reflect actual query patterns. The <strong>Index Tuning</strong> goal in AI SQL Tuner Studio
+            can be applied per-database (SQLStorm, tpcc, tpch, tpch10, WideWorldImporters, CRM, DigitsSolver)
+            for a comprehensive analysis.
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-low">Low</span>
+          <span class="p-title">Consider Columnstore Indexes for Analytical Databases</span>
+          <span class="badge-confidence">Confidence 75%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            The presence of <strong>tpch</strong> and <strong>tpch10</strong> (TPC-H benchmarks) indicates
+            analytical/reporting workloads with large table scans. These workloads are ideal candidates for
+            <strong>clustered or non-clustered columnstore indexes</strong>, which are available on the
+            Enterprise engine and can deliver 10–100x performance improvements for analytical queries.
+            The <code>HTMEMO</code> wait (hash join memoization) on these databases is consistent with
+            this workload profile.
+          </p>
+          <p>
+            <strong>Action:</strong> After running the Index Tuning goal for tpch and tpch10, specifically
+            evaluate columnstore index opportunities on large fact tables.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. QUERY STORE -->
+    <section id="rec-querystore">
+      <h2>4. Query Store Optimization</h2>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-high">High</span>
+          <span class="p-title">WideWorldImporters — Standardize Query Store Configuration</span>
+          <span class="badge-confidence">Confidence 85%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            <strong>WideWorldImporters</strong> has a non-standard Query Store configuration compared to
+            all other databases on this instance:
+          </p>
+          <ul>
+            <li><strong>Flush Interval:</strong> 50 minutes vs. 15 minutes (all others) — data loss window is 3× larger</li>
+            <li><strong>Stats Collection Interval:</strong> 15 minutes vs. 60 minutes (all others) — higher granularity is fine but inconsistent</li>
+            <li><strong>Max Plans Per Query:</strong> 1,000 vs. 200 (all others) — increases storage overhead</li>
+            <li><strong>Max Storage:</strong> 500 MB vs. 1,000 MB (all others) — may cap earlier under active workloads</li>
+          </ul>
+          <p>
+            <strong>Recommendation:</strong> Standardize to the consistent settings used by other databases:
+            15-min flush, 60-min stats interval, 200 max plans, 1,000 MB storage, and upgrade compatibility
+            to 160. See <a href="#scripts">Scripts</a> — "Standardize WideWorldImporters Query Store Settings".
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-medium">Medium</span>
+          <span class="p-title">All Databases — Query Store Configuration Is Generally Healthy</span>
+          <span class="badge-confidence">Confidence 90%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            All six non-WWI databases have Query Store in <strong>READ_WRITE</strong> mode with AUTO cleanup
+            and capture, 1,000 MB storage limit, 15-minute flush interval, and 30-day stale query threshold.
+            Storage utilization is minimal (0.1–0.8%), indicating Query Store is functioning correctly and
+            not under pressure.
+          </p>
+          <p>
+            <strong>Positive:</strong> All databases are at compatibility level 160, enabling full
+            SQL Server 2022 IQP features including DOP Feedback, CE Feedback, and Parameter Sensitive
+            Plan optimization — which rely on Query Store data to function.
+          </p>
+          <p>
+            <strong>Optional Enhancement:</strong> Consider enabling <code>QUERY_CAPTURE_MODE = CUSTOM</code>
+            with appropriate thresholds to filter out low-frequency, low-resource queries from storage,
+            keeping Query Store data focused on meaningful workloads. This is optional for a developer
+            environment but good practice.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. CHECKDB -->
+    <section id="rec-checkdb">
+      <h2>5. Database Integrity Maintenance (CHECKDB)</h2>
+
+      <div class="callout callout-critical">
+        <strong>CRITICAL:</strong> All 7 user databases show CHECKDB has either never been run or is more
+        than 30 days overdue. The 1900-01-01 date indicates the database was never successfully checked,
+        not that the check failed — it simply has no record in <code>sys.databases.create_date</code>
+        integrity tracking. This must be rectified immediately.
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-critical">Critical</span>
+          <span class="p-title">Run DBCC CHECKDB on All User Databases Immediately</span>
+          <span class="badge-confidence">Confidence 95%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            The following databases have <strong>never had CHECKDB recorded</strong> (showing 1900-01-01):
+          </p>
+          <ul>
+            <li>WideWorldImporters</li>
+            <li>SQLStorm</li>
+            <li>tpcc</li>
+            <li>tpch</li>
+            <li>CRM</li>
+            <li>tpch10</li>
+          </ul>
+          <p>
+            <strong>DigitsSolver</strong> was last checked on April 12, 2026 (33 days ago — marginally
+            overdue per the 30-day threshold). Re-run is recommended.
+          </p>
+          <p>
+            <strong>Recommended Schedule:</strong>
+          </p>
+          <ul>
+            <li><strong>Immediately:</strong> Run <code>DBCC CHECKDB</code> with <code>PHYSICAL_ONLY</code>
+            on all databases to quickly detect physical corruption.</li>
+            <li><strong>Weekly (or bi-weekly):</strong> Full <code>DBCC CHECKDB</code> (all checks) on
+            smaller databases (CRM, DigitsSolver, master, msdb, model).</li>
+            <li><strong>Monthly:</strong> Full <code>DBCC CHECKDB</code> on larger databases
+            (WideWorldImporters, SQLStorm, tpcc, tpch, tpch10).</li>
+          </ul>
+          <p>
+            <strong>Note:</strong> This is a developer workstation — on production systems, CHECKDB should
+            run at minimum weekly. Since this is Developer Edition, schedule via SQL Agent jobs or Windows
+            Task Scheduler.
+          </p>
+          <p>
+            See <a href="#scripts">Scripts</a> — "Run DBCC CHECKDB on All User Databases" and
+            "Schedule Weekly CHECKDB via SQL Agent".
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. SECURITY -->
+    <section id="rec-security">
+      <h2>6. Security Enhancements</h2>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-low">Low</span>
+          <span class="p-title">Connection Encryption — All User Sessions Encrypted ✅</span>
+          <span class="badge-confidence">Confidence 95%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            All 10 active user sessions are <strong>encrypted</strong>. The one unencrypted session
+            (Session 67) belongs to <code>NT SERVICE\SQLTELEMETRY</code> running the SQL Server CEIP
+            (Customer Experience Improvement Program) via <strong>shared memory</strong>. As explicitly
+            noted in the analysis instructions, shared memory connections are local-only and carry
+            <strong>minimal risk</strong> — no user data is exposed. No action required.
+          </p>
+          <p>
+            <strong>Note:</strong> All connections use NTLM Windows Authentication over shared memory
+            (local machine only). If remote TCP connections are added in future, ensure TLS is configured
+            via SQL Server Configuration Manager with a valid certificate.
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-low">Low</span>
+          <span class="p-title">Sysadmin Membership — Minimal and Appropriate ✅</span>
+          <span class="badge-confidence">Confidence 95%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            Only <strong>one sysadmin member</strong> exists: <code>RockyPC\k_a_f</code> (the local
+            Windows account, expected for a developer workstation). This follows least-privilege principles.
+            No built-in <code>sa</code> account or additional privileged accounts detected.
+          </p>
+          <p>
+            <strong>Best Practice Reminder:</strong> Periodically audit sysadmin membership with the script
+            in the <a href="#scripts">Scripts</a> section. Ensure that if this machine is ever connected to
+            a domain or shared environment, unnecessary principals are not added.
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-medium">Medium</span>
+          <span class="p-title">Mixed Mode Authentication Is Enabled</span>
+          <span class="badge-confidence">Confidence 80%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            <code>Integrated Security Only = No</code> indicates the server is configured for <strong>Mixed
+            Mode Authentication</strong> (both Windows and SQL Server logins accepted). For a local developer
+            workstation this is common and acceptable, but it introduces the risk of weak SQL logins if any
+            are created.
+          </p>
+          <p>
+            <strong>Recommendation:</strong> Audit existing SQL Server logins and ensure the <code>sa</code>
+            account is disabled or has a strong password. See <a href="#scripts">Scripts</a> — "Audit SQL Logins and sa Account Status".
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. CONCURRENCY -->
+    <section id="rec-concurrency">
+      <h2>7. Concurrency Issues</h2>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-low">Low</span>
+          <span class="p-title">No Deadlocks Detected — Healthy ✅</span>
+          <span class="badge-confidence">Confidence 95%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            No deadlocks were detected in the system health session extended events over the past 7 days.
+            No deadlock analysis or Fix Deadlocks goal engagement is needed at this time.
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-low">Low</span>
+          <span class="p-title">Enable Blocked Process Threshold for Proactive Monitoring</span>
+          <span class="badge-confidence">Confidence 82%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            As noted in Configuration (#7), <code>blocked process threshold</code> is currently 0.
+            Setting it to 5 seconds enables automatic blocked process report events that can be captured
+            via Extended Events or the system health session, making it easy to detect blocking chains
+            before they escalate.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. BACKUP & RECOVERY -->
+    <section id="rec-backup">
+      <h2>8. Backup &amp; Recovery</h2>
+
+      <div class="callout callout-critical">
+        <strong>CRITICAL:</strong> The majority of databases on this instance have no recorded backups.
+        While this is a developer machine, the data in SQLStorm, CRM, DigitsSolver, tpcc, tpch, and
+        tpch10 is at risk of permanent loss in the event of storage failure or accidental corruption.
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-critical">Critical</span>
+          <span class="p-title">Establish Immediate Full Backup for All User Databases</span>
+          <span class="badge-confidence">Confidence 95%</span>
+        </div>
+        <div class="p-body">
+          <p>The following databases have <strong>no recorded full backup</strong>:</p>
+          <ul>
+            <li>CRM (FULL recovery — log growing, no protection)</li>
+            <li>DigitsSolver (FULL recovery — log growing, no protection)</li>
+            <li>tpcc (FULL recovery — log growing, no protection)</li>
+            <li>tpch10 (FULL recovery — log growing, no protection)</li>
+            <li>master, msdb, model (system databases)</li>
+          </ul>
+          <p>
+            <strong>WideWorldImporters:</strong> Last full backup was <strong>October 7, 2022</strong>
+            (1,316 days ago). This database is running in SIMPLE recovery, so no log backup is needed,
+            but the backup is dangerously stale and must be refreshed.
+          </p>
+          <p>
+            <strong>SQLStorm:</strong> Last full backup was <strong>October 25, 2025</strong> (202 days
+            ago) in SIMPLE recovery. While somewhat stale, it is functional. Consider refreshing.
+          </p>
+          <p>
+            <strong>tpch:</strong> Last full backup was <strong>November 22, 2025</strong> (174 days ago)
+            in <strong>FULL recovery with no log backups</strong>. The transaction log has been growing
+            unchecked since then — this can cause disk space exhaustion. Immediate action needed:
+            either switch to SIMPLE recovery or implement log backup jobs.
+          </p>
+          <p>See <a href="#scripts">Scripts</a> — "Full Backup All User Databases" and "Fix Full Recovery Log Backup Gap".</p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-high">High</span>
+          <span class="p-title">Fix Full Recovery Databases Without Log Backups</span>
+          <span class="badge-confidence">Confidence 95%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            The following databases are in <strong>FULL recovery model but have no log backups</strong>.
+            In this state, the transaction log cannot be truncated and will grow until disk space is
+            exhausted. Additionally, point-in-time recovery (the primary benefit of FULL recovery) is
+            not achievable without a continuous log backup chain:
+          </p>
+          <ul>
+            <li>model (system DB — FULL recovery, no log backups)</li>
+            <li>DigitsSolver</li>
+            <li>CRM</li>
+            <li>tpcc</li>
+            <li>tpch</li>
+            <li>tpch10</li>
+          </ul>
+          <p>
+            <strong>Decision Required:</strong> For each database, choose one of:
+          </p>
+          <ol>
+            <li><strong>Switch to SIMPLE recovery</strong> if point-in-time recovery is not needed
+            (appropriate for most developer databases).</li>
+            <li><strong>Implement regular log backups</strong> (every 15–60 minutes) to enable
+            point-in-time recovery and allow log truncation.</li>
+          </ol>
+          <p>See <a href="#scripts">Scripts</a> — "Fix Full Recovery Log Backup Gap".</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. OPERATIONAL -->
+    <section id="rec-operational">
+      <h2>9. Operational Best Practices</h2>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-medium">Medium</span>
+          <span class="p-title">Apply Latest SQL Server 2022 Cumulative Update</span>
+          <span class="badge-confidence">Confidence 80%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            The instance is running <strong>16.0.1180.1 (RTM-GDR, KB5091158)</strong> dated April 16, 2026.
+            This appears to be a very recent GDR patch. Verify that this is the latest available GDR or CU
+            by checking the <a href="https://learn.microsoft.com/en-us/troubleshoot/sql/releases/sqlserver-2022/build-versions" target="_blank">SQL Server 2022 build history</a>.
+            GDR releases contain critical security fixes only; Cumulative Updates (CUs) also include
+            bug fixes and performance improvements. For a developer environment, tracking the latest CU
+            is recommended.
+          </p>
+          <p>
+            <strong>Note:</strong> Product Update Level shows "(unknown)" — this may indicate the patch
+            level property is not set in this GDR. Confirm actual patch level via
+            <code>SELECT @@VERSION</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-medium">Medium</span>
+          <span class="p-title">SQL Server Agent — Establish Maintenance Jobs</span>
+          <span class="badge-confidence">Confidence 90%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            SQL Server Agent is running (<code>Agent XPs = 1</code>). Leverage it to automate:
+          </p>
+          <ul>
+            <li><strong>DBCC CHECKDB</strong> — weekly/monthly schedule per database size</li>
+            <li><strong>Index maintenance</strong> — rebuild/reorganize based on fragmentation thresholds
+            (Ola Hallengren's maintenance solution is recommended)</li>
+            <li><strong>Statistics update</strong> — weekly or after large data loads</li>
+            <li><strong>Database backups</strong> — daily full + log backups where applicable</li>
+            <li><strong>Query Store cleanup</strong> — Query Store AUTO cleanup is enabled but manual
+            purge scripts can help after bulk test runs</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-low">Low</span>
+          <span class="p-title">Developer Edition Not Licensed for Production Use</span>
+          <span class="badge-confidence">Confidence 99%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            This server runs <strong>Developer Edition</strong>, which has full Enterprise feature parity
+            but is licensed for development and testing only. If any of these databases are used in a
+            production capacity or are accessed by end users, the instance must be re-licensed with an
+            appropriate Standard or Enterprise edition.
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-low">Low</span>
+          <span class="p-title">Enable Database Mail for Alert Notifications</span>
+          <span class="badge-confidence">Confidence 70%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            <code>Database Mail XPs</code> is disabled. Enabling Database Mail and configuring SQL Agent
+            alerts for severity 16+ errors, 823/824/825 I/O errors, and maintenance job failures provides
+            proactive notification of critical issues without requiring manual monitoring.
+          </p>
+        </div>
+      </div>
+
+      <div class="priority-item">
+        <div class="p-header">
+          <span class="badge badge-low">Low</span>
+          <span class="p-title">Consider Enabling Tempdb Metadata Memory-Optimized for Production-like Testing</span>
+          <span class="badge-confidence">Confidence 75%</span>
+        </div>
+        <div class="p-body">
+          <p>
+            When running benchmark workloads (tpcc, tpch) that stress tempdb, enabling
+            <code>tempdb metadata memory-optimized</code> will prevent tempdb system table latch contention
+            under high concurrency. This requires a service restart but is non-disruptive on a developer machine.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <hr />
+
+    <!-- ══════ REFERENCE: WAIT ANALYSIS ══════ -->
+    <section id="wait-analysis">
+      <h2>Wait Analysis Reference</h2>
+
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Wait Type</th>
+            <th>% Total</th>
+            <th>Tasks</th>
+            <th>Total Wait</th>
+            <th>Max Wait</th>
+            <th>Assessment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>PWAIT_DIRECTLOGCONSUMER_GETNEXT</code></td>
+            <td>42.56%</td>
+            <td>1,096</td>
+            <td>90.41 min</td>
+            <td>5,030 ms</td>
+            <td><span class="badge badge-low">Benign</span> — QDS log consumer</td>
+          </tr>
+          <tr>
+            <td><code>QDS_PERSIST_TASK_MAIN_LOOP_SLEEP</code></td>
+            <td>42.37%</td>
+            <td>91</td>
+            <td>90.02 min</td>
+            <td>60,029 ms</td>
+            <td><span class="badge badge-low">Benign</span> — QDS flush sleep</td>
+          </tr>
+          <tr>
+            <td><code>QDS_ASYNC_QUEUE</code></td>
+            <td>12.48%</td>
+            <td>14</td>
+            <td>26.51 min</td>
+            <td>408,799 ms</td>
+            <td><span class="badge badge-low">Benign</span> — QDS background queue</td>
+          </tr>
+          <tr>
+            <td><code>HTMEMO</code></td>
+            <td>1.65%</td>
+            <td>112</td>
+            <td>3.51 min</td>
+            <td>15,732 ms</td>
+            <td><span class="badge badge-low">Benign</span> — Hash join memoization</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        <strong>Interpretation:</strong> The top three waits are entirely driven by Query Store background
+        activity. The overwhelming dominance of QDS waits (97%) in the wait statistics immediately after
+        server startup is expected — QDS initializes its log consumer threads, persistence tasks, and async
+        queues on startup. These waits will normalize as user workload accumulates. No performance
+        bottleneck is indicated.
+      </p>
+    </section>
+
+    <!-- ══════ REFERENCE: I/O ANALYSIS ══════ -->
+    <section id="io-analysis">
+      <h2>I/O Analysis Reference</h2>
+
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Database</th>
+            <th>File</th>
+            <th>Reads</th>
+            <th>Read MB</th>
+            <th>Writes</th>
+            <th>Write MB</th>
+            <th>Avg Latency</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SQLStorm</td>
+            <td>ROWS</td>
+            <td>1,554</td>
+            <td>128</td>
+            <td>102</td>
+            <td>37</td>
+            <td>1 ms</td>
+            <td><span class="badge badge-low">Excellent</span></td>
+          </tr>
+          <tr>
+            <td>WideWorldImporters</td>
+            <td>LOG</td>
+            <td>571</td>
+            <td>258</td>
+            <td>18</td>
+            <td>0</td>
+            <td>1 ms</td>
+            <td><span class="badge badge-low">Excellent</span></td>
+          </tr>
+          <tr>
+            <td>tpch</td>
+            <td>ROWS</td>
+            <td>425</td>
+            <td>26</td>
+            <td>1</td>
+            <td>0</td>
+            <td>0 ms</td>
+            <td><span class="badge badge-low">Excellent</span></td>
+          </tr>
+          <tr>
+            <td>SQLStorm</td>
+            <td>LOG</td>
+            <td>32</td>
+            <td>1</td>
+            <td>232</td>
+            <td>7</td>
+            <td>0 ms</td>
+            <td><span class="badge badge-low">Excellent</span></td>
+          </tr>
+          <tr>
+            <td>tpch10</td>
+            <td>ROWS</td>
+            <td>426</td>
+            <td>26</td>
+            <td>1</td>
+            <td>0</td>
+            <td>0 ms</td>
+            <td><span class="badge badge-low">Excellent</span></td>
+          </tr>
+          <tr>
+            <td><em>All others</em></td>
+            <td><em>—</em></td>
+            <td colspan="5"><em>All showing 0 ms average latency — no concerns.</em></td>
+            <td><span class="badge badge-low">Excellent</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        All files are performing at sub-millisecond to 1 ms latency, consistent with NVMe SSD or
+        high-performance local storage. No I/O tuning is required.
+      </p>
+    </section>
+
+    <hr />
+
+    <!-- ══════ SCRIPTS SECTION ══════ -->
+    <section id="scripts">
+      <h2>Scripts</h2>
+
+      <p>
+        The following scripts implement the recommendations in this report. Each script is a complete,
+        runnable T-SQL batch. Review and test in a non-production environment before execution. Scripts
+        that require a service restart are clearly marked.
+      </p>
+
+      <!-- ─────────────────────────────────────────── -->
+      <h3>1. Enable Optimize for Ad Hoc Workloads (Recommendation 2.1)</h3>
+      <pre><code>-- Enable 'optimize for ad hoc workloads' to reduce single-use plan cache bloat.
+-- This is a dynamic setting; no service restart required.
+-- Applies to: RockyPC (server-wide)
+
+USE master;
+GO
+
+EXEC sp_configure 'show advanced options', 1;
+RECONFIGURE WITH OVERRIDE;
+GO
+
+EXEC sp_configure 'optimize for ad hoc workloads', 1;
+RECONFIGURE WITH OVERRIDE;
+GO
+
+-- Verify
+SELECT name, value, value_in_use, description
+FROM sys.configurations
+WHERE name = 'optimize for ad hoc workloads';
+GO</code></pre>
+
+      <!-- ─────────────────────────────────────────── -->
+      <h3>2. Enable Backup Compression and Checksum Defaults (Recommendations 2.2 and 2.3)</h3>
+      <pre><code>-- Enable backup compression default and backup checksum default.
+-- These are dynamic settings; no service restart required.
+-- Applies to: RockyPC (server-wide)
+
+USE master;
+GO
+
+EXEC sp_configure 'show advanced options', 1;
+RECONFIGURE WITH OVERRIDE;
+GO
+
+-- Enable backup compression (reduces backup size by ~50-70%)
+EXEC sp_configure 'backup compression default', 1;
+RECONFIGURE WITH OVERRIDE;
+GO
+
+-- Enable backup checksum (validates integrity during backup and restore)
+EXEC sp_configure 'backup checksum default', 1;
+RECONFIGURE WITH OVERRIDE;
+GO
+
+-- Verify
+SELECT name, value, value_in_use, description
+FROM sys.configurations
+WHERE name IN ('backup compression default', 'backup checksum default');
+GO</code></pre>
+
+      <!-- ─────────────────────────────────────────── -->
+      <h3>3. Enable Blocked Process Threshold (Recommendations 2.7 / 7.2)</h3>
+      <pre><code>-- Enable blocked process threshold monitoring (fires when blocking exceeds 5 seconds).
+-- This is a dynamic setting; no service restart required.
+-- Captures blocked process reports via system health extended event session.
+-- Applies to: RockyPC (server-wide)
+
+USE master;
+GO
+
+EXEC sp_configure 'show advanced options', 1;
+RECONFIGURE WITH OVERRIDE;
+GO
+
+EXEC sp_configure 'blocked process threshold (s)', 5;
+RECONFIGURE WITH OVERRIDE;
+GO
+
+-- Verify
+SELECT name, value, value_in_use, description
+FROM sys.configurations
+WHERE name = 'blocked process threshold (s)';
+GO</code></pre>
+
+      <!-- ─────────────────────────────────────────── -->
+      <h3>4. Enable Memory-Optimized TempDB Metadata (Recommendation 1.1)</h3>
+      <pre><code>-- Enable memory-optimized tempdb metadata to reduce system table latch contention.
+-- *** IMPORTANT: Requires SQL Server service restart to take effect. ***
+-- Plan a maintenance window before applying this change.
+-- Applies to: RockyPC (server-wide, SQL Server 2019+ Enterprise/Developer)
+
+USE master;
+GO
+
+EXEC sp_configure 'show advanced options', 1;
+RECONFIGURE WITH OVERRIDE;
+GO
+
+EXEC sp_configure 'tempdb metadata memory-optimized', 1;
+RECONFIGURE WITH OVERRIDE;
+GO
+
+-- Verify current setting (change takes effect after service restart)
+SELECT name, value, value_in_use, description
+FROM sys.configurations
+WHERE name = 'tempdb metadata memory-optimized';
+GO
+
+-- After restarting the SQL Server service, verify with:
+-- SELECT CASE WHEN OBJECTPROPERTY(OBJECT_ID('tempdb.sys.sysrowsets'),'TableIsMemoryOptimized') = 1
+--             THEN 'Memory-Optimized TempDB Metadata: ENABLED'
+--             ELSE 'Memory-Optimized TempDB Metadata: DISABLED'
+--        END AS status;
+GO</code></pre>
+
+      <!-- ─────────────────────────────────────────── -->
+      <h3>5. Upgrade WideWorldImporters Compatibility Level to 160 (Recommendation 2.4)</h3>
+      <pre><code>-- Upgrade WideWorldImporters database compatibility level from 130 to 160.
+-- This enables SQL Server 2022 Intelligent Query Processing features.
+-- *** TEST IN STAGING FIRST — query plan changes may affect performance. ***
+-- Uses Query Store to capture plan regressions (Query Store is already enabled).
+
+USE master;
+GO
+
+-- Step 1: Ensure Query Store is capturing baseline plans BEFORE upgrade
+--         (already READ_WRITE, so baseline is being captured)
+
+-- Step 2: Upgrade compatibility level
+ALTER DATABASE [WideWorldImporters]
+SET COMPATIBILITY_LEVEL = 160;
+GO
+
+-- Step 3: Verify
+SELECT name, compatibility_level
+FROM sys.databases
+WHERE name = 'WideWorldImporters';
+GO
+
+-- Step 4: If plan regressions occur after upgrade, use Query Store
+--         to force the old plan while investigating:
+-- USE [WideWorldImporters];
+-- EXEC sp_query_store_force_plan @query_id = <query_id>, @plan_id = <old_plan_id>;
+GO</code></pre>
+
+      <!-- ─────────────────────────────────────────── -->
+      <h3>6. Standardize WideWorldImporters Query Store Settings (Recommendation 4.1)</h3>
+      <pre><code>-- Standardize WideWorldImporters Query Store configuration to match other databases.
+-- Changes flush interval to 15 min, stats interval to 60 min,
+-- max plans per query to 200, and max storage to 1000 MB.
+
+USE master;
+GO
+
+ALTER DATABASE [WideWorldImporters]
+SET QUERY_STORE = ON
+(
+    OPERATION_MODE            = READ_WRITE,
+    CLEANUP_POLICY            = (STALE_QUERY_THRESHOLD_DAYS = 30),
+    DATA_FLUSH_INTERVAL_SECONDS = 900,      -- 15 minutes (was 50 min = 3000 sec)
+    INTERVAL_LENGTH_MINUTES   = 60,         -- Stats collection interval (was 15 min)
+    MAX_STORAGE_SIZE_MB       = 1000,       -- Storage ceiling (was 500 MB)
+    QUERY_CAPTURE_MODE        = AUTO,
+    MAX_PLANS_PER_QUERY       = 200,        -- Max plans (was 1000)
+    SIZE_BASED_CLEANUP_MODE   = AUTO
+);
+GO
+
+-- Verify
+SELECT
+    d.name,
+    qs.desired_state_desc,
+    qs.actual_state_desc,
+    qs.data_flush_interval_seconds / 60.0 AS flush_interval_min,
+    qs.query_capture_mode_desc,
+    qs.max_storage_size_mb,
+    qs.stale_query_threshold_days,
+    qs.max_plans_per_query
+FROM sys.databases d
+JOIN sys.database_query_store_options qs ON d.database_id = qs.database_id
+WHERE d.name = 'WideWorldImporters';
+GO</code></pre>
+
+      <!-- ─────────────────────────────────────────── -->
+      <h3>7. Run DBCC CHECKDB on All User Databases (Recommendation 5.1 — Quick Pass)</h3>
+      <pre><code>-- Run DBCC CHECKDB with PHYSICAL_ONLY on all user databases for rapid corruption detection.
+-- PHYSICAL_ONLY reduces duration significantly on large databases.
+-- Run the full check (without PHYSICAL_ONLY) during off-hours on a schedule.
+-- *** This may take several minutes per database depending on size. ***
+
+USE master;
+GO
+
+PRINT '== Starting DBCC CHECKDB (PHYSICAL_ONLY) for all user databases ==';
+PRINT 'Start time: ' + CONVERT(VARCHAR, GETDATE(), 120);
+GO
+
+DBCC CHECKDB ([WideWorldImporters]) WITH PHYSICAL_ONLY, NO_INFOMSGS;
+GO
+PRINT 'WideWorldImporters: CHECKDB complete at ' + CONVERT(VARCHAR, GETDATE(), 120);
+GO
+
+DBCC CHECKDB ([SQLStorm]) WITH PHYSICAL_ONLY, NO_INFOMSGS;
+GO
+PRINT 'SQLStorm: CHECKDB complete at ' + CONVERT(VARCHAR, GETDATE(), 120);
+GO
+
+DBCC CHECKDB ([tpcc]) WITH PHYSICAL_ONLY, NO_INFOMSGS;
+GO
+PRINT 'tpcc: CHECKDB complete at ' + CONVERT(VARCHAR, GETDATE(), 120);
+GO
+
+DBCC CHECKDB ([tpch]) WITH PHYSICAL_ONLY, NO_INFOMSGS;
+GO
+PRINT 'tpch: CHECKDB complete at ' + CONVERT(VARCHAR, GETDATE(), 120);
+GO
+
+DBCC CHECKDB ([CRM]) WITH PHYSICAL_ONLY, NO_INFOMSGS;
+GO
+PRINT 'CRM: CHECKDB complete at ' + CONVERT(VARCHAR, GETDATE(), 120);
+GO
+
+DBCC CHECKDB ([tpch10]) WITH PHYSICAL_ONLY, NO_INFOMSGS;
+GO
+PRINT 'tpch10: CHECKDB complete at ' + CONVERT(VARCHAR, GETDATE(), 120);
+GO
+
+DBCC CHECKDB ([DigitsSolver]) WITH PHYSICAL_ONLY, NO_INFOMSGS;
+GO
+PRINT 'DigitsSolver: CHECKDB complete at ' + CONVERT(VARCHAR, GETDATE(), 120);
+GO
+
+-- System databases
+DBCC CHECKDB ([master])  WITH PHYSICAL_ONLY, NO_INFOMSGS;
+DBCC CHECKDB ([model])   WITH PHYSICAL_ONLY, NO_INFOMSGS;
+DBCC CHECKDB ([msdb])    WITH PHYSICAL_ONLY, NO_INFOMSGS;
+GO
+PRINT 'System databases: CHECKDB complete at ' + CONVERT(VARCHAR, GETDATE(), 120);
+GO
+
+-- Verify last CHECKDB dates after completion
+SELECT
+    d.name AS database_name,
+    DATABASEPROPERTYEX(d.name, 'LastGoodCheckDbTime') AS last_good_checkdb,
+    DATEDIFF(DAY, CAST(DATABASEPROPERTYEX(d.name, 'LastGoodCheckDbTime') AS DATETIME), GETDATE()) AS days_since_checkdb
+FROM sys.databases d
+WHERE d.database_id > 0
+  AND d.state_desc = 'ONLINE'
+ORDER BY days_since_checkdb DESC;
+GO</code></pre>
+
+      <!-- ─────────────────────────────────────────── -->
+      <h3>8. Schedule Weekly CHECKDB via SQL Agent Job (Recommendation 5.1)</h3>
+      <pre><code>-- Create a SQL Server Agent job to run full DBCC CHECKDB on all user databases weekly.
+-- Scheduled for Sunday at 2:00 AM (adjust as needed).
+-- Requires SQL Server Agent to be running.
+
+USE msdb;
+GO
+
+-- Drop existing job if it exists (for re-runability)
+IF EXISTS (SELECT 1 FROM msdb.dbo.sysjobs WHERE name = N'Weekly DBCC CHECKDB - All Databases')
+    EXEC msdb.dbo.sp_delete_job @job_name = N'Weekly DBCC CHECKDB - All Databases';
+GO
+
+EXEC msdb.dbo.sp_add_job
+    @job_name = N'Weekly DBCC CHECKDB - All Databases',
+    @enabled = 1,
+    @description = N'Runs DBCC CHECKDB on all online user databases weekly to verify integrity.',
+    @category_name = N'Database Maintenance';
+GO
+
+EXEC msdb.dbo.sp_add_jobstep
+    @job_name = N'Weekly DBCC CHECKDB - All Databases',
+    @step_name = N'Run CHECKDB on all databases',
+    @subsystem = N'TSQL',
+    @command = N'
+DECLARE @dbname SYSNAME;
+DECLARE @sql NVARCHAR(500);
+DECLARE db_cursor CURSOR FOR
+    SELECT name
+    FROM sys.databases
+    WHERE state_desc = ''ONLINE''
+      AND name NOT IN (''tempdb'')
+    ORDER BY name;
+
+OPEN db_cursor;
+FETCH NEXT FROM db_cursor INTO @dbname;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    SET @sql = N''DBCC CHECKDB(['' + @dbname + N'']) WITH NO_INFOMSGS, ALL_ERRORMSGS'';
+    PRINT ''Running CHECKDB on: '' + @dbname + '' at '' + CONVERT(VARCHAR, GETDATE(), 120);
+    EXEC sp_executesql @sql;
+    FETCH NEXT FROM db_cursor INTO @dbname;
+END;
+CLOSE db_cursor;
+DEALLOCATE db_cursor;
+',
+    @on_success_action = 1,
+    @on_fail_action = 2;
+GO
+
+-- Schedule: Sunday at 02:00 AM
+EXEC msdb.dbo.sp_add_schedule
+    @schedule_name = N'Weekly Sunday 2AM',
+    @freq_type = 8,            -- Weekly
+    @freq_interval = 1,        -- Sunday
+    @freq_recurrence_factor = 1,
+    @active_start_time = 20000; -- 02:00:00
+GO
+
+EXEC msdb.dbo.sp_attach_schedule
+    @job_name = N'Weekly DBCC CHECKDB - All Databases',
+    @schedule_name = N'Weekly Sunday 2AM';
+GO
+
+EXEC msdb.dbo.sp_add_jobserver
+    @job_name = N'Weekly DBCC CHECKDB - All Databases',
+    @server_name = N'(local)';
+GO
+
+PRINT 'Weekly DBCC CHECKDB job created successfully.';
+GO</code></pre>
+
+      <!-- ─────────────────────────────────────────── -->
+      <h3>9. Full Backup All User Databases (Recommendation 8.1)</h3>
+      <pre><code>-- Perform immediate full backups of all user databases that lack recent backups.
+-- Adjust @backup_path to a valid backup directory on your system.
+-- Backups use WITH COMPRESSION and CHECKSUM (enabled by previous sp_configure scripts).
+
+USE master;
+GO
+
+DECLARE @backup_path NVARCHAR(256) = N'C:\SQLBackups\';  -- *** CHANGE THIS PATH ***
+
+-- Ensure backup directory exists (run in Windows or use xp_cmdshell if enabled)
+-- EXEC xp_cmdshell 'mkdir C:\SQLBackups';
+
+DECLARE @sql NVARCHAR(1000);
+DECLARE @dbname SYSNAME;
+DECLARE @filename NVARCHAR(500);
+DECLARE @timestamp VARCHAR(20);
+
+SET @timestamp = REPLACE(REPLACE(CONVERT(VARCHAR, GETDATE(), 120), '-', ''), ':', '');
+SET @timestamp = REPLACE(@timestamp, ' ', '_');
+
+-- Backup each user database
+DECLARE backup_cursor CURSOR FOR
+    SELECT name
+    FROM sys.databases
+    WHERE name NOT IN ('tempdb')
+      AND state_desc = 'ONLINE'
+    ORDER BY name;
+
+OPEN backup_cursor;
+FETCH NEXT FROM backup_cursor INTO @dbname;
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    SET @filename = @backup_path + @dbname + N'_Full_' + @timestamp + N'.bak';
+    SET @sql = N'BACKUP DATABASE [' + @dbname + N']
+    TO DISK = N''' + @filename + N'''
+    WITH COMPRESSION,
+         CHECKSUM,
+         STATS = 10,
+         FORMAT,
+         INIT,
+         NAME = N''' + @dbname + N' Full Backup'';';
+
+    PRINT 'Backing up: ' + @dbname + ' -> ' + @filename;
+    EXEC sp_executesql @sql;
+
+    FETCH NEXT FROM backup_cursor INTO @dbname;
+END;
+
+CLOSE backup_cursor;
+DEALLOCATE backup_cursor;
+GO
+
+-- Verify backups recorded in msdb
+SELECT
+    d.name AS database_name,
+    bs.type AS backup_type,
+    bs.backup_finish_date,
+    CAST(bs.backup_size / 1024.0 / 1024.0 AS DECIMAL(10,2)) AS backup_size_mb,
+    bs.is_compressed
+FROM sys.databases d
+LEFT JOIN msdb.dbo.backupset bs
+    ON d.name = bs.database_name
+    AND bs.backup_finish_date >= DATEADD(HOUR, -2, GETDATE())
+ORDER BY d.name, bs.backup_finish_date DESC;
+GO</code></pre>
+
+      <!-- ─────────────────────────────────────────── -->
+      <h3>10. Fix Full Recovery Databases Without Log Backups (Recommendation 8.2)</h3>
+      <pre><code>-- For developer databases where point-in-time recovery is NOT required,
+-- switch from FULL to SIMPLE recovery model to prevent log file growth.
+-- *** REVIEW EACH DATABASE BEFORE RUNNING — choose SIMPLE only if PITR is not needed. ***
+-- After switching to SIMPLE, take a new full backup to establish a new backup chain.
+
+USE master;
+GO
+
+-- Option A: Switch to SIMPLE recovery (recommended for developer/test databases
+--           where point-in-time recovery is not required)
+
+-- Uncomment the databases you want to switch to SIMPLE:
+
+-- ALTER DATABASE [tpcc]       SET RECOVERY SIMPLE WITH NO_WAIT;
+-- ALTER DATABASE [tpch]       SET RECOVERY SIMPLE WITH NO_WAIT;
+-- ALTER DATABASE [tpch10]     SET RECOVERY SIMPLE WITH NO_WAIT;
+-- ALTER DATABASE [CRM]        SET RECOVERY SIMPLE WITH NO_WAIT;
+-- ALTER DATABASE [DigitsSolver] SET RECOVERY SIMPLE WITH NO_WAIT;
+-- ALTER DATABASE [model]      SET RECOVERY SIMPLE WITH NO_WAIT;  -- system DB caution
+
+-- After switching to SIMPLE, shrink the log to reclaim space (one-time operation only):
+-- DBCC SHRINKFILE (N'<logfile_logical_name>', 64);  -- Shrink to 64 MB
+
+-- Option B: If FULL recovery IS required, create a log backup job.
+--           First take a full backup (run Script #9 above), then create log backups.
+--           Example for tpch (has an existing full backup from 2025-11-22):
+
+-- BACKUP LOG [tpch]
+-- TO DISK = N'C:\SQLBackups\tpch_Log_' + REPLACE(REPLACE(CONVERT(VARCHAR,GETDATE(),120),'-',''),':','') + '.trn'
+-- WITH COMPRESSION, CHECKSUM, STATS = 10;
+
+-- Verify recovery models after changes
+SELECT name, recovery_model_desc, log_reuse_wait_desc
+FROM sys.databases
+WHERE name NOT IN ('tempdb', 'master', 'msdb')
+ORDER BY name;
+GO</code></pre>
+
+      <!-- ─────────────────────────────────────────── -->
+      <h3>11. Audit SQL Logins and sa Account Status (Recommendation 6.3)</h3>
+      <pre><code>-- Audit all SQL Server logins, sysadmin members, and sa account status.
+-- Review output for unexpected privileged accounts.
+
+USE master;
+GO
+
+-- List all server logins with their roles and status
+SELECT
+    sp.name                     AS login_name,
+    sp.type_desc                AS login_type,
+    sp.is_disabled,
+    sp.is_policy_checked,
+    sp.is_expiration_checked,
+    CASE WHEN srm.role_principal_id IS NOT NULL THEN 'YES' ELSE 'NO' END AS is_sysadmin,
+    sp.create_date,
+    sp.modify_date,
+    sp.default_database_name
+FROM sys.server_principals sp
+LEFT JOIN sys.server_role_members srm
+    ON sp.principal_id = srm.member_principal_id
+   AND srm.role_principal_id = SUSER_ID('sysadmin')
+WHERE sp.type IN ('S', 'U', 'G')  -- SQL, Windows user, Windows group
+  AND sp.name NOT LIKE '##%'      -- Exclude internal accounts
+ORDER BY is_sysadmin DESC, sp.name;
+GO
+
+-- Check sa account specifically
+SELECT
+    name,
+    is_disabled,
+    LOGINPROPERTY('sa', 'PasswordHash') AS has_password,
+    LOGINPROPERTY('sa', 'BadPasswordCount') AS bad_password_count,
+    LOGINPROPERTY('sa', 'IsLocked') AS is_locked
+FROM sys.server_principals
+WHERE name = 'sa';
+GO
+
+-- List all sysadmin members explicitly
+SELECT
+    ssp.name AS sysadmin_member,
+    ssp.type_desc,
+    ssp.is_disabled,
+    ssp.create_date
+FROM sys.server_role_members srm
+JOIN sys.server_principals ssp ON srm.member_principal_id = ssp.principal_id
+JOIN sys.server_principals srp ON srm.role_principal_id = srp.principal_id
+WHERE srp.name = 'sysadmin'
+ORDER BY ssp.name;
+GO</code></pre>
+
+      <!-- ─────────────────────────────────────────── -->
+      <h3>12. Apply All Safe Server Configuration Changes in One Batch (Combined Script)</h3>
+      <pre><code>-- Combined script: Apply all safe, dynamic sp_configure recommendations at once.
+-- No service restart required for these settings.
+-- Settings included:
+--   1. optimize for ad hoc workloads = 1
+--   2. backup compression default    = 1
+--   3. backup checksum default       = 1
+--   4. blocked process threshold     = 5 seconds
+-- Note: 'tempdb metadata memory-optimized' requires restart — see Script #4.
+
+USE master;
+GO
+
+EXEC sp_configure 'show advanced options', 1;
+RECONFIGURE WITH OVERRIDE;
+GO
+
+EXEC sp_configure 'optimize for ad hoc workloads', 1;
+EXEC sp_configure 'backup compression default', 1;
+EXEC sp_configure 'backup checksum default', 1;
+EXEC sp_configure 'blocked process threshold (s)', 5;
+GO
+
+RECONFIGURE WITH OVERRIDE;
+GO
+
+-- Verify all changes
+SELECT name, value, value_in_use, description
+FROM sys.configurations
+WHERE name IN (
+    'optimize for ad hoc workloads',
+    'backup compression default',
+    'backup checksum default',
+    'blocked process threshold (s)'
+)
+ORDER BY name;
+GO
+
+PRINT 'All configuration changes applied successfully at ' + CONVERT(VARCHAR, GETDATE(), 120);
+GO</code></pre>
+
+    </section>
+
+  </main>
+</div>
+
+<!-- ══════════════ FOOTER ══════════════ -->
+<footer>
+  <div>
+    Generated by <strong>AI SQL Tuner Studio v1.0.38.0</strong> using model
+    <strong>claude-sonnet-4-6</strong> with reasoning effort <strong>high</strong>.
+    &nbsp;|&nbsp;
+    <a href="https://aisqltuner.com" target="_blank">aisqltuner.com</a>
+  </div>
+  <div>
+    Based on analysis as of <strong>2026-05-16 00:27:38 UTC</strong>
+  </div>
+</footer>
+
+</body>
+</html>
+```

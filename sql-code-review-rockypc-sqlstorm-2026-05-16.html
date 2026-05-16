@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SQL Code Review – RockyPC / SQLStorm – 2026-05-16</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg:#FFFFFF; --panel:#F6F8F9; --ink:#111827; --muted:#6B7280;
+    --teal:#0B6E6E; --teal-2:#0E8585; --code:#EFF7F7; --border:#E5E7EB;
+    --warn:#B45309; --bad:#B91C1C; --ok:#065F46;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height:1.55; font-size:15px; }
+  a { color:var(--teal); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  header.top { border-bottom:1px solid var(--border); padding:24px 32px; background:#fff; }
+  header.top h1 { margin:0 0 6px 0; color:var(--teal); font-size:24px; letter-spacing:-0.2px; }
+  header.top .meta { color:var(--muted); font-size:13px; }
+  header.top .meta strong { color:var(--ink); }
+  .layout { display:grid; grid-template-columns:260px 1fr; min-height:calc(100vh - 110px); }
+  nav.toc { background:var(--panel); border-right:1px solid var(--border);
+    padding:20px 18px; position:sticky; top:0; align-self:start; height:100vh; overflow:auto; }
+  nav.toc h2 { font-size:12px; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); margin:0 0 10px; }
+  nav.toc ol { list-style:none; padding:0; margin:0; }
+  nav.toc ol li { margin:4px 0; }
+  nav.toc a { color:var(--ink); font-size:13.5px; display:block; padding:5px 8px; border-radius:6px; }
+  nav.toc a:hover { background:#E8EFEF; color:var(--teal); text-decoration:none; }
+  main { padding:28px 36px 60px; max-width:1100px; }
+  h2 { color:var(--teal); border-bottom:2px solid var(--code); padding-bottom:6px;
+    margin-top:34px; font-size:21px; }
+  h3 { color:var(--teal-2); margin-top:24px; font-size:17px; }
+  h4 { margin-top:18px; font-size:14.5px; color:var(--ink); }
+  pre { background:var(--code); border:1px solid #D9EBEB; border-radius:8px;
+    padding:14px 16px; overflow:auto; font-size:13px; line-height:1.5; }
+  code { font-family: "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; }
+  p code, li code { background:var(--code); padding:1px 6px; border-radius:4px; font-size:13px; color:#0B5252; }
+  ol.prio > li { margin-bottom:16px; }
+  ul { margin:6px 0 6px 18px; }
+  table { border-collapse:collapse; width:100%; margin:12px 0; font-size:13.5px; }
+  th, td { border:1px solid var(--border); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--teal); font-weight:600; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11.5px; font-weight:600; }
+  .b-crit { background:#FEE2E2; color:var(--bad); }
+  .b-high { background:#FEF3C7; color:var(--warn); }
+  .b-med  { background:#DBEAFE; color:#1E40AF; }
+  .b-low  { background:#D1FAE5; color:var(--ok); }
+  .b-conf { background:#E0F2F1; color:var(--teal); }
+  .summary-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin:12px 0 24px; }
+  .stat { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+  .stat .n { font-size:22px; font-weight:700; color:var(--teal); }
+  .stat .l { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+  footer { border-top:1px solid var(--border); padding:18px 36px; color:var(--muted);
+    font-size:12.5px; text-align:center; background:#fff; }
+  footer a { color:var(--teal); }
+  .callout { background:var(--code); border-left:4px solid var(--teal); padding:10px 14px; border-radius:0 6px 6px 0; margin:12px 0; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "SQL Code Review – RockyPC / SQLStorm – 2026-05-16",
+  "datePublished": "2026-05-16",
+  "about": "T-SQL stored procedure code review for database SQLStorm on RockyPC (SQL Server 2022 Developer Edition)",
+  "author": { "@type": "Organization", "name": "AI SQL Tuner Studio" }
+}
+</script>
+</head>
+<body>
+
+<header class="top">
+  <h1>SQL Code Review – RockyPC / SQLStorm – 2026-05-16</h1>
+  <div class="meta">
+    <strong>Tuning Goal:</strong> Code Review &nbsp;|&nbsp;
+    <strong>Server:</strong> RockyPC &nbsp;|&nbsp;
+    <strong>Version:</strong> Microsoft SQL Server 2022 (16.0.1180.1) Developer Edition (64-bit) &nbsp;|&nbsp;
+    <strong>Database:</strong> SQLStorm
+  </div>
+</header>
+
+<div class="layout">
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#exec">Executive Summary</a></li>
+    <li><a href="#scope">Review Scope &amp; Counts</a></li>
+    <li><a href="#recs">Detailed Recommendations</a></li>
+    <li><a href="#antipatterns">Common Anti-Patterns</a></li>
+    <li><a href="#locking">Locking &amp; Concurrency</a></li>
+    <li><a href="#indexing">Indexing Observations</a></li>
+    <li><a href="#sql2022">SQL Server 2022 Opportunities</a></li>
+    <li><a href="#scripts">Scripts</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section id="exec">
+<h2>Executive Summary</h2>
+<p>This review covers a large library of analytic stored procedures over a Stack-Exchange-style schema
+(<code>Posts</code>, <code>Users</code>, <code>Votes</code>, <code>Badges</code>, <code>Comments</code>,
+<code>PostHistory</code>). The dominant tables are large (Votes 926K, PostHistory 848K, Badges 439K,
+Comments 351K, Users 267K, Posts 247K) yet the index usage summary shows <strong>only the clustered PKs</strong>
+on the identity column — there are <strong>no visible nonclustered indexes</strong> on the foreign-key /
+filter columns the procedures repeatedly use (<code>OwnerUserId</code>, <code>PostId</code>,
+<code>UserId</code>, <code>PostTypeId</code>, <code>CreationDate</code>, <code>VoteTypeId</code>,
+<code>Class</code>). This is the single biggest performance lever.</p>
+
+<div class="summary-grid">
+  <div class="stat"><div class="n">~110</div><div class="l">Procedures Reviewed</div></div>
+  <div class="stat"><div class="n">8</div><div class="l">Tables &gt; 1K Rows</div></div>
+  <div class="stat"><div class="n">0</div><div class="l">Nonclustered Indexes Detected</div></div>
+  <div class="stat"><div class="n">14</div><div class="l">Recommendations</div></div>
+</div>
+
+<h3>Top Priorities</h3>
+<ol class="prio">
+  <li><span class="badge b-crit">CRITICAL</span> &nbsp;Add foreign-key/filter nonclustered indexes (Posts.OwnerUserId, Votes.PostId, Votes.UserId, Badges.UserId, Comments.PostId, Comments.UserId, PostHistory.PostId, Posts.ParentId, Posts.PostTypeId+CreationDate). Almost every procedure joins/groups on these.</li>
+  <li><span class="badge b-crit">CRITICAL</span> &nbsp;Eliminate the <code>Posts.Tags LIKE '%' + t.TagName + '%'</code> pattern (sp00060, sp09990, sp09982, sp00992, sp09881, sp09886, sp09915). It is non-sargable, returns false positives, and forces a Cartesian-style scan of Posts × Tags. Normalize via a <code>PostTags</code> table or use <code>STRING_SPLIT</code> with a join to <code>Tags</code>.</li>
+  <li><span class="badge b-crit">CRITICAL</span> &nbsp;Remove the long-held transaction with <code>WAITFOR DELAY '00:00:05'</code> inside <code>dbo.usp_UpdateTablesWithDelay</code>. This holds X locks on Users and Posts for 5+ seconds per call and will cause severe blocking under load.</li>
+  <li><span class="badge b-high">HIGH</span> &nbsp;Replace many-CTE "join-everything-then-filter" patterns (e.g., sp00060, sp09990, sp09895, sp09886, sp09836-style procs) with <code>OUTER APPLY</code> / <code>TOP N</code> patterns as demonstrated in <code>sp00060Fixed</code>. The fixed version is the template — adopt it broadly.</li>
+  <li><span class="badge b-high">HIGH</span> &nbsp;Fix multiple <strong>logic bugs</strong>: <code>DATEADD(YEAR,1,0)</code> arithmetic (sp09978, sp09921, sp09844, sp09905, sp09923, sp09844, sp09826, sp09841) computes nonsense dates; join conditions like <code>ON tp.UpVotes &gt; 100 AND b.UserId = (SELECT OwnerUserId ...)</code> (sp09994) and <code>JOIN PopularTags ON ups.PostCount &gt; 5</code> (sp00992) produce Cartesian results; sp09826 joins <code>Users ON tp.PostId = u.Id</code> (joins post IDs to user IDs).</li>
+  <li><span class="badge b-high">HIGH</span> &nbsp;Stop using <code>ORDER BY NEWID()</code> against multi-hundred-thousand row tables in <code>usp_UpdateTablesInLoop</code> — full sort of Users + Posts each iteration.</li>
+  <li><span class="badge b-med">MEDIUM</span> &nbsp;Adopt consistent two-part naming (<code>dbo.Posts</code>), <code>SET XACT_ABORT ON</code>, schema-qualified <code>CREATE OR ALTER PROCEDURE dbo.xxx</code>, and remove use of reserved word <code>Rank</code> as a column alias.</li>
+</ol>
+</section>
+
+<section id="scope">
+<h2>Review Scope &amp; Counts</h2>
+<table>
+<tr><th>Object Type</th><th>Count Provided</th><th>Notes</th></tr>
+<tr><td>Stored Procedures</td><td>~110</td><td>Only the most recent objects were provided for review.</td></tr>
+<tr><td>Functions / Views / Triggers</td><td>0</td><td>None supplied in this batch.</td></tr>
+<tr><td>User Tables &gt; 1K rows</td><td>8</td><td>Votes, PostHistory, Badges, Comments, Users, Posts, PostLinks, Tags.</td></tr>
+<tr><td>Nonclustered Indexes (visible)</td><td>0</td><td>Only clustered PKs on identity columns appear in usage summary.</td></tr>
+</table>
+<p class="callout">Confidence in this scope: <span class="badge b-conf">HIGH</span> for the procedures supplied. The absence of nonclustered indexes in the supplied usage summary is taken at face value; if other indexes exist but were not surfaced, some "missing index" recommendations may already be satisfied.</p>
+</section>
+
+<section id="recs">
+<h2>Detailed Prioritized Recommendations</h2>
+
+<ol class="prio">
+
+<li id="r1">
+<h3>1. Create Foundational Nonclustered Indexes <span class="badge b-crit">CRITICAL</span> <span class="badge b-conf">Confidence: HIGH</span></h3>
+<p>Every single analytic procedure in the batch joins/aggregates on the same handful of columns. With only the identity-column clustered PKs in place, each call must scan the entire <code>Posts</code> (398 MB), <code>PostHistory</code> (820 MB), and <code>Votes</code> heaps when joining. Recommended indexes (see <a href="#scripts">Scripts</a>):</p>
+<ul>
+  <li><code>Posts (OwnerUserId) INCLUDE (PostTypeId, Score, ViewCount, CreationDate, Title)</code></li>
+  <li><code>Posts (PostTypeId, CreationDate) INCLUDE (OwnerUserId, Score, ViewCount, Title)</code></li>
+  <li><code>Posts (ParentId) INCLUDE (PostTypeId)</code> filtered <code>WHERE ParentId IS NOT NULL</code></li>
+  <li><code>Votes (PostId, VoteTypeId)</code></li>
+  <li><code>Votes (UserId, VoteTypeId)</code></li>
+  <li><code>Badges (UserId) INCLUDE (Class, Name, Date)</code></li>
+  <li><code>Comments (PostId) INCLUDE (UserId, Score, CreationDate)</code></li>
+  <li><code>Comments (UserId)</code></li>
+  <li><code>PostHistory (PostId, PostHistoryTypeId, CreationDate) INCLUDE (UserId)</code></li>
+  <li><code>PostHistory (UserId, CreationDate)</code></li>
+  <li><code>Users (Reputation DESC) INCLUDE (DisplayName)</code></li>
+  <li><code>PostLinks (PostId, LinkTypeId) INCLUDE (RelatedPostId)</code></li>
+</ul>
+<p>Create with <code>ONLINE = ON</code> (Enterprise/Developer supports it) and <code>DATA_COMPRESSION = PAGE</code> — wide narrow row tables here benefit substantially.</p>
+</li>
+
+<li id="r2">
+<h3>2. Eliminate <code>LIKE '%' + Tag + '%'</code> on Posts.Tags <span class="badge b-crit">CRITICAL</span> <span class="badge b-conf">HIGH</span></h3>
+<p>Found in <code>sp00060</code>, <code>sp09990</code>, <code>sp09982</code>, <code>sp00992</code>, <code>sp09881</code>, <code>sp09886</code>, <code>sp09915</code>. Issues:</p>
+<ul>
+  <li>Non-sargable — forces full Posts scan for each Tag row.</li>
+  <li>Incorrect — <code>'%c%'</code> matches <code>'c'</code>, <code>'c++'</code>, <code>'csharp'</code>, etc.</li>
+  <li>O(Posts × Tags) explosion (247K × 1232 = ~304M comparisons just to build the join).</li>
+</ul>
+<p>Preferred fix: normalize tags into <code>dbo.PostTags(PostId, TagId)</code> with PKs and an index on <code>(TagId, PostId)</code>. Interim fix: parse on read with <code>STRING_SPLIT(REPLACE(REPLACE(p.Tags,'&lt;',''),'&gt;',','), ',')</code> and join to <code>Tags</code> by exact match (still expensive but correct). See script <a href="#s-posttags">Build PostTags normalization</a>.</p>
+</li>
+
+<li id="r3">
+<h3>3. Fix the Long-Held Transaction in <code>usp_UpdateTablesWithDelay</code> <span class="badge b-crit">CRITICAL</span> <span class="badge b-conf">HIGH</span></h3>
+<p>The procedure opens an explicit transaction, updates <code>Users</code>, then issues <code>WAITFOR DELAY '00:00:05'</code> <em>inside the transaction</em>, then updates <code>Posts</code>. During those 5 seconds, X locks (and key range locks under serializable, or U→X lock conversions) are held on both rows. Worse, <code>usp_UpdateTablesInLoop</code> calls this repeatedly with random IDs. Under any concurrent load, this guarantees blocking and likely deadlocks.</p>
+<p>Recommendations:</p>
+<ul>
+  <li>Remove the <code>WAITFOR</code> from inside the transaction entirely. If delay simulation is needed, do it <em>before</em> <code>BEGIN TRAN</code> or <em>after</em> <code>COMMIT</code>.</li>
+  <li>Update rows in primary-key order across callers to reduce deadlock risk.</li>
+  <li>Consider <code>SET LOCK_TIMEOUT</code> on the loop driver to fail fast.</li>
+  <li>Replace <code>PRINT</code>-heavy diagnostics with optional <code>RAISERROR(... ,0,1) WITH NOWAIT</code> only when a debug flag is set.</li>
+</ul>
+</li>
+
+<li id="r4">
+<h3>4. Stop <code>ORDER BY NEWID()</code> on Large Tables <span class="badge b-high">HIGH</span> <span class="badge b-conf">HIGH</span></h3>
+<p><code>usp_UpdateTablesInLoop</code> uses <code>SELECT TOP 1 @Id = Id FROM Users ORDER BY NEWID()</code> and the same on Posts — each iteration computes NEWID() for 267K (Users) and 247K (Posts) rows, then sorts them. Replace with sampling on the clustered index:</p>
+<pre><code>-- Cheap pseudo-random pick
+SELECT TOP (1) @RandomUserId = Id
+FROM dbo.Users TABLESAMPLE SYSTEM (1 PERCENT)
+ORDER BY (SELECT NULL);
+-- Fallback if 0 rows: pick by Id range
+IF @RandomUserId IS NULL
+  SELECT @RandomUserId = Id FROM dbo.Users WHERE Id =
+    (ABS(CHECKSUM(NEWID())) % (SELECT MAX(Id) FROM dbo.Users)) + 1;</code></pre>
+</li>
+
+<li id="r5">
+<h3>5. Replace "Join-Everything CTEs" with OUTER APPLY / TOP N <span class="badge b-high">HIGH</span> <span class="badge b-conf">HIGH</span></h3>
+<p><code>sp00060Fixed</code> is the canonical template and should be applied to nearly every other proc in the batch. Key transformations:</p>
+<ul>
+  <li>Pre-aggregate Posts, Votes, Badges, Comments <em>separately by UserId</em> — never join Posts→Votes→Badges in one CTE (the Cartesian fan-out triples and quadruples counts; e.g., <code>sp09991</code>, <code>sp09941</code>, <code>sp09851</code>, <code>sp09812</code>, <code>sp09877</code> all over-count because each user's badges multiply through the Posts→Votes join).</li>
+  <li>For "latest post per user/tag/type" use <code>OUTER APPLY (SELECT TOP (1) … ORDER BY CreationDate DESC)</code> instead of <code>ROW_NUMBER()</code> over the whole table.</li>
+  <li>Push <code>TOP/OFFSET–FETCH</code> as close to the leaf as possible, not in a wrapper CTE after a full aggregation.</li>
+</ul>
+<div class="callout"><strong>Example of the over-count bug</strong> (present in sp09991 and many siblings): joining <code>Users LEFT JOIN Posts LEFT JOIN Votes</code> and <em>also</em> <code>LEFT JOIN Badges</code> in the same CTE causes <code>BadgeCount</code> and <code>Upvotes</code> to be multiplied. Splitting into per-entity aggregates as in <code>sp00060Fixed</code> fixes both correctness and performance.</div>
+</li>
+
+<li id="r6">
+<h3>6. Fix Date Arithmetic Bugs <span class="badge b-high">HIGH</span> <span class="badge b-conf">HIGH</span></h3>
+<p>Multiple procs use <code>CAST('2024-10-01 12:34:56' AS DATETIME) - DATEADD(YEAR, 1, 0)</code>. <code>DATEADD(YEAR, 1, 0)</code> returns 1901-01-01, so the expression subtracts ~123 years of ticks rather than 1 year. Affected: <code>sp09978</code>, <code>sp09921</code>, <code>sp09844</code>, <code>sp09905</code>, <code>sp09923</code>, <code>sp09826</code>, <code>sp00990</code>, <code>sp09963</code>. Replace with:</p>
+<pre><code>WHERE p.CreationDate &gt;= DATEADD(YEAR, -1, CAST('2024-10-01 12:34:56' AS datetime2))</code></pre>
+<p>Also: <code>sp09971</code> and <code>sp09889</code> use <code>GETDATE()</code> directly inside a SARG which is fine in 2022 but consider converting via a local <code>DECLARE @AsOf datetime2 = SYSDATETIME();</code> for plan reuse and Parameter Sensitivity Plan optimization.</p>
+</li>
+
+<li id="r7">
+<h3>7. Repair Outright Join Bugs <span class="badge b-high">HIGH</span> <span class="badge b-conf">HIGH</span></h3>
+<ul>
+  <li><code>sp09994</code>: <code>LEFT JOIN Badges b ON tp.UpVotes &gt; 100 AND b.UserId = (SELECT OwnerUserId FROM Posts WHERE Id = tp.PostId)</code> — produces a Cartesian product for every post with UpVotes&gt;100. Should be: derive <code>OwnerUserId</code> in the CTE then <code>LEFT JOIN Badges b ON b.UserId = rp.OwnerUserId</code> (with a deterministic TOP 1 selection).</li>
+  <li><code>sp09826</code>: <code>JOIN Users u ON tp.PostId = u.Id</code> — joins PostId to UserId. Should be <code>tp.OwnerUserId = u.Id</code> (carry OwnerUserId through CTE).</li>
+  <li><code>sp00992</code>: <code>LEFT JOIN PopularTags p ON ups.PostCount &gt; 5</code> — Cartesian.</li>
+  <li><code>sp09881</code>: <code>CROSS JOIN PopularTags</code> then OFFSET 100 — Cartesian explosion before paging.</li>
+  <li><code>sp09974</code>: <code>CROSS JOIN PopularPosts</code> — every user × every popular post.</li>
+  <li><code>sp09833</code>: <code>JOIN PostTypes pt ON rp.PostId IS NOT NULL</code> — Cartesian.</li>
+  <li><code>sp09886</code>: <code>JOIN TagPostDetails T ON A.DisplayName = T.Tag</code> — joining a username to a tag string is almost certainly wrong.</li>
+  <li><code>sp09895</code>: re-runs the entire PopularPosts query inside a <code>CROSS JOIN</code> derived table instead of referencing the CTE.</li>
+  <li><code>sp09836</code>-style (sp09911, sp09905, sp09891, sp09836): joining <code>Badges b ON b.UserId = (SELECT OwnerUserId FROM Posts WHERE Id = …)</code> — non-deterministic and slow; pull <code>OwnerUserId</code> through the CTE.</li>
+</ul>
+</li>
+
+<li id="r8">
+<h3>8. Replace Correlated Subqueries with Pre-Aggregates <span class="badge b-high">HIGH</span> <span class="badge b-conf">HIGH</span></h3>
+<p><code>sp09974</code> uses four correlated <code>SELECT COUNT(*) FROM …</code> per row. <code>sp09946</code>, <code>sp09940</code>, <code>sp09854</code>, <code>sp09904</code>, <code>sp09831</code>, <code>sp09815</code> do similar. With no supporting indexes today these become per-row scans. Refactor into a single pre-aggregated CTE and <code>LEFT JOIN</code> on UserId / PostId.</p>
+</li>
+
+<li id="r9">
+<h3>9. <code>ROW_NUMBER() OVER (PARTITION BY p.Id ORDER BY …)</code> is Pointless <span class="badge b-med">MEDIUM</span> <span class="badge b-conf">HIGH</span></h3>
+<p><code>sp09971</code> and <code>sp09955</code> partition by the primary key <code>p.Id</code> — every partition has exactly 1 row, so <code>rn</code> is always 1. The CTE materializes a sort for no reason. Either remove the windowed filter entirely, or partition by a meaningful column (e.g., <code>OwnerUserId</code>).</p>
+</li>
+
+<li id="r10">
+<h3>10. Avoid Reserved/Confusing Identifiers <span class="badge b-med">MEDIUM</span> <span class="badge b-conf">HIGH</span></h3>
+<p>Many procs alias windowed positions as <code>Rank</code>, which is also a T-SQL function name. While it parses, it is brittle and harms readability. Use <code>RankNo</code>, <code>RowNo</code>, or <code>PostRank</code>. Also avoid <code>Rank</code>/<code>VoteCount</code> shadowing within nested CTEs.</p>
+</li>
+
+<li id="r11">
+<h3>11. Standardize Procedure Header &amp; Error Handling <span class="badge b-med">MEDIUM</span> <span class="badge b-conf">HIGH</span></h3>
+<p>Inconsistent across the batch. Adopt:</p>
+<pre><code>CREATE OR ALTER PROCEDURE dbo.spXXXX
+AS
+BEGIN
+  SET NOCOUNT ON;
+  SET XACT_ABORT ON;
+  SET ANSI_WARNINGS ON;
+  SET ARITHABORT ON;
+  ...
+END
+GO</code></pre>
+<p>Schema-qualify every object reference (<code>dbo.Posts</code>, not <code>Posts</code>) — saves an implicit name-resolution lookup and improves plan-cache reuse.</p>
+</li>
+
+<li id="r12">
+<h3>12. Mind <code>AVG</code> on <code>int</code> Columns <span class="badge b-med">MEDIUM</span> <span class="badge b-conf">HIGH</span></h3>
+<p><code>AVG(p.Score)</code>, <code>AVG(p.ViewCount)</code>, <code>AVG(b.Class)</code>, etc., return integer when the column is int (truncation). Use <code>AVG(CAST(p.Score AS decimal(18,4)))</code> or <code>AVG(p.Score * 1.0)</code> where business meaning is fractional. Affected: sp09972, sp09950, sp09894, sp09909, sp09833, sp09877, sp09874, sp09829, sp09823.</p>
+</li>
+
+<li id="r13">
+<h3>13. Replace <code>STRING_AGG</code> Over Unbounded Sets <span class="badge b-med">MEDIUM</span> <span class="badge b-conf">HIGH</span></h3>
+<p><code>sp09967</code> emits <code>STRING_AGG(P.Title, '; ')</code> over <em>all</em> a user's posts (potentially thousands). <code>sp09908</code> aggregates voter info similarly. Risks: 8000-byte truncation for non-MAX, large memory grants, and unbounded result sizes. Cap with <code>STRING_AGG(... ) WITHIN GROUP (ORDER BY …)</code> on a pre-<code>TOP (N)</code>-limited derived table.</p>
+</li>
+
+<li id="r14">
+<h3>14. Reduce Plan-Cache Pollution &amp; Leverage 2022 Features <span class="badge b-low">LOW</span> <span class="badge b-conf">MEDIUM</span></h3>
+<ul>
+  <li>Hard-coded literal date strings (<code>'2024-10-01 12:34:56'</code>) inside dozens of procs create rigid plans. Pass an <code>@AsOfDate datetime2</code> parameter and benefit from <strong>Parameter Sensitive Plan optimization</strong> (SQL 2022).</li>
+  <li>Consider <code>OPTION (USE HINT('ENABLE_PARALLEL_PLAN_PREFERENCE'))</code> and rely on <strong>DOP feedback</strong> for the heaviest analytic procs.</li>
+  <li>For pure analytic aggregation procs (sp09812, sp09823, sp09887, sp09851), consider a <strong>nonclustered columnstore index</strong> on Posts/Votes/PostHistory — Enterprise/Developer-only and a strong fit for these scan-heavy GROUP BYs.</li>
+  <li>Enable <strong>Query Store</strong> if not already; with so many similarly-shaped procs, regression hunting will be a daily task.</li>
+</ul>
+</li>
+
+</ol>
+</section>
+
+<section id="antipatterns">
+<h2>Common Anti-Patterns Observed</h2>
+<table>
+<tr><th>Anti-pattern</th><th>Examples</th><th>Impact</th></tr>
+<tr><td>LIKE-on-Tags string</td><td>sp00060, sp09990, sp09982, sp00992, sp09881, sp09886, sp09915</td><td>Non-sargable, wrong results</td></tr>
+<tr><td>Join chain causing row multiplication in aggregates</td><td>sp09991, sp09941, sp09851, sp09812, sp09877, sp00060 (original)</td><td>Inflated counts/sums</td></tr>
+<tr><td>Correlated subquery per row</td><td>sp09974, sp09946, sp09940, sp09904, sp09831, sp09815, sp09825</td><td>O(N²) scans without index</td></tr>
+<tr><td>Cartesian via constant-predicate join</td><td>sp09833, sp00992, sp09881, sp09974, sp09895, sp09994</td><td>Result explosion</td></tr>
+<tr><td>Joining unrelated columns</td><td>sp09826 (PostId=UserId), sp09886 (DisplayName=Tag), sp09836-family</td><td>Wrong rows returned</td></tr>
+<tr><td>Date math bug (<code>DATEADD(YEAR,1,0)</code>)</td><td>sp09978, sp09921, sp09844, sp09905, sp09923, sp09826</td><td>Wrong filter window</td></tr>
+<tr><td>Reserved word as alias (<code>Rank</code>)</td><td>~30 procedures</td><td>Readability, fragility</td></tr>
+<tr><td>Pointless ROW_NUMBER over PK</td><td>sp09971, sp09955</td><td>Wasted sort</td></tr>
+<tr><td>ORDER BY NEWID() on large tables</td><td>usp_UpdateTablesInLoop</td><td>Full scan + sort per iteration</td></tr>
+<tr><td>Long transaction with WAITFOR</td><td>usp_UpdateTablesWithDelay</td><td>Severe locking</td></tr>
+<tr><td>Unqualified object names</td><td>most procs</td><td>Plan-cache &amp; name-resolution overhead</td></tr>
+<tr><td>INT division / AVG(int)</td><td>sp09972, sp09950, sp09894, sp09833</td><td>Silent truncation</td></tr>
+</table>
+</section>
+
+<section id="locking">
+<h2>Locking &amp; Concurrency</h2>
+<ul>
+  <li><strong>usp_UpdateTablesWithDelay</strong>: the 5-second <code>WAITFOR</code> inside the transaction is the dominant concurrency hazard in the batch. Combined with random PK access from <code>usp_UpdateTablesInLoop</code>, parallel runs will deadlock on Users/Posts.</li>
+  <li>The analytic procs are read-only, but without supporting indexes they scan the largest tables (PostHistory 820 MB) and will take Sch-S / IS / S locks that can block concurrent writers. Consider <code>SET TRANSACTION ISOLATION LEVEL READ COMMITTED SNAPSHOT</code> at the database level (RCSI) — it eliminates reader/writer blocking with low overhead.</li>
+  <li>None of the procs use explicit table hints like <code>NOLOCK</code> (good), but if RCSI is not enabled, large scans may build up shared locks. Validate <code>is_read_committed_snapshot_on</code>.</li>
+</ul>
+<p>Script <a href="#s-rcsi">Enable RCSI</a> is provided.</p>
+</section>
+
+<section id="indexing">
+<h2>Indexing Observations</h2>
+<p>The index usage list shows only clustered PKs and reports <em>zero seeks</em> on most of them, with a small number of scans. That is consistent with the procs in this batch: virtually every plan ends up scanning the leaf level of the clustered index because the predicates do not match the leading key. Once the indexes from Recommendation #1 are in place, expect:</p>
+<ul>
+  <li>Order-of-magnitude drop in logical reads on Posts/Votes/Badges/Comments/PostHistory.</li>
+  <li>Disappearance of large hash-aggregate spills on procs like <code>sp09812</code>, <code>sp09851</code>, <code>sp09887</code>.</li>
+  <li>Better DOP-feedback behavior on SQL 2022 because the plans will switch from huge parallel scans to index seeks with smaller memory grants.</li>
+</ul>
+</section>
+
+<section id="sql2022">
+<h2>SQL Server 2022 Opportunities</h2>
+<ul>
+  <li><strong>Parameter Sensitive Plan (PSP) optimization</strong> — convert hard-coded date literals to parameters; PSP will keep multiple cached plans for skewed ranges.</li>
+  <li><strong>DOP feedback</strong> — leave MAXDOP at instance default and let the engine reduce parallelism for tiny result sets in these analytic procs.</li>
+  <li><strong>Optimized plan forcing / Query Store hints</strong> — for any proc that regresses after indexing, use <code>sp_query_store_set_hints</code> to apply <code>RECOMPILE</code> or <code>OPTIMIZE FOR UNKNOWN</code> without code changes.</li>
+  <li><strong>Approximate aggregates</strong> — <code>APPROX_COUNT_DISTINCT()</code> for cardinality-style reporting on Posts/Votes.</li>
+  <li><strong>Nonclustered columnstore</strong> on Posts/Votes/PostHistory for analytic procs — Enterprise/Developer feature, ideal here.</li>
+</ul>
+</section>
+
+<section id="scripts">
+<h2>Scripts</h2>
+
+<h3 id="s-indexes">Script 1 — Foundational Nonclustered Indexes (Recommendation #1)</h3>
+<pre><code>USE [SQLStorm];
+GO
+SET XACT_ABORT ON;
+GO
+
+-- Posts: most heavily filtered table
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Posts_OwnerUserId_Incl' AND object_id=OBJECT_ID('dbo.Posts'))
+CREATE NONCLUSTERED INDEX IX_Posts_OwnerUserId_Incl
+    ON dbo.Posts (OwnerUserId)
+    INCLUDE (PostTypeId, Score, ViewCount, CreationDate, LastActivityDate, AcceptedAnswerId, AnswerCount, CommentCount)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE, FILLFACTOR = 90);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Posts_PostType_CreationDate' AND object_id=OBJECT_ID('dbo.Posts'))
+CREATE NONCLUSTERED INDEX IX_Posts_PostType_CreationDate
+    ON dbo.Posts (PostTypeId, CreationDate)
+    INCLUDE (OwnerUserId, Score, ViewCount, AnswerCount, CommentCount)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Posts_ParentId' AND object_id=OBJECT_ID('dbo.Posts'))
+CREATE NONCLUSTERED INDEX IX_Posts_ParentId
+    ON dbo.Posts (ParentId)
+    INCLUDE (PostTypeId, Score, OwnerUserId)
+    WHERE ParentId IS NOT NULL
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+-- Votes
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Votes_PostId_VoteType' AND object_id=OBJECT_ID('dbo.Votes'))
+CREATE NONCLUSTERED INDEX IX_Votes_PostId_VoteType
+    ON dbo.Votes (PostId, VoteTypeId)
+    INCLUDE (UserId, BountyAmount, CreationDate)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Votes_UserId_VoteType' AND object_id=OBJECT_ID('dbo.Votes'))
+CREATE NONCLUSTERED INDEX IX_Votes_UserId_VoteType
+    ON dbo.Votes (UserId, VoteTypeId)
+    INCLUDE (PostId, CreationDate)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+-- Badges
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Badges_UserId' AND object_id=OBJECT_ID('dbo.Badges'))
+CREATE NONCLUSTERED INDEX IX_Badges_UserId
+    ON dbo.Badges (UserId)
+    INCLUDE (Class, Name, [Date])
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+-- Comments
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Comments_PostId' AND object_id=OBJECT_ID('dbo.Comments'))
+CREATE NONCLUSTERED INDEX IX_Comments_PostId
+    ON dbo.Comments (PostId)
+    INCLUDE (UserId, Score, CreationDate)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Comments_UserId' AND object_id=OBJECT_ID('dbo.Comments'))
+CREATE NONCLUSTERED INDEX IX_Comments_UserId
+    ON dbo.Comments (UserId)
+    INCLUDE (PostId, Score, CreationDate)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+-- PostHistory
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_PostHistory_PostId_Type_Date' AND object_id=OBJECT_ID('dbo.PostHistory'))
+CREATE NONCLUSTERED INDEX IX_PostHistory_PostId_Type_Date
+    ON dbo.PostHistory (PostId, PostHistoryTypeId, CreationDate)
+    INCLUDE (UserId)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_PostHistory_UserId_Date' AND object_id=OBJECT_ID('dbo.PostHistory'))
+CREATE NONCLUSTERED INDEX IX_PostHistory_UserId_Date
+    ON dbo.PostHistory (UserId, CreationDate)
+    INCLUDE (PostId, PostHistoryTypeId)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+-- Users
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Users_Reputation' AND object_id=OBJECT_ID('dbo.Users'))
+CREATE NONCLUSTERED INDEX IX_Users_Reputation
+    ON dbo.Users (Reputation DESC)
+    INCLUDE (DisplayName, CreationDate, LastAccessDate, UpVotes, DownVotes, Views)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+-- PostLinks
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_PostLinks_PostId_LinkType' AND object_id=OBJECT_ID('dbo.PostLinks'))
+CREATE NONCLUSTERED INDEX IX_PostLinks_PostId_LinkType
+    ON dbo.PostLinks (PostId, LinkTypeId)
+    INCLUDE (RelatedPostId)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+</code></pre>
+
+<h3 id="s-posttags">Script 2 — Normalize Tags into a PostTags Bridge (Recommendation #2)</h3>
+<pre><code>USE [SQLStorm];
+GO
+SET XACT_ABORT ON;
+GO
+
+IF OBJECT_ID('dbo.PostTags','U') IS NULL
+BEGIN
+    CREATE TABLE dbo.PostTags
+    (
+        PostId int NOT NULL,
+        TagId  int NOT NULL,
+        CONSTRAINT PK_PostTags PRIMARY KEY CLUSTERED (PostId, TagId)
+            WITH (DATA_COMPRESSION = PAGE)
+    );
+
+    CREATE NONCLUSTERED INDEX IX_PostTags_TagId_PostId
+        ON dbo.PostTags (TagId, PostId)
+        WITH (DATA_COMPRESSION = PAGE);
+END
+GO
+
+-- Populate from existing Posts.Tags (format: '&lt;tag1&gt;&lt;tag2&gt;...')
+;WITH Split AS
+(
+    SELECT  p.Id AS PostId,
+            LTRIM(RTRIM(REPLACE(value,'&gt;',''))) AS TagName
+    FROM    dbo.Posts AS p
+    CROSS APPLY STRING_SPLIT(REPLACE(p.Tags,'&gt;&lt;','&gt;|&lt;'),'|') AS s(value)
+    WHERE   p.Tags IS NOT NULL
+      AND   LEN(p.Tags) &gt; 0
+)
+INSERT dbo.PostTags (PostId, TagId)
+SELECT DISTINCT s.PostId, t.Id
+FROM   Split AS s
+JOIN   dbo.Tags AS t
+       ON  t.TagName = REPLACE(s.TagName,'&lt;','')
+WHERE  NOT EXISTS (SELECT 1 FROM dbo.PostTags pt
+                   WHERE pt.PostId = s.PostId AND pt.TagId = t.Id);
+GO
+</code></pre>
+
+<h3 id="s-fixwait">Script 3 — Refactor usp_UpdateTablesWithDelay to Eliminate Long Transaction (Recommendation #3)</h3>
+<pre><code>USE [SQLStorm];
+GO
+CREATE OR ALTER PROCEDURE dbo.usp_UpdateTablesWithDelay
+    @UserId         int,
+    @NewReputation  int,
+    @PostId         int,
+    @NewScore       int,
+    @SimulateDelay  bit = 0      -- only set in test harness, NEVER in prod
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    -- Optional simulated latency BEFORE the transaction so no locks are held
+    IF @SimulateDelay = 1
+        WAITFOR DELAY '00:00:05';
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+            UPDATE dbo.Users
+               SET Reputation     = @NewReputation,
+                   LastAccessDate = SYSDATETIME()
+             WHERE Id = @UserId;
+
+            UPDATE dbo.Posts
+               SET Score            = @NewScore,
+                   LastActivityDate = SYSDATETIME()
+             WHERE Id = @PostId;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT &gt; 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END
+GO
+</code></pre>
+
+<h3 id="s-fixloop">Script 4 — Refactor usp_UpdateTablesInLoop to Avoid ORDER BY NEWID() (Recommendation #4)</h3>
+<pre><code>USE [SQLStorm];
+GO
+CREATE OR ALTER PROCEDURE dbo.usp_UpdateTablesInLoop
+    @LoopCount         int          = 10,
+    @DelayBetweenCalls varchar(8)   = '00:00:01'
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @Counter int = 0,
+            @MaxUserId int, @MaxPostId int,
+            @RandomUserId int, @RandomPostId int,
+            @NewReputation int, @NewScore int,
+            @SuccessCount int = 0, @ErrorCount int = 0;
+
+    SELECT @MaxUserId = MAX(Id) FROM dbo.Users;
+    SELECT @MaxPostId = MAX(Id) FROM dbo.Posts;
+
+    WHILE @Counter &lt; @LoopCount
+    BEGIN
+        SET @Counter += 1;
+
+        SET @RandomUserId = ((ABS(CHECKSUM(NEWID())) % @MaxUserId) + 1);
+        SET @RandomPostId = ((ABS(CHECKSUM(NEWID())) % @MaxPostId) + 1);
+        SET @NewReputation = ABS(CHECKSUM(NEWID())) % 10000;
+        SET @NewScore      = (ABS(CHECKSUM(NEWID())) % 100) - 10;
+
+        BEGIN TRY
+            EXEC dbo.usp_UpdateTablesWithDelay
+                 @UserId        = @RandomUserId,
+                 @NewReputation = @NewReputation,
+                 @PostId        = @RandomPostId,
+                 @NewScore      = @NewScore,
+                 @SimulateDelay = 0;
+            SET @SuccessCount += 1;
+        END TRY
+        BEGIN CATCH
+            SET @ErrorCount += 1;
+        END CATCH
+
+        IF @Counter &lt; @LoopCount
+            WAITFOR DELAY @DelayBetweenCalls;
+    END
+
+    SELECT @LoopCount AS TotalIterations,
+           @SuccessCount AS Successful,
+           @ErrorCount   AS Errors;
+END
+GO
+</code></pre>
+
+<h3 id="s-rewrite">Script 5 — Template Rewrite Applied to sp09991 (Recommendations #5, #7, #11)</h3>
+<pre><code>USE [SQLStorm];
+GO
+CREATE OR ALTER PROCEDURE dbo.sp09991
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    ;WITH PostAgg AS
+    (
+        SELECT  p.OwnerUserId AS UserId,
+                COUNT_BIG(*) AS PostCount,
+                SUM(CASE WHEN p.PostTypeId = 1 THEN 1 ELSE 0 END) AS QuestionCount,
+                SUM(CASE WHEN p.PostTypeId = 2 THEN 1 ELSE 0 END) AS AnswerCount,
+                SUM(CASE WHEN p.PostTypeId = 3 THEN 1 ELSE 0 END) AS WikiCount
+        FROM    dbo.Posts AS p
+        WHERE   p.OwnerUserId IS NOT NULL
+        GROUP BY p.OwnerUserId
+    ),
+    VoteAgg AS
+    (
+        SELECT  p.OwnerUserId AS UserId,
+                SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END) AS Upvotes,
+                SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END) AS Downvotes
+        FROM    dbo.Posts AS p
+        JOIN    dbo.Votes AS v ON v.PostId = p.Id
+        WHERE   p.OwnerUserId IS NOT NULL
+          AND   v.VoteTypeId IN (2,3)
+        GROUP BY p.OwnerUserId
+    ),
+    BadgeAgg AS
+    (
+        SELECT  b.UserId,
+                COUNT_BIG(*)                                     AS BadgeCount,
+                SUM(CASE WHEN b.Class = 1 THEN 1 ELSE 0 END)     AS GoldBadges,
+                SUM(CASE WHEN b.Class = 2 THEN 1 ELSE 0 END)     AS SilverBadges,
+                SUM(CASE WHEN b.Class = 3 THEN 1 ELSE 0 END)     AS BronzeBadges
+        FROM    dbo.Badges AS b
+        GROUP BY b.UserId
+    )
+    SELECT TOP (10)
+        u.Id          AS UserId,
+        ISNULL(pa.PostCount,0)    AS PostCount,
+        ISNULL(pa.QuestionCount,0) AS QuestionCount,
+        ISNULL(pa.AnswerCount,0)   AS AnswerCount,
+        ISNULL(pa.WikiCount,0)     AS WikiCount,
+        ISNULL(va.Upvotes,0)       AS Upvotes,
+        ISNULL(va.Downvotes,0)     AS Downvotes,
+        ISNULL(ba.BadgeCount,0)    AS BadgeCount,
+        ISNULL(ba.GoldBadges,0)    AS GoldBadges,
+        ISNULL(ba.SilverBadges,0)  AS SilverBadges,
+        ISNULL(ba.BronzeBadges,0)  AS BronzeBadges,
+        RANK() OVER (ORDER BY ISNULL(va.Upvotes,0) - ISNULL(va.Downvotes,0) DESC) AS UserRank
+    FROM   dbo.Users AS u
+    LEFT JOIN PostAgg  AS pa ON pa.UserId = u.Id
+    LEFT JOIN VoteAgg  AS va ON va.UserId = u.Id
+    LEFT JOIN BadgeAgg AS ba ON ba.UserId = u.Id
+    WHERE  ISNULL(pa.PostCount,0) &gt; 0
+    ORDER BY UserRank;
+END
+GO
+</code></pre>
+
+<h3 id="s-datefix">Script 6 — Centralized Date Window Helper (Recommendation #6)</h3>
+<pre><code>USE [SQLStorm];
+GO
+CREATE OR ALTER FUNCTION dbo.fn_GetReportWindow (@AsOf datetime2, @YearsBack int)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT
+        WindowStart = DATEADD(YEAR, -@YearsBack, @AsOf),
+        WindowEnd   = @AsOf
+);
+GO
+
+-- Example usage replacing CAST('2024-10-01 12:34:56' AS DATETIME) - DATEADD(YEAR,1,0):
+-- SELECT WindowStart, WindowEnd FROM dbo.fn_GetReportWindow(SYSUTCDATETIME(), 1);
+GO
+</code></pre>
+
+<h3 id="s-rcsi">Script 7 — Enable Read Committed Snapshot Isolation (Locking)</h3>
+<pre><code>USE [master];
+GO
+-- Eliminates reader/writer blocking for the analytic procs.
+-- Requires no active user sessions in the target database while ALTER is committed.
+ALTER DATABASE [SQLStorm] SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;
+GO
+ALTER DATABASE [SQLStorm] SET ALLOW_SNAPSHOT_ISOLATION ON;
+GO
+</code></pre>
+
+<h3 id="s-qs">Script 8 — Enable / Tune Query Store (Recommendation #14)</h3>
+<pre><code>USE [master];
+GO
+ALTER DATABASE [SQLStorm] SET QUERY_STORE = ON
+(
+    OPERATION_MODE              = READ_WRITE,
+    CLEANUP_POLICY              = ( STALE_QUERY_THRESHOLD_DAYS = 30 ),
+    DATA_FLUSH_INTERVAL_SECONDS = 900,
+    INTERVAL_LENGTH_MINUTES     = 30,
+    MAX_STORAGE_SIZE_MB         = 2048,
+    QUERY_CAPTURE_MODE          = AUTO,
+    SIZE_BASED_CLEANUP_MODE     = AUTO,
+    MAX_PLANS_PER_QUERY         = 200,
+    WAIT_STATS_CAPTURE_MODE     = ON
+);
+GO
+</code></pre>
+
+<h3 id="s-cci">Script 9 — Optional Nonclustered Columnstore for Analytic Workload (Recommendation #14)</h3>
+<pre><code>USE [SQLStorm];
+GO
+-- Validate disk space and maintenance window before applying.
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='NCCI_Votes' AND object_id=OBJECT_ID('dbo.Votes'))
+CREATE NONCLUSTERED COLUMNSTORE INDEX NCCI_Votes
+    ON dbo.Votes (PostId, UserId, VoteTypeId, BountyAmount, CreationDate);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='NCCI_PostHistory' AND object_id=OBJECT_ID('dbo.PostHistory'))
+CREATE NONCLUSTERED COLUMNSTORE INDEX NCCI_PostHistory
+    ON dbo.PostHistory (PostId, PostHistoryTypeId, UserId, CreationDate);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='NCCI_Posts' AND object_id=OBJECT_ID('dbo.Posts'))
+CREATE NONCLUSTERED COLUMNSTORE INDEX NCCI_Posts
+    ON dbo.Posts (Id, OwnerUserId, PostTypeId, Score, ViewCount, AnswerCount, CommentCount, CreationDate, LastActivityDate, ParentId, AcceptedAnswerId);
+GO
+</code></pre>
+
+</section>
+
+</main>
+</div>
+
+<footer>
+  Generated by AI SQL Tuner Studio v1.0.38.0 using model claude-opus-4-7 with reasoning effort high.<br>
+  Based on analysis as of 2026-05-16 00:45:15 UTC. &nbsp;|&nbsp; <a href="https://aisqltuner.com">https://aisqltuner.com</a>
+</footer>
+
+</body>
+</html>
