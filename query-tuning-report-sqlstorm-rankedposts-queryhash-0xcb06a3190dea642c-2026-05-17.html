@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Query Tuning Report – SQLStorm.RankedPosts (QueryHash 0xCB06A3190DEA642C) – 2026-05-17</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --paper:#FFFFFF;
+    --sidebar:#F6F8F9;
+    --teal:#0B6E6E;
+    --teal-dark:#085050;
+    --text:#111827;
+    --muted:#6B7280;
+    --code-bg:#EFF7F7;
+    --border:#E5E7EB;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.55}
+  a{color:var(--teal);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+  aside{background:var(--sidebar);border-right:1px solid var(--border);padding:24px 20px;position:sticky;top:0;height:100vh;overflow-y:auto}
+  aside h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);margin:0 0 12px 0}
+  aside ol{margin:0;padding-left:18px}
+  aside ol li{margin:6px 0;font-size:14px}
+  main{padding:36px 48px;max-width:1100px}
+  h1{color:var(--teal);font-size:26px;margin:0 0 6px 0;border-bottom:2px solid var(--teal);padding-bottom:10px}
+  h2{color:var(--teal);font-size:20px;margin-top:32px;border-bottom:1px solid var(--border);padding-bottom:6px}
+  h3{color:var(--teal-dark);font-size:16px;margin-top:22px}
+  .meta{color:var(--muted);font-size:13px;margin-bottom:18px}
+  .meta strong{color:var(--text)}
+  code{font-family:"SF Mono",Consolas,Monaco,monospace;background:var(--code-bg);padding:1px 5px;border-radius:3px;font-size:13px;color:#0B3F3F}
+  pre{background:var(--code-bg);border:1px solid #DCEAEA;border-radius:6px;padding:14px 16px;overflow-x:auto;font-size:13px;line-height:1.45}
+  pre code{background:transparent;padding:0;color:#0B3F3F}
+  table{border-collapse:collapse;width:100%;margin:10px 0 16px 0;font-size:14px}
+  th,td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--sidebar);color:var(--teal);font-weight:600}
+  .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600}
+  .pill-crit{background:#FDECEC;color:#9B1C1C}
+  .pill-high{background:#FFF1E0;color:#9A3412}
+  .pill-med{background:#FFFAD6;color:#92670B}
+  .pill-low{background:#E7F4F4;color:#0B6E6E}
+  .evidence{border-left:3px solid var(--teal);background:var(--sidebar);padding:8px 12px;margin:8px 0;color:var(--muted);font-size:13px}
+  .evidence strong{color:var(--text)}
+  footer{border-top:1px solid var(--border);margin-top:48px;padding:18px 0;color:var(--muted);font-size:13px}
+  footer a{color:var(--teal)}
+  ul li, ol li{margin:4px 0}
+  .tag-goal{display:inline-block;background:var(--code-bg);color:var(--teal);padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;margin-left:6px}
+</style>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"TechArticle",
+  "headline":"Query Tuning Report – SQLStorm.RankedPosts (QueryHash 0xCB06A3190DEA642C) – 2026-05-17",
+  "datePublished":"2026-05-17",
+  "author":{"@type":"Organization","name":"AI SQL Tuner Studio"},
+  "about":"SQL Server query performance tuning"
+}
+</script>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#summary">Executive Summary</a></li>
+      <li><a href="#topfindings">Top Findings</a></li>
+      <li><a href="#detailed">Detailed Recommendations</a>
+        <ol>
+          <li><a href="#rec1">Eliminate LIKE join on Tags</a></li>
+          <li><a href="#rec2">Fix join semantics (UserId vs PostId)</a></li>
+          <li><a href="#rec3">Pre-aggregate before window/rank</a></li>
+          <li><a href="#rec4">Targeted supporting indexes</a></li>
+          <li><a href="#rec5">DISTINCT &amp; ORDER BY review</a></li>
+          <li><a href="#rec6">Statistics &amp; parameters</a></li>
+        </ol>
+      </li>
+      <li><a href="#table-insights">Table-Specific Insights</a></li>
+      <li><a href="#validation">Validation Steps</a></li>
+      <li><a href="#scripts">Scripts</a></li>
+    </ol>
+  </aside>
+
+  <main>
+    <h1>Query Tuning Report – SQLStorm.RankedPosts (QueryHash 0xCB06A3190DEA642C) – 2026-05-17</h1>
+    <div class="meta">
+      <span class="tag-goal">Tuning Goal: Query Tuner</span><br>
+      <strong>Server:</strong> RockyPC &nbsp;|&nbsp;
+      <strong>Version:</strong> SQL Server 2022 (16.0.1180.1) Developer Edition (64-bit), Enterprise engine &nbsp;|&nbsp;
+      <strong>Database:</strong> SQLStorm<br>
+      <strong>Estimated Plan Cost:</strong> 201.56 <span class="pill pill-crit">Critical</span> &nbsp;|&nbsp;
+      <strong>Observed runtime:</strong> ~40s, 2,105 rows
+    </div>
+
+    <h2 id="summary">Executive Summary</h2>
+    <p>
+      The query has an estimated subtree cost of <strong>201.56</strong> (Critical band). The dominant cost is concentrated in a single
+      operator subtree: the <code>Nested Loops</code> with a <code>LIKE '%' + t.TagName + '%'</code> predicate against <code>dbo.Posts.Tags</code>,
+      contributing ~<strong>193 of the 201 cost units</strong> (≈96%). The remaining plan (the user/votes/badges aggregation) is well-shaped and costs only ~7 units.
+    </p>
+    <p>
+      Additionally, the final <code>LEFT JOIN RankedPosts rp ON tp.UserId = rp.PostId</code> joins <strong>UserId to PostId</strong>, which is almost certainly a logic bug — those
+      ID domains do not match. This means the <code>RankedPosts</code> CTE is computed at enormous cost (~104K rows × 1,232 tags via a non-sargable wildcard scan) only to produce
+      essentially incidental matches in the final result. Fixing this single defect is the largest available win.
+    </p>
+    <ol>
+      <li><strong>Rewrite the Posts–Tags relationship</strong> to remove the leading-wildcard <code>LIKE</code> join (use <code>STRING_SPLIT</code> or a normalized PostTags table). <span class="pill pill-crit">Critical</span></li>
+      <li><strong>Correct the final join predicate</strong> — <code>tp.UserId = rp.PostId</code> is semantically wrong; join on <code>OwnerUserId</code> or remove the join. <span class="pill pill-crit">Critical</span></li>
+      <li><strong>Add targeted indexes</strong> on <code>Posts(OwnerUserId,PostTypeId)</code>, <code>Votes(PostId) INCLUDE(VoteTypeId)</code>, and <code>Badges(UserId)</code>. <span class="pill pill-high">High</span></li>
+      <li><strong>Pre-aggregate <code>Votes</code> and <code>Badges</code></strong> per user before joining, to remove the cross-product effect feeding <code>COUNT(DISTINCT)</code>. <span class="pill pill-med">Medium</span></li>
+      <li><strong>Remove unnecessary <code>SELECT DISTINCT</code></strong> after the rewrite to avoid the final Hash Aggregate / Sort spill risk. <span class="pill pill-low">Low</span></li>
+    </ol>
+
+    <h2 id="topfindings">Top Findings (Evidence)</h2>
+    <ul>
+      <li>
+        <strong>Non-sargable LIKE drives 96% of cost.</strong>
+        <div class="evidence">Nested Loops (NodeId 8) <code>EstimateCPU="67.2275"</code>, subtree cost <code>193.282</code>; predicate
+        <code>Posts.Tags LIKE '%' + Tags.TagName + '%'</code> with a Table Spool (NodeId 10) rewound 104,435 times.</div>
+      </li>
+      <li>
+        <strong>Wrong-domain join.</strong>
+        <div class="evidence">Query text: <code>LEFT JOIN RankedPosts rp ON tp.UserId = rp.PostId</code>. <code>UserId</code> is a <code>dbo.Users.Id</code> domain (267,193 distinct); <code>PostId</code> belongs to <code>dbo.Posts.Id</code> (246,672 distinct). Overlap of value ranges is coincidental.</div>
+      </li>
+      <li>
+        <strong>Posts full scan.</strong>
+        <div class="evidence">Clustered Index Scan on <code>PK__Posts__3214EC07AF21AC3E</code> (NodeId 9) reads <code>EstimatedRowsRead="246672"</code>, AvgRowSize 2051, table size <strong>399 MB</strong>. No usable index for the <code>PostTypeId=1</code> predicate or for the tag join.</div>
+      </li>
+      <li>
+        <strong>COUNT(DISTINCT) over a join cross-product.</strong>
+        <div class="evidence">Hash Match Aggregate (NodeId 18) ingests ~<code>1,700,990</code> rows because <code>Posts ⨝ Votes ⨝ Badges</code> multiplies row counts before <code>COUNT(DISTINCT p.Id)</code> / <code>COUNT(DISTINCT b.Id)</code> deduplicate.</div>
+      </li>
+      <li>
+        <strong>Memory grant pressure risk.</strong>
+        <div class="evidence"><code>SerialDesiredMemory="1224792"</code> KB requested; multiple Sort/Hash operators with batch-mode and MemoryFractions across the plan; tempdb spill possible at higher concurrency.</div>
+      </li>
+      <li>
+        <strong>Missing-index DMV hints align with rewrite targets.</strong>
+        <div class="evidence">DMV: <code>Votes(PostId) INCLUDE(VoteTypeId)</code> impact 19.36%; <code>Posts(OwnerUserId)</code> impact 13.58%; <code>Badges(UserId)</code> impact 21.41%.</div>
+      </li>
+    </ul>
+
+    <h2 id="detailed">Detailed Prioritized Recommendations</h2>
+
+    <h3 id="rec1">1. Eliminate the <code>LIKE '%' + TagName + '%'</code> join on Posts.Tags <span class="pill pill-crit">Critical</span></h3>
+    <p>
+      <strong>Why:</strong> <code>Posts.Tags</code> is a delimited string column (e.g. <code>&lt;sql-server&gt;&lt;tuning&gt;</code>). Joining to <code>Tags.TagName</code> with a double-wildcard <code>LIKE</code> is non-sargable: the optimizer cannot seek, must scan all 246,672 posts, and re-evaluates the predicate per tag (1,232 tags) using a Table Spool. This is the root cost.
+    </p>
+    <p><strong>Before (current):</strong></p>
+    <pre><code>FROM Posts p
+JOIN Tags t ON p.Tags LIKE '%' + t.TagName + '%'
+WHERE p.PostTypeId = 1</code></pre>
+    <p><strong>After — Option A: use <code>STRING_SPLIT</code> with the &lt; &gt; delimiter (SQL 2022 supports ordinal):</strong></p>
+    <pre><code>FROM Posts p
+CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(p.Tags,'&gt;',''),'&lt;','|'), '|') s
+JOIN  Tags t ON t.TagName = s.value
+WHERE p.PostTypeId = 1
+  AND s.value &lt;&gt; '';</code></pre>
+    <p><strong>After — Option B (best): normalize via a <code>PostTags</code> bridge table</strong> (one-time materialization). This converts the LIKE pattern join into a hash/merge join on integer keys.</p>
+    <p>
+      Confidence: <strong>High</strong> on the impact (≥80% cost reduction for this subtree).
+      Risk: Option B requires a one-time backfill and a maintenance trigger or scheduled rebuild; Option A is zero-schema but still scans <code>Posts</code> once.
+    </p>
+
+    <h3 id="rec2">2. Correct the final join predicate <span class="pill pill-crit">Critical</span></h3>
+    <p>
+      <code>LEFT JOIN RankedPosts rp ON tp.UserId = rp.PostId</code> joins user identifiers to post identifiers. This is almost certainly unintended. Two valid interpretations:
+    </p>
+    <ul>
+      <li><strong>Latest post owned by the user:</strong> include <code>OwnerUserId</code> in <code>RankedPosts</code> and join <code>tp.UserId = rp.OwnerUserId AND rp.rn = 1</code>.</li>
+      <li><strong>Latest post per tag (independent list):</strong> remove the join entirely and return the latest-per-tag list separately.</li>
+    </ul>
+    <p><strong>Recommended rewrite (latest post per user):</strong></p>
+    <pre><code>WITH UserLatestPost AS (
+    SELECT p.OwnerUserId, p.Id AS PostId, p.Title, p.CreationDate,
+           ROW_NUMBER() OVER (PARTITION BY p.OwnerUserId ORDER BY p.CreationDate DESC) AS rn
+    FROM Posts p
+    WHERE p.PostTypeId = 1
+)
+SELECT ... FROM TopUsers tp
+LEFT JOIN UserLatestPost rp ON rp.OwnerUserId = tp.UserId AND rp.rn = 1;</code></pre>
+    <p>This removes <code>Tags</code> from the plan entirely if tag context is not actually required by the report. Confidence: <strong>High</strong>.</p>
+
+    <h3 id="rec3">3. Pre-aggregate Votes &amp; Badges before joining <span class="pill pill-med">Medium</span></h3>
+    <p>
+      The current shape multiplies rows: <code>Users ⨝ Posts ⨝ Votes ⨝ Badges</code> produces ≈1.7M rows feeding a Hash Aggregate with <code>COUNT(DISTINCT)</code>. Pre-aggregating to one row per user keeps cardinality low and eliminates the need for <code>DISTINCT</code>.
+    </p>
+    <pre><code>WITH PostAgg AS (
+    SELECT p.OwnerUserId, COUNT(*) AS TotalPosts
+    FROM Posts p WHERE p.OwnerUserId IS NOT NULL
+    GROUP BY p.OwnerUserId
+),
+VoteAgg AS (
+    SELECT p.OwnerUserId,
+           SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpVotes,
+           SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownVotes
+    FROM Posts p
+    JOIN Votes v ON v.PostId = p.Id
+    GROUP BY p.OwnerUserId
+),
+BadgeAgg AS (
+    SELECT b.UserId, COUNT(*) AS BadgeCount
+    FROM Badges b GROUP BY b.UserId
+)
+SELECT ...
+FROM Users u
+LEFT JOIN PostAgg  pa ON pa.OwnerUserId = u.Id
+LEFT JOIN VoteAgg  va ON va.OwnerUserId = u.Id
+LEFT JOIN BadgeAgg ba ON ba.UserId      = u.Id
+WHERE pa.TotalPosts &gt; 10;</code></pre>
+    <p>Confidence: <strong>High</strong>. Expected reduction of intermediate row volume by ~10×.</p>
+
+    <h3 id="rec4">4. Targeted supporting indexes <span class="pill pill-high">High</span></h3>
+    <p>The following indexes directly serve the rewritten query and align with DMV missing-index hints.</p>
+    <table>
+      <thead><tr><th>Index</th><th>Est. Storage</th><th>Read Benefit</th><th>Write Overhead</th><th>Maintenance Notes / Risk</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>IX_Posts_OwnerUserId_PostTypeId_INC_CreationDate_Title</code></td>
+          <td>~28–34 MB</td>
+          <td>~55–70%</td>
+          <td>Low–Medium (Posts is moderate write)</td>
+          <td>Supports PostAgg, UserLatestPost CTE, and Posts→Users join. PAGE compression recommended. Use <code>ONLINE = ON</code>.</td>
+        </tr>
+        <tr>
+          <td><code>IX_Votes_PostId_INC_VoteTypeId</code></td>
+          <td>~16–20 MB</td>
+          <td>~40–55%</td>
+          <td>Medium (Votes is write-heavy)</td>
+          <td>Replaces full Votes scan (926K rows). Watch insert hotspots; PAGE compression.</td>
+        </tr>
+        <tr>
+          <td><code>IX_Badges_UserId</code></td>
+          <td>~6–8 MB</td>
+          <td>~30–45%</td>
+          <td>Low</td>
+          <td>Tiny; high benefit for BadgeAgg. Aligns with DMV impact 21.41%.</td>
+        </tr>
+        <tr>
+          <td><code>IX_Posts_PostTypeId_INC_OwnerUserId_CreationDate_Title</code> <em>(only if Option A LIKE rewrite retained)</em></td>
+          <td>~26–32 MB</td>
+          <td>~25–35% (filter only)</td>
+          <td>Low–Medium</td>
+          <td>Replaces the 399 MB clustered scan with a narrower scan; does not eliminate LIKE cost.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p><strong>Risk assessment:</strong> Posts and Votes are large; each new index adds insert/update cost and a small extra log volume. Build with <code>ONLINE = ON, DATA_COMPRESSION = PAGE</code>. Combined estimated added storage is ~60–90 MB — acceptable on this database.</p>
+
+    <h3 id="rec5">5. Remove <code>SELECT DISTINCT</code> and the trailing ORDER BY on a left-joined column <span class="pill pill-low">Low</span></h3>
+    <p>
+      Once joins are corrected, <code>DISTINCT</code> is no longer needed and the final <code>Hash Match Aggregate</code> (NodeId 2, est. 67,958 rows) plus <code>Sort</code> (NodeId 1) can be removed.
+      Also, <code>ORDER BY tp.UserRank, rp.CreationDate DESC</code> orders by a column that can be NULL from the LEFT JOIN — keep <code>UserRank</code> only or add <code>NULLS LAST</code> semantics via <code>CASE</code> if needed.
+    </p>
+
+    <h3 id="rec6">6. Statistics &amp; parameter considerations <span class="pill pill-low">Low</span></h3>
+    <ul>
+      <li>All referenced stats are 100% sampled and current (latest update 2026-03-19). No statistics action required immediately.</li>
+      <li>The query has <strong>no parameters</strong> — Parameter Sensitive Plan (PSP) optimization and parameter sniffing are not applicable. Do not introduce a plan guide.</li>
+      <li>Consider enabling <code>AUTO_UPDATE_STATISTICS_ASYNC</code> on SQLStorm to avoid compile-time stalls on large tables (current: Disabled).</li>
+      <li>SQL Server 2022 Batch Mode on Rowstore is already engaged (<code>BatchModeOnRowStoreUsed="true"</code>) — keep CE 160.</li>
+    </ul>
+
+    <h2 id="table-insights">Table-Specific Insights</h2>
+    <table>
+      <thead><tr><th>Table</th><th>Rows</th><th>Observed Usage</th><th>Insight</th></tr></thead>
+      <tbody>
+        <tr><td>dbo.Posts</td><td>740,016 (399 MB)</td><td>170 scans, 20 seeks</td><td>Dominated by scans; large row size (avg 2051 bytes). Highest-leverage table for new indexes.</td></tr>
+        <tr><td>dbo.Votes</td><td>926,084 (12 MB)</td><td>93 scans, 0 seeks</td><td>Zero seeks indicates no non-clustered support on <code>PostId</code> or <code>UserId</code>. Strong DMV hints confirm.</td></tr>
+        <tr><td>dbo.Users</td><td>534,386 (44 MB)</td><td>120 scans, 36 seeks</td><td>Used as the driving aggregation key — well-served by clustered PK once Posts/Votes/Badges are indexed.</td></tr>
+        <tr><td>dbo.Badges</td><td>439,352 (8 MB)</td><td>43 scans, 0 seeks</td><td>Small and write-light — safe to add <code>UserId</code> index.</td></tr>
+        <tr><td>dbo.Tags</td><td>1,232</td><td>4 scans</td><td>Tiny; only problematic because of how it's joined (LIKE %tag%).</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="validation">Validation Steps</h2>
+    <ol>
+      <li>Capture a baseline: <code>SET STATISTICS IO ON; SET STATISTICS TIME ON;</code> then run the original query, save outputs.</li>
+      <li>Apply scripts in order: indexes first, then rewritten query.</li>
+      <li>Re-run with <code>STATISTICS IO/TIME</code> and compare logical reads on Posts/Votes, CPU time, and elapsed time. Target: &gt;5× reduction in elapsed time, &gt;10× reduction in logical reads on Posts.</li>
+      <li>Inspect the new actual plan for absence of the Nested Loops + LIKE predicate and absence of Table Spool.</li>
+      <li>Verify result correctness by comparing row counts and a sample of <code>UserRank, DisplayName, TotalPosts</code> values against the original (or document intended semantic change for the join fix).</li>
+    </ol>
+
+    <section id="scripts">
+      <h2>Scripts</h2>
+
+      <h3>Script 1 — Baseline measurement (run before changes)</h3>
+<pre><code>USE [SQLStorm];
+GO
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+SET NOCOUNT ON;
+GO
+-- Run the original query here and capture STATISTICS IO/TIME output and the actual plan.
+-- (Paste the original query in this batch when executing the baseline.)
+GO
+SET STATISTICS IO OFF;
+SET STATISTICS TIME OFF;
+GO</code></pre>
+
+      <h3>Script 2 — Create supporting indexes (Recommendation #4)</h3>
+<pre><code>USE [SQLStorm];
+GO
+-- Posts: support OwnerUserId joins, PostTypeId filter, and latest-post lookup.
+CREATE NONCLUSTERED INDEX [IX_Posts_OwnerUserId_PostTypeId_INC_CreationDate_Title]
+ON [dbo].[Posts] ([OwnerUserId], [PostTypeId])
+INCLUDE ([CreationDate], [Title])
+WITH (ONLINE = ON, DATA_COMPRESSION = PAGE, FILLFACTOR = 90, SORT_IN_TEMPDB = ON);
+GO
+
+-- Votes: support PostId join with VoteTypeId aggregation.
+CREATE NONCLUSTERED INDEX [IX_Votes_PostId_INC_VoteTypeId]
+ON [dbo].[Votes] ([PostId])
+INCLUDE ([VoteTypeId])
+WITH (ONLINE = ON, DATA_COMPRESSION = PAGE, FILLFACTOR = 95, SORT_IN_TEMPDB = ON);
+GO
+
+-- Badges: support UserId aggregation.
+CREATE NONCLUSTERED INDEX [IX_Badges_UserId]
+ON [dbo].[Badges] ([UserId])
+WITH (ONLINE = ON, DATA_COMPRESSION = PAGE, FILLFACTOR = 95, SORT_IN_TEMPDB = ON);
+GO
+
+-- Optional: Posts secondary covering index for PostTypeId-only scans (keep only if Option A LIKE rewrite is retained).
+-- CREATE NONCLUSTERED INDEX [IX_Posts_PostTypeId_INC_OwnerUserId_CreationDate_Title]
+-- ON [dbo].[Posts] ([PostTypeId])
+-- INCLUDE ([OwnerUserId], [CreationDate], [Title])
+-- WITH (ONLINE = ON, DATA_COMPRESSION = PAGE, FILLFACTOR = 90, SORT_IN_TEMPDB = ON);
+-- GO</code></pre>
+
+      <h3>Script 3 — Rewritten query (Recommendations #1, #2, #3, #5)</h3>
+<pre><code>USE [SQLStorm];
+GO
+-- Rewritten version: pre-aggregates, removes LIKE join, fixes UserId/PostId mismatch by
+-- joining latest post per user via OwnerUserId. Adjust if the original intent was latest-per-tag.
+WITH UserLatestPost AS (
+    SELECT  p.OwnerUserId,
+            p.Id            AS PostId,
+            p.Title,
+            p.CreationDate,
+            ROW_NUMBER() OVER (PARTITION BY p.OwnerUserId
+                               ORDER BY p.CreationDate DESC) AS rn
+    FROM    dbo.Posts p
+    WHERE   p.PostTypeId  = 1
+      AND   p.OwnerUserId IS NOT NULL
+),
+PostAgg AS (
+    SELECT  p.OwnerUserId, COUNT(*) AS TotalPosts
+    FROM    dbo.Posts p
+    WHERE   p.OwnerUserId IS NOT NULL
+    GROUP BY p.OwnerUserId
+),
+VoteAgg AS (
+    SELECT  p.OwnerUserId,
+            SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpVotes,
+            SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownVotes
+    FROM    dbo.Posts p
+    JOIN    dbo.Votes v ON v.PostId = p.Id
+    GROUP BY p.OwnerUserId
+),
+BadgeAgg AS (
+    SELECT  b.UserId, COUNT(*) AS BadgeCount
+    FROM    dbo.Badges b
+    GROUP BY b.UserId
+),
+TopUsers AS (
+    SELECT  u.Id          AS UserId,
+            u.DisplayName,
+            pa.TotalPosts,
+            ISNULL(va.UpVotes,   0) AS UpVotes,
+            ISNULL(va.DownVotes, 0) AS DownVotes,
+            ISNULL(ba.BadgeCount,0) AS BadgeCount,
+            DENSE_RANK() OVER (ORDER BY pa.TotalPosts DESC,
+                                       ISNULL(va.UpVotes,0) - ISNULL(va.DownVotes,0) DESC) AS UserRank
+    FROM    dbo.Users u
+    JOIN    PostAgg   pa ON pa.OwnerUserId = u.Id
+    LEFT JOIN VoteAgg  va ON va.OwnerUserId = u.Id
+    LEFT JOIN BadgeAgg ba ON ba.UserId      = u.Id
+    WHERE   pa.TotalPosts &gt; 10
+)
+SELECT  tp.UserRank,
+        tp.DisplayName,
+        tp.TotalPosts,
+        tp.UpVotes,
+        tp.DownVotes,
+        tp.BadgeCount,
+        rp.Title        AS LatestPostTitle,
+        rp.CreationDate AS LatestPostDate,
+        CASE WHEN rp.rn = 1 THEN 'Latest' ELSE 'Older' END AS PostStatus
+FROM    TopUsers tp
+LEFT JOIN UserLatestPost rp
+       ON rp.OwnerUserId = tp.UserId
+      AND rp.rn = 1
+ORDER BY tp.UserRank;
+GO</code></pre>
+
+      <h3>Script 4 — Alternative rewrite preserving Tags semantics via STRING_SPLIT (Recommendation #1, Option A)</h3>
+<pre><code>USE [SQLStorm];
+GO
+-- Use this variant only if the original "latest post per Tag" semantics are required.
+-- Replaces the non-sargable LIKE join with STRING_SPLIT against the Tags column.
+WITH RankedPosts AS (
+    SELECT  p.Id           AS PostId,
+            p.Title,
+            p.CreationDate,
+            t.Id            AS TagId,
+            t.TagName,
+            ROW_NUMBER() OVER (PARTITION BY t.Id ORDER BY p.CreationDate DESC) AS rn
+    FROM    dbo.Posts p
+    CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(p.Tags, '&gt;', ''), '&lt;', '|'), '|') s
+    JOIN    dbo.Tags t ON t.TagName = s.value
+    WHERE   p.PostTypeId = 1
+      AND   s.value &lt;&gt; ''
+)
+SELECT TagId, TagName, PostId, Title, CreationDate
+FROM   RankedPosts
+WHERE  rn = 1
+ORDER BY TagName;
+GO</code></pre>
+
+      <h3>Script 5 — Optional: enable async auto-update stats (Recommendation #6)</h3>
+<pre><code>USE [master];
+GO
+ALTER DATABASE [SQLStorm] SET AUTO_UPDATE_STATISTICS_ASYNC ON WITH NO_WAIT;
+GO</code></pre>
+
+      <h3>Script 6 — Post-change validation</h3>
+<pre><code>USE [SQLStorm];
+GO
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+SET NOCOUNT ON;
+GO
+-- Re-run the rewritten query (Script 3) here and capture STATISTICS IO/TIME + actual plan.
+-- Compare logical reads on Posts/Votes/Badges and elapsed time against the baseline (Script 1).
+GO
+SET STATISTICS IO OFF;
+SET STATISTICS TIME OFF;
+GO</code></pre>
+
+      <h3>Script 7 — Rollback (drop new indexes if needed)</h3>
+<pre><code>USE [SQLStorm];
+GO
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Posts_OwnerUserId_PostTypeId_INC_CreationDate_Title' AND object_id = OBJECT_ID('dbo.Posts'))
+    DROP INDEX [IX_Posts_OwnerUserId_PostTypeId_INC_CreationDate_Title] ON [dbo].[Posts];
+GO
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Votes_PostId_INC_VoteTypeId' AND object_id = OBJECT_ID('dbo.Votes'))
+    DROP INDEX [IX_Votes_PostId_INC_VoteTypeId] ON [dbo].[Votes];
+GO
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Badges_UserId' AND object_id = OBJECT_ID('dbo.Badges'))
+    DROP INDEX [IX_Badges_UserId] ON [dbo].[Badges];
+GO</code></pre>
+    </section>
+
+    
+  </main>
+</div>
+<footer>
+      <div>Generated by AI SQL Tuner Studio v1.0.39.0 using model claude-opus-4-7 with reasoning effort low.</div>
+      <div>Based on analysis as of 2026-05-17 20:42:53 UTC.</div>
+      <div><a href="https://aisqltuner.com">https://aisqltuner.com</a></div>
+    </footer>
+</body>
+</html>

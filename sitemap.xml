@@ -3,12 +3,12 @@
 
   <url>
     <loc>https://reports.aisqltuner.com/</loc>
-    <lastmod>2026-05-13</lastmod>
+    <lastmod>2026-05-30</lastmod>
   </url>
 
   <url>
     <loc>https://reports.aisqltuner.com/index.html</loc>
-    <lastmod>2026-05-13</lastmod>
+    <lastmod>2026-05-30</lastmod>
   </url>
 
   <url>
@@ -84,6 +84,46 @@
   <url>
     <loc>https://reports.aisqltuner.com/index-tuning-report-sqlstorm-rockypc-2026-05-13.html</loc>
     <lastmod>2026-05-13</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/code-review-rockypc-sqlstorm-2026-05-11.html</loc>
+    <lastmod>2026-05-11</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-05-16.html</loc>
+    <lastmod>2026-05-16</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/sql-code-review-rockypc-sqlstorm-2026-05-16.html</loc>
+    <lastmod>2026-05-16</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/query-tuning-report-sqlstorm-rankedposts-queryhash-0xcb06a3190dea642c-2026-05-17.html</loc>
+    <lastmod>2026-05-17</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-dark-mode-2026-05-21.html</loc>
+    <lastmod>2026-05-21</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-05-25.html</loc>
+    <lastmod>2026-05-25</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/index-tuning-rockypc-sqlstorm-dbo-votes-2026-05-25.html</loc>
+    <lastmod>2026-05-25</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-05-30.html</loc>
+    <lastmod>2026-05-30</lastmod>
   </url>
 
 </urlset>

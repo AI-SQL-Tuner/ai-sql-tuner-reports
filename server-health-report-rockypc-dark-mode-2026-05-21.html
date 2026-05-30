@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Server Health Report – RockyPC – 2026-05-21</title>
+  <meta name="description" content="SQL Server health assessment and prioritized recommendations for RockyPC.">
+  <style>
+    :root{
+      --bg:#FFFFFF;
+      --panel:#F6F8F9;
+      --text:#111827;
+      --muted:#6B7280;
+      --accent:#0B6E6E;
+      --border:#D9E3E6;
+      --code:#EFF7F7;
+      --warn:#B45309;
+      --crit:#B91C1C;
+      --ok:#166534;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family: Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .layout{
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      min-height:100vh;
+    }
+    .sidebar{
+      background:var(--panel);
+      border-right:1px solid var(--border);
+      padding:24px 20px;
+      position:sticky;
+      top:0;
+      height:100vh;
+      overflow:auto;
+    }
+    .sidebar h2{
+      margin:0 0 12px 0;
+      font-size:1.05rem;
+      color:var(--accent);
+    }
+    .sidebar ul{
+      list-style:none;
+      padding:0;
+      margin:0;
+    }
+    .sidebar li{
+      margin:8px 0;
+    }
+    .content{
+      padding:32px 40px 56px;
+      max-width:1200px;
+    }
+    h1{
+      margin:0 0 8px 0;
+      font-size:2rem;
+      color:var(--accent);
+      line-height:1.2;
+    }
+    h2{
+      margin-top:34px;
+      color:var(--accent);
+      border-bottom:2px solid var(--border);
+      padding-bottom:6px;
+    }
+    h3{
+      margin-top:22px;
+      color:var(--accent);
+    }
+    p.meta, .secondary{
+      color:var(--muted);
+      margin:4px 0;
+    }
+    .card{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:18px 20px;
+      margin:16px 0;
+    }
+    .badge{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:.86rem;
+      font-weight:600;
+      margin-right:8px;
+      margin-bottom:8px;
+      border:1px solid var(--border);
+      background:var(--panel);
+      color:var(--text);
+    }
+    .crit{color:var(--crit);font-weight:700}
+    .warn{color:var(--warn);font-weight:700}
+    .ok{color:var(--ok);font-weight:700}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin:14px 0 20px;
+      font-size:.95rem;
+    }
+    th, td{
+      border:1px solid var(--border);
+      padding:10px 12px;
+      text-align:left;
+      vertical-align:top;
+    }
+    th{
+      background:var(--panel);
+      color:var(--accent);
+    }
+    pre{
+      background:var(--code);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:14px;
+      overflow:auto;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    code{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size:.92em;
+    }
+    .grid-2{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:16px;
+    }
+    footer{
+      margin-top:40px;
+      padding-top:18px;
+      border-top:1px solid var(--border);
+      color:var(--muted);
+      font-size:.92rem;
+    }
+    @media (max-width: 980px){
+      .layout{grid-template-columns:1fr}
+      .sidebar{
+        position:relative;
+        height:auto;
+        border-right:none;
+        border-bottom:1px solid var(--border);
+      }
+      .content{padding:24px 18px 40px}
+      .grid-2{grid-template-columns:1fr}
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0B1220;
+        --panel:#162032;
+        --text:#F3F4F6;
+        --muted:#9CA3AF;
+        --accent:#2DD4BF;
+        --border:#243146;
+        --code:#0F172A;
+        --warn:#F59E0B;
+        --crit:#F87171;
+        --ok:#34D399;
+      }
+      .card{background:#0B1220}
+      th{background:#162032}
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Report",
+    "headline":"Server Health Report – RockyPC – 2026-05-21",
+    "datePublished":"2026-05-21",
+    "author":{
+      "@type":"Organization",
+      "name":"AI SQL Tuner Studio"
+    },
+    "about":{
+      "@type":"SoftwareApplication",
+      "name":"Microsoft SQL Server 2022"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div class="layout">
+    <nav class="sidebar" aria-label="Table of contents">
+      <h2>Contents</h2>
+      <ul>
+        <li><a href="#executive-summary">Executive summary</a></li>
+        <li><a href="#detailed-recommendations">Detailed prioritized recommendations</a></li>
+        <li><a href="#performance">1) Performance improvements</a></li>
+        <li><a href="#configuration">2) Configuration optimizations</a></li>
+        <li><a href="#indexing">3) Index optimization opportunities</a></li>
+        <li><a href="#query-store">4) Query Store optimization</a></li>
+        <li><a href="#checkdb">5) Database integrity maintenance</a></li>
+        <li><a href="#security">6) Security enhancements</a></li>
+        <li><a href="#concurrency">7) Concurrency issues</a></li>
+        <li><a href="#operations">8) Operational best practices</a></li>
+        <li><a href="#maintenance">9) Proactive maintenance suggestions</a></li>
+        <li><a href="#scripts">Scripts</a></li>
+      </ul>
+    </nav>
+
+    <main class="content">
+      <header>
+        <h1>Server Health Report – RockyPC – 2026-05-21</h1>
+        <p class="meta">Tuning goal: <strong>Server Health</strong></p>
+        <p class="meta">Server: <strong>RockyPC</strong> | Database context: <strong>master</strong></p>
+        <p class="meta">Version: <strong>SQL Server 2022 (16.x)</strong> | Full Version: <strong>16.0.1180.1 RTM-GDR</strong> | Edition: <strong>Developer Edition (64-bit)</strong> | Engine Edition: <strong>Enterprise</strong></p>
+      </header>
+
+      <section id="executive-summary">
+        <h2>Executive summary</h2>
+        <div class="card">
+          <p>This SQL Server 2022 instance is generally <strong>not showing acute CPU, memory, or storage distress</strong>. I/O latency is excellent, tempdb file distribution is balanced, memory is not under visible pressure, and recent deadlocks were not detected. The most important risks are <strong>operational and integrity-related</strong>, not raw resource saturation.</p>
+          <ol>
+            <li><span class="crit">Critical:</span> Implement <strong>DBCC CHECKDB</strong> immediately for <strong>WideWorldImporters, SQLStorm, tpcc, tpch, CRM, tpch10</strong>, and refresh the overdue run for <strong>DigitsSolver</strong>. Several databases show no recorded CHECKDB history.</li>
+            <li><span class="crit">Critical:</span> Establish a <strong>real backup strategy</strong>. Multiple databases have <strong>no full backups</strong>, and several <strong>FULL recovery</strong> databases have <strong>no log backups</strong>, which creates recovery-chain and data-loss exposure.</li>
+            <li><span class="warn">High:</span> Review and tune <strong>missing index candidates</strong> in <strong>CRM, SQLStorm, tpcc, tpch, tpch10, WideWorldImporters</strong>. Do <strong>not</strong> create all DMV suggestions blindly; several recommendations reference suspicious object names and should be validated with a proper index analysis. Run the <strong>Index Tuning</strong> goal for each affected database.</li>
+            <li><span class="warn">High:</span> Improve baseline configuration: enable <strong>optimize for ad hoc workloads</strong>, enable <strong>backup checksum default</strong>, and enable <strong>backup compression default</strong> unless intentionally disabled.</li>
+            <li><span class="warn">Medium:</span> Parallelism waits exist (<code>CXPACKET</code>, <code>CXCONSUMER</code>, <code>CXSYNC_PORT</code>) but are not severe enough to indicate a current CPU bottleneck. Monitor first; consider raising <strong>cost threshold for parallelism</strong> from 30 to 40-50 if unnecessary parallel plans persist.</li>
+            <li><span class="ok">Low risk:</span> The only unencrypted connection shown is a <strong>local shared memory telemetry session</strong>. Per the provided guidance, this is <strong>minimal risk</strong> and shared memory sessions can be ignored for encryption concerns. Still enforce encryption for any future TCP client access.</li>
+            <li><span class="ok">Healthy:</span> Query Store is enabled and writable on all listed user databases. Most settings are acceptable, though <strong>WideWorldImporters</strong> should be standardized and considered for <strong>compatibility level 160</strong> after testing.</li>
+          </ol>
+          <p><strong>Overall confidence:</strong> <strong>0.91</strong></p>
+        </div>
+      </section>
+
+      <section id="detailed-recommendations">
+        <h2>Detailed prioritized recommendations</h2>
+        <ol>
+          <li>Run overdue or missing <strong>CHECKDB</strong> validations immediately and schedule recurring integrity checks.</li>
+          <li>Implement consistent <strong>full, differential, and log backup</strong> routines aligned to recovery models.</li>
+          <li>Validate and tune <strong>high-value missing indexes</strong> for the six affected databases using a comprehensive index analysis workflow.</li>
+          <li>Enable safe server-wide settings that reduce plan cache waste and improve backup reliability.</li>
+          <li>Standardize <strong>Query Store</strong> behavior and align compatibility levels where appropriate to SQL Server 2022 features.</li>
+          <li>Monitor parallelism and tempdb-heavy workloads, but avoid aggressive changes because current storage and memory indicators are healthy.</li>
+          <li>Maintain least privilege and continue keeping <strong>sysadmin</strong> membership minimal.</li>
+          <li>Adopt proactive monitoring for integrity, backup age, waits, and index drift.</li>
+        </ol>
+      </section>
+
+      <section id="performance">
+        <h2>1) Performance improvements</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Assessment</h3>
+            <ul>
+              <li><strong>I/O:</strong> Healthy. Database file latency is excellent overall; tempdb data files average about 4 ms total latency and are evenly utilized.</li>
+              <li><strong>Memory:</strong> No visible pressure. SQL Server has committed about 2.6 GB with a target around 15.2 GB, well below the <code>max server memory</code> of 23,168 MB.</li>
+              <li><strong>CPU:</strong> No direct evidence of severe CPU saturation. Parallelism waits are present but not dominant enough to justify aggressive change without workload confirmation.</li>
+              <li><strong>Tempdb:</strong> Configuration looks good: eight balanced data files for 16 logical CPUs, and tempdb I/O is healthy.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Interpretation of top waits</h3>
+            <ul>
+              <li><code>QDS_PERSIST_TASK_MAIN_LOOP_SLEEP</code> and <code>QDS_ASYNC_QUEUE</code> are largely <strong>benign Query Store background waits</strong>.</li>
+              <li><code>PWAIT_DIRECTLOGCONSUMER_GETNEXT</code> is often not a direct bottleneck by itself; treat it as informational unless correlated with log throughput or a specific feature/workload.</li>
+              <li><code>CXCONSUMER</code>, <code>CXPACKET</code>, and <code>CXSYNC_PORT</code> indicate <strong>parallel query activity</strong>. On this server, they suggest tuning opportunity rather than emergency.</li>
+              <li><code>HTMEMO</code> can appear with parallel optimization and metadata work; monitor trends before acting.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Recommendations</h3>
+        <ol>
+          <li><strong>Do not treat current storage as the bottleneck.</strong> There is no evidence that slower disks are driving performance issues. Confidence: <strong>0.96</strong>.</li>
+          <li><strong>Keep MAXDOP at 8 for now.</strong> This matches common guidance for a 16 logical CPU single-socket system and does not appear obviously mis-set. Confidence: <strong>0.84</strong>.</li>
+          <li><strong>Consider increasing cost threshold for parallelism to 40-50</strong> if monitoring continues to show excess parallel plans with modest query cost. Current value 30 is reasonable but still permissive on modern hardware. Confidence: <strong>0.73</strong>.</li>
+          <li><strong>Leave tempdb file count as-is</strong> unless you observe PAGELATCH contention. Current file balance and latency are good. Confidence: <strong>0.95</strong>.</li>
+          <li><strong>Use Query Store and workload capture to identify actual expensive user queries.</strong> The current top plan cache entries are diagnostic collection queries, not business workload queries. Confidence: <strong>0.94</strong>.</li>
+        </ol>
+      </section>
+
+      <section id="configuration">
+        <h2>2) Configuration optimizations</h2>
+        <div class="card">
+          <ul>
+            <li><strong>Enable <code>optimize for ad hoc workloads</code>.</strong> Current value is 0. On mixed or tool-driven workloads this often reduces single-use plan cache bloat safely.</li>
+            <li><strong>Enable <code>backup checksum default</code>.</strong> Current value is 0. Checksums improve backup validation confidence.</li>
+            <li><strong>Enable <code>backup compression default</code>.</strong> Current value is 0. On SQL Server 2022 Developer/Enterprise features are available, and compression is typically beneficial.</li>
+            <li><strong>Consider enabling <code>remote admin connections</code>.</strong> Current value is 0. On a non-clustered standalone instance, enabling DAC is useful for break-glass troubleshooting.</li>
+            <li><strong>Do not enable risky disabled features unnecessarily.</strong> It is good that <code>xp_cmdshell</code>, CLR, Ole Automation, external scripts, and Ad Hoc Distributed Queries are disabled.</li>
+          </ul>
+        </div>
+
+        <h3>Version and edition notes</h3>
+        <ul>
+          <li>This instance is <strong>SQL Server 2022 Developer Edition</strong> with Enterprise capabilities available for testing and tuning.</li>
+          <li>The build is <strong>RTM-GDR 16.0.1180.1</strong>. Apply current SQL Server 2022 servicing when appropriate to pick up optimizer, Query Store, and engine fixes. Confidence: <strong>0.88</strong>.</li>
+          <li><strong>WideWorldImporters</strong> is still at <strong>compatibility level 130</strong>, so it is not benefiting from SQL Server 2022 optimizer features such as Parameter Sensitive Plan optimization and DOP feedback.</li>
+        </ul>
+      </section>
+
+      <section id="indexing">
+        <h2>3) Index optimization opportunities</h2>
+        <div class="card">
+          <p><span class="warn">38+ high-impact missing index recommendations</span> were detected across <strong>CRM, SQLStorm, tpcc, tpch, tpch10, WideWorldImporters</strong>. Per guidance, run a comprehensive <strong>Index Tuning</strong> analysis for each of those databases.</p>
+          <p>Important caveat: several DMV entries reference object names that look like constraints, triggers, or synthetic artifact names rather than clean base-table identifiers. That makes these suggestions <strong>directionally useful but not safe for blind implementation</strong>.</p>
+        </div>
+
+        <h3>Highest priority databases</h3>
+        <ol>
+          <li><strong>SQLStorm</strong> — repeated high-impact candidates on <code>dbo.Badges</code>, <code>dbo.PostHistory</code>, <code>dbo.Users</code>, <code>dbo.Votes</code>, and <code>dbo.Comments</code>. Confidence: <strong>0.87</strong>.</li>
+          <li><strong>WideWorldImporters</strong> — multiple candidates, but object names suggest validation is essential before DDL changes. Also review compatibility-level upgrade potential first. Confidence: <strong>0.79</strong>.</li>
+          <li><strong>CRM</strong> — multiple high-impact candidates, several with suspicious object naming; likely a strong candidate for full index and schema review. Confidence: <strong>0.80</strong>.</li>
+          <li><strong>tpch, tpch10, tpcc</strong> — likely benchmark or test-style workloads, but still worth tuning if these databases matter operationally. Confidence: <strong>0.70</strong>.</li>
+        </ol>
+
+        <h3>Recommendations</h3>
+        <ul>
+          <li>Consolidate overlapping missing index requests before any creation.</li>
+          <li>Validate actual table names, row counts, workload patterns, and duplication against existing indexes.</li>
+          <li>Favor tested, workload-backed nonclustered indexes over direct DMV script generation.</li>
+          <li>Use Query Store to confirm which query shapes would benefit most before adding write-amplifying indexes.</li>
+        </ul>
+      </section>
+
+      <section id="query-store">
+        <h2>4) Query Store optimization</h2>
+        <div class="card">
+          <ul>
+            <li>Query Store is <strong>enabled and READ_WRITE</strong> on all listed user databases. This is good and should be retained.</li>
+            <li>Most databases use reasonable settings: <strong>AUTO capture</strong>, <strong>AUTO cleanup</strong>, <strong>15-minute flush</strong>, and <strong>60-minute stats interval</strong>.</li>
+            <li><strong>WideWorldImporters</strong> differs materially: compatibility level <strong>130</strong>, flush interval <strong>50 minutes</strong>, stats interval <strong>15 minutes</strong>, and <strong>max plans per query = 1000</strong>.</li>
+          </ul>
+        </div>
+
+        <h3>Recommendations</h3>
+        <ol>
+          <li><strong>Keep Query Store enabled on all user databases.</strong> No database in scope needs Query Store to be enabled because it already is. Confidence: <strong>0.99</strong>.</li>
+          <li><strong>Standardize WideWorldImporters Query Store settings</strong> unless its workload specifically requires the current nonstandard profile. Lowering <code>MAX_PLANS_PER_QUERY</code> from 1000 to a more typical range such as 200 can reduce unnecessary plan accumulation. Confidence: <strong>0.81</strong>.</li>
+          <li><strong>After testing, raise WideWorldImporters compatibility level to 160</strong> to unlock SQL Server 2022 optimizer features. Confidence: <strong>0.89</strong>.</li>
+          <li><strong>Use Query Store to drive plan stabilization</strong> before making broad parallelism or indexing changes. Confidence: <strong>0.92</strong>.</li>
+        </ol>
+      </section>
+
+      <section id="checkdb">
+        <h2>5) Database integrity maintenance</h2>
+        <div class="card">
+          <p class="crit">This is the most urgent technical risk area.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Database</th>
+                <th>Last CHECKDB</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>WideWorldImporters</td><td>Jan 1 1900</td><td class="crit">Critical: effectively never recorded</td></tr>
+              <tr><td>SQLStorm</td><td>Jan 1 1900</td><td class="crit">Critical: effectively never recorded</td></tr>
+              <tr><td>tpcc</td><td>Jan 1 1900</td><td class="crit">Critical: effectively never recorded</td></tr>
+              <tr><td>tpch</td><td>Jan 1 1900</td><td class="crit">Critical: effectively never recorded</td></tr>
+              <tr><td>CRM</td><td>Jan 1 1900</td><td class="crit">Critical: effectively never recorded</td></tr>
+              <tr><td>tpch10</td><td>Jan 1 1900</td><td class="crit">Critical: effectively never recorded</td></tr>
+              <tr><td>DigitsSolver</td><td>2026-04-12</td><td class="crit">Critical: 39 days old</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Recommendations</h3>
+        <ol>
+          <li><strong>Run DBCC CHECKDB immediately</strong> for all user databases listed above. Confidence: <strong>0.99</strong>.</li>
+          <li><strong>Adopt a recurring integrity schedule:</strong>
+            <ul>
+              <li>Production or important databases: weekly full <code>DBCC CHECKDB</code>.</li>
+              <li>Very large databases: at least weekly or structured rotation with documented exception handling.</li>
+              <li>After storage issues, forced shutdowns, or restore operations: run integrity checks promptly.</li>
+            </ul>
+          </li>
+          <li><strong>Capture and retain CHECKDB history centrally</strong> so “never run” and overdue conditions are visible. Confidence: <strong>0.94</strong>.</li>
+        </ol>
+      </section>
+
+      <section id="security">
+        <h2>6) Security enhancements</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Encryption</h3>
+            <ul>
+              <li>Two user connections were observed.</li>
+              <li>One encrypted local shared memory session was present.</li>
+              <li>One unencrypted shared memory telemetry session (<code>SQLServerCEIP</code>) was present.</li>
+              <li>Per the provided guidance, the telemetry shared memory session is <strong>minimal risk</strong> and shared memory connections should be ignored for encryption concerns.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Privilege model</h3>
+            <ul>
+              <li>Only one <strong>sysadmin</strong> member exists: <code>RockyPC\k_a_f</code>.</li>
+              <li>This is a <strong>good least-privilege posture</strong> from a count perspective.</li>
+              <li>Continue reviewing whether this login truly requires permanent sysadmin membership.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Recommendations</h3>
+        <ol>
+          <li><strong>No urgent remediation is required for the observed unencrypted shared-memory telemetry session.</strong> Confidence: <strong>0.98</strong>.</li>
+          <li><strong>For any TCP/IP client access, require encryption.</strong> Use TLS certificates, <code>Encrypt=True</code> in connection strings, and Force Encryption at the SQL Server network layer if remote connectivity exists. Confidence: <strong>0.90</strong>.</li>
+          <li><strong>Preserve minimal sysadmin membership.</strong> One member is acceptable; review periodically and prefer delegated fixed-database or custom server roles where possible. Confidence: <strong>0.96</strong>.</li>
+          <li><strong>Keep high-risk surface area features disabled</strong> unless explicitly needed. Current posture here is generally good. Confidence: <strong>0.93</strong>.</li>
+        </ol>
+      </section>
+
+      <section id="concurrency">
+        <h2>7) Concurrency issues</h2>
+        <div class="card">
+          <ul>
+            <li><strong>No deadlocks</strong> were detected in the past 7 days.</li>
+            <li>Because no deadlocks were found, no database-specific deadlock escalation is required at this time.</li>
+            <li>Parallelism-related waits are present, but there is no evidence of acute blocking or deadlock instability.</li>
+          </ul>
+        </div>
+
+        <h3>Recommendations</h3>
+        <ol>
+          <li><strong>No deadlock emergency action is needed.</strong> Confidence: <strong>0.99</strong>.</li>
+          <li><strong>If blocking becomes visible later, use Extended Events and Query Store together</strong> rather than enabling broad intrusive tracing. Confidence: <strong>0.88</strong>.</li>
+          <li><strong>Keep monitoring tempdb and parallel query patterns</strong> for latch or exchange-related regressions as workload grows. Confidence: <strong>0.81</strong>.</li>
+        </ol>
+      </section>
+
+      <section id="operations">
+        <h2>8) Operational best practices</h2>
+        <div class="card">
+          <p class="crit">Backup posture is currently unacceptable for reliable recovery.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Area</th>
+                <th>Finding</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Full backups</td><td>Several databases have no recorded full backup</td><td class="crit">Critical</td></tr>
+              <tr><td>Log backups</td><td>FULL recovery databases lack log backups</td><td class="crit">Critical</td></tr>
+              <tr><td>System databases</td><td><code>master</code>, <code>msdb</code>, and <code>model</code> have no recorded full backup</td><td class="crit">Critical</td></tr>
+              <tr><td>Servicing</td><td>Instance is on RTM-GDR build</td><td class="warn">High</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Recommendations</h3>
+        <ol>
+          <li><strong>Back up system databases immediately</strong>: <code>master</code>, <code>msdb</code>, and <code>model</code>. Confidence: <strong>0.99</strong>.</li>
+          <li><strong>For FULL recovery databases, either start log backups or change recovery model intentionally.</strong> Databases in FULL without log backups are operationally inconsistent. Confidence: <strong>0.98</strong>.</li>
+          <li><strong>Standardize retention, verification, and restore testing.</strong> A backup that has not been restored in testing is not proven. Confidence: <strong>0.95</strong>.</li>
+          <li><strong>Patch the SQL Server 2022 instance</strong> to a current supported servicing level after validation. Confidence: <strong>0.88</strong>.</li>
+        </ol>
+      </section>
+
+      <section id="maintenance">
+        <h2>9) Proactive maintenance suggestions</h2>
+        <ol>
+          <li><strong>Create a weekly health review</strong> covering waits, backup age, CHECKDB age, Query Store size, and failed jobs. Confidence: <strong>0.93</strong>.</li>
+          <li><strong>Track plan cache behavior after enabling ad hoc optimization</strong> to confirm reduced single-use plan waste. Confidence: <strong>0.82</strong>.</li>
+          <li><strong>Review compatibility level 160 adoption</strong> for databases still below SQL Server 2022 capability, especially <strong>WideWorldImporters</strong>. Confidence: <strong>0.89</strong>.</li>
+          <li><strong>Use Query Store baselines before and after index changes</strong> so regressions can be detected quickly. Confidence: <strong>0.91</strong>.</li>
+          <li><strong>Maintain documented standards</strong> for recovery model selection, backup cadence, CHECKDB cadence, and index review criteria. Confidence: <strong>0.94</strong>.</li>
+        </ol>
+      </section>
+
+      <section id="scripts">
+        <h2>Scripts</h2>
+
+        <h3>Enable safe server-wide configuration improvements for plan cache efficiency, backup reliability, and DAC access</h3>
+        <pre><code>USE [master];
+GO
+EXEC sys.sp_configure N'show advanced options', 1;
+RECONFIGURE;
+GO
+EXEC sys.sp_configure N'optimize for ad hoc workloads', 1;
+EXEC sys.sp_configure N'backup checksum default', 1;
+EXEC sys.sp_configure N'backup compression default', 1;
+EXEC sys.sp_configure N'remote admin connections', 1;
+RECONFIGURE;
+GO
+EXEC sys.sp_configure N'show advanced options', 0;
+RECONFIGURE;
+GO</code></pre>
+
+        <h3>Optionally raise cost threshold for parallelism to reduce low-value parallel plans</h3>
+        <pre><code>USE [master];
+GO
+EXEC sys.sp_configure N'show advanced options', 1;
+RECONFIGURE;
+GO
+EXEC sys.sp_configure N'cost threshold for parallelism', 50;
+RECONFIGURE;
+GO
+EXEC sys.sp_configure N'show advanced options', 0;
+RECONFIGURE;
+GO</code></pre>
+
+        <h3>Run immediate DBCC CHECKDB against all overdue user databases identified in this assessment</h3>
+        <pre><code>USE [master];
+GO
+DBCC CHECKDB (N'WideWorldImporters') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'SQLStorm') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'tpcc') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'tpch') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'CRM') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'tpch10') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'DigitsSolver') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO</code></pre>
+
+        <h3>Review current backup posture and age for all databases to implement the backup recommendations</h3>
+        <pre><code>USE [msdb];
+GO
+WITH backup_summary AS
+(
+    SELECT
+        d.name,
+        d.recovery_model_desc,
+        MAX(CASE WHEN b.type = 'D' THEN b.backup_finish_date END) AS last_full_backup,
+        MAX(CASE WHEN b.type = 'I' THEN b.backup_finish_date END) AS last_diff_backup,
+        MAX(CASE WHEN b.type = 'L' THEN b.backup_finish_date END) AS last_log_backup
+    FROM master.sys.databases AS d
+    LEFT JOIN msdb.dbo.backupset AS b
+        ON b.database_name = d.name
+    GROUP BY d.name, d.recovery_model_desc
+)
+SELECT
+    name,
+    recovery_model_desc,
+    last_full_backup,
+    last_diff_backup,
+    last_log_backup,
+    DATEDIFF(DAY, last_full_backup, SYSDATETIME()) AS days_since_full,
+    DATEDIFF(HOUR, last_log_backup, SYSDATETIME()) AS hours_since_log
+FROM backup_summary
+ORDER BY name;
+GO</code></pre>
+
+        <h3>Standardize Query Store settings for WideWorldImporters and prepare for SQL Server 2022 feature usage</h3>
+        <pre><code>USE [master];
+GO
+ALTER DATABASE [WideWorldImporters] SET QUERY_STORE = ON;
+GO
+ALTER DATABASE [WideWorldImporters] SET QUERY_STORE
+(
+    OPERATION_MODE = READ_WRITE,
+    CLEANUP_POLICY = (STALE_QUERY_THRESHOLD_DAYS = 30),
+    DATA_FLUSH_INTERVAL_SECONDS = 900,
+    INTERVAL_LENGTH_MINUTES = 60,
+    MAX_STORAGE_SIZE_MB = 1000,
+    QUERY_CAPTURE_MODE = AUTO,
+    SIZE_BASED_CLEANUP_MODE = AUTO,
+    MAX_PLANS_PER_QUERY = 200
+);
+GO
+ALTER DATABASE [WideWorldImporters] SET COMPATIBILITY_LEVEL = 160;
+GO</code></pre>
+
+        <h3>Collect validated missing index candidates for CRM to support the Index Tuning recommendation</h3>
+        <pre><code>USE [CRM];
+GO
+SELECT
+    DB_NAME(mid.database_id) AS database_name,
+    OBJECT_SCHEMA_NAME(mid.object_id, mid.database_id) AS schema_name,
+    OBJECT_NAME(mid.object_id, mid.database_id) AS object_name,
+    mid.equality_columns,
+    mid.inequality_columns,
+    mid.included_columns,
+    migs.user_seeks,
+    migs.user_scans,
+    migs.avg_total_user_cost,
+    migs.avg_user_impact,
+    CONVERT(decimal(18,2), migs.avg_total_user_cost * migs.avg_user_impact * (migs.user_seeks + migs.user_scans)) AS impact_score
+FROM sys.dm_db_missing_index_details AS mid
+JOIN sys.dm_db_missing_index_groups AS mig
+    ON mid.index_handle = mig.index_handle
+JOIN sys.dm_db_missing_index_group_stats AS migs
+    ON mig.index_group_handle = migs.group_handle
+WHERE mid.database_id = DB_ID()
+ORDER BY impact_score DESC;
+GO</code></pre>
+
+        <h3>Collect validated missing index candidates for SQLStorm to support the Index Tuning recommendation</h3>
+        <pre><code>USE [SQLStorm];
+GO
+SELECT
+    DB_NAME(mid.database_id) AS database_name,
+    OBJECT_SCHEMA_NAME(mid.object_id, mid.database_id) AS schema_name,
+    OBJECT_NAME(mid.object_id, mid.database_id) AS object_name,
+    mid.equality_columns,
+    mid.inequality_columns,
+    mid.included_columns,
+    migs.user_seeks,
+    migs.user_scans,
+    migs.avg_total_user_cost,
+    migs.avg_user_impact,
+    CONVERT(decimal(18,2), migs.avg_total_user_cost * migs.avg_user_impact * (migs.user_seeks + migs.user_scans)) AS impact_score
+FROM sys.dm_db_missing_index_details AS mid
+JOIN sys.dm_db_missing_index_groups AS mig
+    ON mid.index_handle = mig.index_handle
+JOIN sys.dm_db_missing_index_group_stats AS migs
+    ON mig.index_group_handle = migs.group_handle
+WHERE mid.database_id = DB_ID()
+ORDER BY impact_score DESC;
+GO</code></pre>
+
+        <h3>Collect validated missing index candidates for tpcc to support the Index Tuning recommendation</h3>
+        <pre><code>USE [tpcc];
+GO
+SELECT
+    DB_NAME(mid.database_id) AS database_name,
+    OBJECT_SCHEMA_NAME(mid.object_id, mid.database_id) AS schema_name,
+    OBJECT_NAME(mid.object_id, mid.database_id) AS object_name,
+    mid.equality_columns,
+    mid.inequality_columns,
+    mid.included_columns,
+    migs.user_seeks,
+    migs.user_scans,
+    migs.avg_total_user_cost,
+    migs.avg_user_impact,
+    CONVERT(decimal(18,2), migs.avg_total_user_cost * migs.avg_user_impact * (migs.user_seeks + migs.user_scans)) AS impact_score
+FROM sys.dm_db_missing_index_details AS mid
+JOIN sys.dm_db_missing_index_groups AS mig
+    ON mid.index_handle = mig.index_handle
+JOIN sys.dm_db_missing_index_group_stats AS migs
+    ON mig.index_group_handle = migs.group_handle
+WHERE mid.database_id = DB_ID()
+ORDER BY impact_score DESC;
+GO</code></pre>
+
+        <h3>Collect validated missing index candidates for tpch to support the Index Tuning recommendation</h3>
+        <pre><code>USE [tpch];
+GO
+SELECT
+    DB_NAME(mid.database_id) AS database_name,
+    OBJECT_SCHEMA_NAME(mid.object_id, mid.database_id) AS schema_name,
+    OBJECT_NAME(mid.object_id, mid.database_id) AS object_name,
+    mid.equality_columns,
+    mid.inequality_columns,
+    mid.included_columns,
+    migs.user_seeks,
+    migs.user_scans,
+    migs.avg_total_user_cost,
+    migs.avg_user_impact,
+    CONVERT(decimal(18,2), migs.avg_total_user_cost * migs.avg_user_impact * (migs.user_seeks + migs.user_scans)) AS impact_score
+FROM sys.dm_db_missing_index_details AS mid
+JOIN sys.dm_db_missing_index_groups AS mig
+    ON mid.index_handle = mig.index_handle
+JOIN sys.dm_db_missing_index_group_stats AS migs
+    ON mig.index_group_handle = migs.group_handle
+WHERE mid.database_id = DB_ID()
+ORDER BY impact_score DESC;
+GO</code></pre>
+
+        <h3>Collect validated missing index candidates for tpch10 to support the Index Tuning recommendation</h3>
+        <pre><code>USE [tpch10];
+GO
+SELECT
+    DB_NAME(mid.database_id) AS database_name,
+    OBJECT_SCHEMA_NAME(mid.object_id, mid.database_id) AS schema_name,
+    OBJECT_NAME(mid.object_id, mid.database_id) AS object_name,
+    mid.equality_columns,
+    mid.inequality_columns,
+    mid.included_columns,
+    migs.user_seeks,
+    migs.user_scans,
+    migs.avg_total_user_cost,
+    migs.avg_user_impact,
+    CONVERT(decimal(18,2), migs.avg_total_user_cost * migs.avg_user_impact * (migs.user_seeks + migs.user_scans)) AS impact_score
+FROM sys.dm_db_missing_index_details AS mid
+JOIN sys.dm_db_missing_index_groups AS mig
+    ON mid.index_handle = mig.index_handle
+JOIN sys.dm_db_missing_index_group_stats AS migs
+    ON mig.index_group_handle = migs.group_handle
+WHERE mid.database_id = DB_ID()
+ORDER BY impact_score DESC;
+GO</code></pre>
+
+        <h3>Collect validated missing index candidates for WideWorldImporters to support the Index Tuning recommendation</h3>
+        <pre><code>USE [WideWorldImporters];
+GO
+SELECT
+    DB_NAME(mid.database_id) AS database_name,
+    OBJECT_SCHEMA_NAME(mid.object_id, mid.database_id) AS schema_name,
+    OBJECT_NAME(mid.object_id, mid.database_id) AS object_name,
+    mid.equality_columns,
+    mid.inequality_columns,
+    mid.included_columns,
+    migs.user_seeks,
+    migs.user_scans,
+    migs.avg_total_user_cost,
+    migs.avg_user_impact,
+    CONVERT(decimal(18,2), migs.avg_total_user_cost * migs.avg_user_impact * (migs.user_seeks + migs.user_scans)) AS impact_score
+FROM sys.dm_db_missing_index_details AS mid
+JOIN sys.dm_db_missing_index_groups AS mig
+    ON mid.index_handle = mig.index_handle
+JOIN sys.dm_db_missing_index_group_stats AS migs
+    ON mig.index_group_handle = migs.group_handle
+WHERE mid.database_id = DB_ID()
+ORDER BY impact_score DESC;
+GO</code></pre>
+
+        <h3>Audit current user connection encryption state while ignoring shared memory sessions</h3>
+        <pre><code>USE [master];
+GO
+SELECT
+    s.session_id,
+    c.net_transport,
+    c.encrypt_option,
+    c.auth_scheme,
+    s.login_name,
+    s.host_name,
+    s.program_name,
+    c.client_net_address,
+    c.local_net_address,
+    c.local_tcp_port
+FROM sys.dm_exec_connections AS c
+JOIN sys.dm_exec_sessions AS s
+    ON c.session_id = s.session_id
+WHERE s.is_user_process = 1
+  AND c.net_transport &lt;&gt; N'Shared memory'
+ORDER BY c.encrypt_option, s.session_id;
+GO</code></pre>
+
+        <h3>Audit sysadmin membership to support ongoing least-privilege review</h3>
+        <pre><code>USE [master];
+GO
+SELECT
+    sp.name AS login_name,
+    sp.type_desc,
+    sp.is_disabled
+FROM sys.server_role_members AS srm
+JOIN sys.server_principals AS sp
+    ON srm.member_principal_id = sp.principal_id
+JOIN sys.server_principals AS rp
+    ON srm.role_principal_id = rp.principal_id
+WHERE rp.name = N'sysadmin'
+ORDER BY sp.name;
+GO</code></pre>
+      </section>
+
+      
+    </main>
+  </div>
+<footer>
+        <p>Generated by AI SQL Tuner Studio v1.0.40.0 using model gpt-5.4 with reasoning effort low. <a href="https://aisqltuner.com">https://aisqltuner.com</a></p>
+        <p>Based on analysis as of 2026-05-21 22:03:30 UTC</p>
+      </footer>
+</body>
+</html>
