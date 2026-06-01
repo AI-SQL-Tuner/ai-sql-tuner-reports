@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Query Tuner Report – SQLStorm @ RockyPC – QueryHash 0x932168333A069240</title>
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --sidebar: #F6F8F9;
+    --text: #111827;
+    --secondary: #6B7280;
+    --accent: #0B6E6E;
+    --code-bg: #EFF7F7;
+    --border: #E2E8E8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 16px;
+  }
+  .layout { display: flex; min-height: 100vh; }
+  nav.toc {
+    width: 280px;
+    background: var(--sidebar);
+    padding: 24px 20px;
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  nav.toc h2 { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-top: 0; }
+  nav.toc ol { padding-left: 18px; margin: 0; }
+  nav.toc li { margin: 6px 0; font-size: 0.9rem; }
+  nav.toc a { color: var(--accent); text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+  main { flex: 1; padding: 32px 48px; max-width: 1100px; }
+  h1 { color: var(--accent); font-size: 1.8rem; margin-bottom: 4px; }
+  h2 { color: var(--accent); border-bottom: 2px solid var(--border); padding-bottom: 6px; margin-top: 40px; }
+  h3 { color: var(--accent); margin-top: 28px; }
+  .subtitle { color: var(--secondary); font-size: 1rem; margin: 2px 0; }
+  .meta { color: var(--secondary); font-size: 0.9rem; }
+  code { background: var(--code-bg); padding: 2px 5px; border-radius: 4px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 0.88em; }
+  pre { background: var(--code-bg); padding: 16px; border-radius: 8px; overflow-x: auto; border: 1px solid var(--border); }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 0.9rem; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--sidebar); color: var(--accent); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+  .crit { background: #fde2e2; color: #991b1b; }
+  .high { background: #fde9d2; color: #9a4a00; }
+  .med  { background: #fef3c7; color: #92600a; }
+  .low  { background: #d9f0ee; color: #0B6E6E; }
+  .evidence { border-left: 3px solid var(--accent); padding: 6px 12px; margin: 10px 0; background: var(--code-bg); font-size: 0.86rem; color: var(--secondary); }
+  footer { padding: 24px 48px; border-top: 1px solid var(--border); color: var(--secondary); font-size: 0.85rem; }
+  footer a { color: var(--accent); }
+  .conf { font-style: italic; color: var(--secondary); font-size: 0.85rem; }
+  svg { max-width: 100%; height: auto; }
+  caption { caption-side: bottom; color: var(--secondary); font-size: 0.8rem; padding-top: 6px; }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0B1220;
+      --sidebar: #162032;
+      --text: #F3F4F6;
+      --secondary: #9CA3AF;
+      --accent: #2DD4BF;
+      --code-bg: #0F172A;
+      --border: #243049;
+    }
+    .crit { background: #3b1414; color: #fca5a5; }
+    .high { background: #3a2410; color: #fcd9a5; }
+    .med  { background: #3a3110; color: #fde68a; }
+    .low  { background: #11302d; color: #2DD4BF; }
+  }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Query Tuner Report – SQLStorm @ RockyPC – QueryHash 0x932168333A069240",
+  "about": "SQL Server query performance tuning",
+  "dateCreated": "2026-05-31T19:43:57Z",
+  "author": { "@type": "Organization", "name": "AI SQL Tuner Studio" },
+  "softwareVersion": "v1.0.48.0"
+}
+</script>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#summary">Executive Summary</a></li>
+    <li><a href="#overview">Plan Overview</a></li>
+    <li><a href="#findings">Detailed Recommendations</a>
+      <ol>
+        <li><a href="#rec1">1. EXISTS Eager Spool</a></li>
+        <li><a href="#rec2">2. Comments PostId Index</a></li>
+        <li><a href="#rec3">3. Votes Filtered Index</a></li>
+        <li><a href="#rec4">4. Posts OwnerUserId Index</a></li>
+        <li><a href="#rec5">5. Query Rewrite (OR → UNION)</a></li>
+        <li><a href="#rec6">6. UserReputation CTE cost</a></li>
+        <li><a href="#rec7">7. Statistics & misc</a></li>
+      </ol>
+    </li>
+    <li><a href="#beforeafter">Before / After Plan</a></li>
+    <li><a href="#tables">Table Insights</a></li>
+    <li><a href="#scripts">Scripts</a></li>
+  </ol>
+</nav>
+<main>
+  <h1>Query Tuner Report – SQLStorm @ RockyPC – QueryHash 0x932168333A069240</h1>
+  <p class="subtitle"><strong>Tuning Goal:</strong> Query Tuner</p>
+  <p class="meta">Server: <strong>RockyPC</strong> &nbsp;|&nbsp; Database: <strong>SQLStorm</strong> &nbsp;|&nbsp; SQL Server 2022 (16.0.1180.1) Developer Edition (Enterprise engine)</p>
+
+  <section id="summary">
+    <h2>Executive Summary</h2>
+    <p>The statement has an estimated cost of <strong>20.63</strong> (<span class="badge med">Medium</span>). The optimizer hit a <code>StatementOptmEarlyAbortReason="TimeOut"</code>, meaning the chosen plan may be sub-optimal. The dominant problems are an <strong>Eager Index Spool re-scanning all 351,440 Comments rows</strong> for the correlated <code>EXISTS</code>, and several <strong>full clustered index scans</strong> on large tables (Votes 926K, Posts 740K, Comments 351K) because no supporting non-clustered indexes exist — every referenced table is being accessed only via its primary key clustered index.</p>
+    <ol>
+      <li><span class="badge crit">Critical</span> Eliminate the <strong>Eager Spool over Comments</strong> (NodeId 28, subtree cost <strong>15.07 ≈ 73% of total</strong>) caused by the <code>OR EXISTS</code> predicate. Rewrite with <code>UNION</code> / pre-aggregation and add a Comments index.</li>
+      <li><span class="badge high">High</span> Create <code>IX_Comments_PostId (PostId) INCLUDE (UserId)</code> — plan missing-index impact <strong>40%</strong>; supports both the join and the EXISTS.</li>
+      <li><span class="badge med">Medium</span> Create a <strong>filtered index on Votes</strong> for <code>VoteTypeId = 8</code> to replace the 926K-row scan (currently reads all rows, returns 1,478).</li>
+      <li><span class="badge med">Medium</span> Create <code>IX_Posts_OwnerUserId</code> (plan impact 12.68%) to support the <code>UserReputation</code> join and the final join.</li>
+      <li><span class="badge low">Low</span> Rewrite query to avoid recomputation: the <code>Posts → Comments</code> join is materialized <strong>twice</strong> (once in the CTE aggregate, once in the EXISTS spool).</li>
+    </ol>
+    <p class="conf">Overall confidence: <strong>High</strong> for index/spool findings (direct plan evidence); Medium for exact percent-benefit estimates.</p>
+  </section>
+
+  <section id="overview">
+    <h2>Plan Overview</h2>
+    <p>All five referenced tables are read through their clustered PK only (no non-clustered index exists on any of them per the usage stats). Batch mode on rowstore is engaged (good), but the volumes scanned are large.</p>
+    <table>
+      <thead><tr><th>Operator (Node)</th><th>Table</th><th>Rows Read</th><th>Rows Out</th><th>Subtree Cost</th></tr></thead>
+      <tbody>
+        <tr><td>Eager Index Spool (28)</td><td>Comments</td><td>351,440</td><td>~1</td><td><strong>15.07</strong></td></tr>
+        <tr><td>Clustered Index Scan (14)</td><td>Comments</td><td>351,440</td><td>35,144</td><td>7.79</td></tr>
+        <tr><td>Clustered Index Scan (12 / 21)</td><td>Posts</td><td>246,672 ea.</td><td>8,352 / 2,467</td><td>2.59 ea.</td></tr>
+        <tr><td>Clustered Index Scan (10)</td><td>Votes</td><td>926,084</td><td>1,478</td><td>2.14</td></tr>
+        <tr><td>Clustered Index Scan (19)</td><td>Users</td><td>267,193</td><td>2,672</td><td>1.73</td></tr>
+        <tr><td>Clustered Index Scan (23)</td><td>Badges</td><td>439,352</td><td>4,394</td><td>1.24</td></tr>
+      </tbody>
+      <caption>Operator cost breakdown — the Comments Eager Spool alone is ~73% of the plan.</caption>
+    </table>
+    <div class="evidence">Evidence: <code>StatementOptmEarlyAbortReason="TimeOut"</code> and Index Spool NodeId 28 <code>EstimatedTotalSubtreeCost="15.0741"</code> with <code>EstimatedRowsRead="351440"</code>.</div>
+  </section>
+
+  <section id="findings">
+    <h2>Detailed Prioritized Recommendations</h2>
+
+    <h3 id="rec1">1. Eliminate the Eager Spool from the OR EXISTS <span class="badge crit">Critical</span></h3>
+    <p>The final <code>WHERE rp.TotalBounty &gt; 0 OR EXISTS(...)</code> forces a row-by-row correlated check. The optimizer built an <strong>Eager Index Spool</strong> (NodeId 28) that scans the entire Comments clustered index (351,440 rows) and is rebound ~100 times (<code>EstimateRebinds="99.9946"</code>). This single branch is the largest cost in the plan.</p>
+    <div class="evidence">Evidence: <code>PhysicalOp="Index Spool" LogicalOp="Eager Spool"</code>, subtree cost <strong>15.0741</strong>; feeding <code>Clustered Index Scan</code> of Comments <code>TableCardinality="351440"</code>.</div>
+    <p>Recommended approach: replace the disjunctive <code>OR</code> with a <code>UNION ALL</code> of the two qualifying conditions, or pre-compute a "post has a non-null-user comment" flag during the existing Comments aggregation in <code>RankedPosts</code>. Both remove the need for a separate correlated lookup. See Script 1. Combined with the Comments index (Rec 2) the optimizer can satisfy the EXISTS with a seek instead of a full scan + spool.</p>
+    <p class="conf">Confidence: High. Expected to remove ~70%+ of plan cost.</p>
+
+    <h3 id="rec2">2. Index Comments on PostId INCLUDE UserId <span class="badge high">High</span></h3>
+    <p>Comments is joined and probed by <code>PostId</code> in three places yet has no non-clustered index. The plan's own missing-index list rates this the top opportunity.</p>
+    <div class="evidence">Evidence: <code>&lt;MissingIndex Table="[Comments]"&gt;</code> EQUALITY <code>PostId</code>, <strong>Impact 40.00%</strong>; DMV missing index <code>[PostId]</code> avg impact 18.40%, and index usage shows Comments PK Scans=860, Seeks=0.</div>
+    <p>Including <code>UserId</code> covers the EXISTS predicate (<code>c.UserId IS NOT NULL</code>) and the comment-count aggregation. See Script 2.</p>
+    <table>
+      <thead><tr><th>Metric</th><th>Estimate</th></tr></thead>
+      <tbody>
+        <tr><td>estimatedStorageBytes</td><td>~7.0 MB (351,440 rows × ~12 B key+include + overhead, PAGE-compressed)</td></tr>
+        <tr><td>expectedReadBenefitPercent</td><td>~40%</td></tr>
+        <tr><td>expectedWriteOverheadPercent</td><td>~3–5% on Comments INSERT/UPDATE of PostId/UserId</td></tr>
+        <tr><td>maintenanceNotes</td><td>Single narrow index; low fragmentation risk (PostId roughly monotonic via FK). Rebuild ONLINE available (Enterprise).</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Risk:</strong> Low. Comments has 0 recorded updates in usage window; write overhead minimal.</p>
+    <p class="conf">Confidence: High.</p>
+
+    <h3 id="rec3">3. Filtered index on Votes for VoteTypeId = 8 <span class="badge med">Medium</span></h3>
+    <p>The Votes join filters <code>VoteTypeId = 8</code> but reads the full 926,084-row clustered index to return only 1,478 rows. <code>VoteTypeId</code> has only 13 distinct values, making a filtered index ideal.</p>
+    <div class="evidence">Evidence: NodeId 10 Clustered Index Scan <code>EstimatedRowsRead="926084"</code> → <code>EstimateRows="1478"</code>; predicate <code>[v].[VoteTypeId]=(8)</code>.</div>
+    <p>A filtered index on <code>(PostId) INCLUDE (BountyAmount) WHERE VoteTypeId = 8</code> reduces this to a tiny seek/scan. See Script 3.</p>
+    <table>
+      <thead><tr><th>Metric</th><th>Estimate</th></tr></thead>
+      <tbody>
+        <tr><td>estimatedStorageBytes</td><td>~40 KB (filtered to ~1,500 qualifying rows)</td></tr>
+        <tr><td>expectedReadBenefitPercent</td><td>~12% (plan impact 11.91%)</td></tr>
+        <tr><td>expectedWriteOverheadPercent</td><td>&lt;1% (only VoteTypeId=8 rows maintained)</td></tr>
+        <tr><td>maintenanceNotes</td><td>Filtered index; ensure session SET options (ARITHABORT etc.) are compatible for writes. ARITHABORT is OFF in this plan — verify connections setting ARITHABORT ON for DML against the filtered index.</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Risk:</strong> Low storage/write cost. Note the <strong>filtered-index DML caveat</strong>: the plan shows <code>ARITHABORT="false"</code>; sessions modifying Votes must have the seven required SET options ON or DML will fail.</p>
+    <p class="conf">Confidence: High on read benefit, Medium on write-path SET-option risk.</p>
+
+    <h3 id="rec4">4. Index Posts on OwnerUserId <span class="badge med">Medium</span></h3>
+    <p>Posts is scanned in full twice (RankedPosts and UserReputation) and joined on <code>OwnerUserId</code>. A supporting index assists the <code>UserReputation</code> aggregation and the final join.</p>
+    <div class="evidence">Evidence: <code>&lt;MissingIndex Table="[Posts]"&gt;</code> EQUALITY <code>OwnerUserId</code>, Impact <strong>12.68%</strong>; NodeId 21 scan reads 246,672 rows for the OwnerUserId hash probe.</div>
+    <p>Because the date filter and Title/CreationDate columns are also needed, a covering variant helps the RankedPosts branch too. See Script 4.</p>
+    <table>
+      <thead><tr><th>Metric</th><th>Estimate</th></tr></thead>
+      <tbody>
+        <tr><td>estimatedStorageBytes</td><td>~6 MB key-only (OwnerUserId); ~20 MB if covering CreationDate/Title</td></tr>
+        <tr><td>expectedReadBenefitPercent</td><td>~12%</td></tr>
+        <tr><td>expectedWriteOverheadPercent</td><td>~2–4% on Posts inserts</td></tr>
+        <tr><td>maintenanceNotes</td><td>Posts is the largest table (399 MB). Keep includes minimal (Title is wide, avg 24 B). Use the key-only version unless RankedPosts scan dominates after Rec 1.</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Risk:</strong> Medium — Posts is large and write-active in production; prefer the narrow key-only index first, measure, then widen.</p>
+    <p class="conf">Confidence: Medium.</p>
+
+    <h3 id="rec5">5. Rewrite the OR predicate as UNION-friendly logic <span class="badge low">Low–Medium</span></h3>
+    <p>Disjunctive <code>OR</code> across an aggregate (<code>TotalBounty</code>) and a correlated <code>EXISTS</code> defeats index seeks. Pre-aggregate a comment indicator inside <code>RankedPosts</code> so the outer predicate becomes a simple column comparison. Full rewrite in Script 5.</p>
+    <div class="evidence">Evidence: Concatenation NodeId 24 + two Filters represent the OR-expansion; the EXISTS branch carries the 15.07 spool cost.</div>
+    <p class="conf">Confidence: Medium — semantics preserved by adding <code>MAX(CASE WHEN c.UserId IS NOT NULL THEN 1 ELSE 0 END)</code> to the existing Comments join.</p>
+
+    <h3 id="rec6">6. UserReputation CTE re-scans Posts/Badges/Users <span class="badge low">Low</span></h3>
+    <p>The <code>UserReputation</code> CTE aggregates Users ⋈ Posts ⋈ Badges (cost ≈ 5.6) only to filter <code>PostCount &gt; 5</code>. Posts is scanned a second time here. The Posts OwnerUserId index (Rec 4) and a Badges <code>UserId</code> index reduce these scans.</p>
+    <div class="evidence">Evidence: NodeId 23 Badges Clustered Index Scan reads 439,352 rows; NodeId 21 second Posts scan reads 246,672.</div>
+    <p>Optional Badges index in Script 6. Lower priority because these are batch-mode hash joins with reasonable cost relative to the spool.</p>
+    <p class="conf">Confidence: Medium.</p>
+
+    <h3 id="rec7">7. Statistics & Parameter Considerations <span class="badge low">Informational</span></h3>
+    <ul>
+      <li><strong>Statistics are healthy:</strong> all referenced stats show <code>ModificationCount="0"</code>, <code>SamplingPercent="100"</code>, updated 2026-03-19. No stats refresh required now.</li>
+      <li><strong>Optimizer timeout:</strong> <code>StatementOptmEarlyAbortReason="TimeOut"</code> indicates the plan search was cut short — simplifying the query (Rec 5) and adding indexes (Rec 2–4) gives the optimizer cheaper seek-based options it can find faster.</li>
+      <li><strong>Parameter sniffing:</strong> The query uses <strong>literal/constant predicates only</strong> (the date is computed from a constant; <code>VoteTypeId = 8</code>, <code>PostCount &gt; 5</code> are literals). There are no parameters, so parameter-sniffing mitigations and plan guides are <strong>not applicable</strong>. SQL Server 2022 PSP optimization is also irrelevant here.</li>
+      <li><strong>No Query Store history</strong> exists for this text, so no regression baseline is available — capture one after changes.</li>
+    </ul>
+    <p class="conf">Confidence: High.</p>
+  </section>
+
+  <section id="beforeafter">
+    <h2>Before / After Plan Comparison</h2>
+    <p>Text representation of the expected plan shape change after applying Recs 1–3.</p>
+    <svg viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Before and after execution plan comparison diagram">
+      <title>Before vs After plan operators</title>
+      <rect x="0" y="0" width="760" height="260" fill="none"/>
+      <text x="10" y="20" fill="#0B6E6E" font-size="14" font-weight="bold">BEFORE (cost ≈ 20.63)</text>
+      <rect x="10" y="35" width="340" height="40" rx="6" fill="#EFF7F7" stroke="#0B6E6E"/>
+      <text x="20" y="60" fill="#111827" font-size="12">Eager Index Spool over Comments (351,440 rows) — 15.07</text>
+      <rect x="10" y="85" width="340" height="36" rx="6" fill="#EFF7F7" stroke="#0B6E6E"/>
+      <text x="20" y="108" fill="#111827" font-size="12">Votes Clustered Scan 926,084 → 1,478 — 2.14</text>
+      <rect x="10" y="131" width="340" height="36" rx="6" fill="#EFF7F7" stroke="#0B6E6E"/>
+      <text x="20" y="154" fill="#111827" font-size="12">Comments Clustered Scan 351,440 — 7.79</text>
+
+      <text x="410" y="20" fill="#0B6E6E" font-size="14" font-weight="bold">AFTER (projected ↓ ~70%)</text>
+      <rect x="410" y="35" width="340" height="40" rx="6" fill="#d9f0ee" stroke="#0B6E6E"/>
+      <text x="420" y="60" fill="#111827" font-size="12">Pre-aggregated comment flag (no spool)</text>
+      <rect x="410" y="85" width="340" height="36" rx="6" fill="#d9f0ee" stroke="#0B6E6E"/>
+      <text x="420" y="108" fill="#111827" font-size="12">Votes filtered-index Seek ~1,478 rows</text>
+      <rect x="410" y="131" width="340" height="36" rx="6" fill="#d9f0ee" stroke="#0B6E6E"/>
+      <text x="420" y="154" fill="#111827" font-size="12">Comments IX_PostId Seek/range scan</text>
+      <text x="10" y="210" fill="#6B7280" font-size="11">Diagram: the dominant Eager Spool branch (left) is replaced by an aggregated indicator computed once,</text>
+      <text x="10" y="226" fill="#6B7280" font-size="11">and full clustered scans become index seeks. Projected total cost drops below ~6.</text>
+    </svg>
+  </section>
+
+  <section id="tables">
+    <h2>Table-Specific Insights</h2>
+    <table>
+      <thead><tr><th>Table</th><th>Rows</th><th>Size</th><th>Index usage</th><th>Key insight</th></tr></thead>
+      <tbody>
+        <tr><td>Votes</td><td>926,084</td><td>12 MB</td><td>Scans 1,248 / Seeks 0</td><td>VoteTypeId only 13 distinct → filtered index ideal.</td></tr>
+        <tr><td>Posts</td><td>740,016</td><td>399 MB</td><td>Scans 2,507 / Seeks 240</td><td>Largest table; OwnerUserId ~65K distinct — good seek selectivity.</td></tr>
+        <tr><td>Users</td><td>534,386</td><td>44 MB</td><td>Scans 1,763 / Seeks 533</td><td>Reputation only 2,443 distinct; sort on it is cheap.</td></tr>
+        <tr><td>Comments</td><td>351,440</td><td>78 MB</td><td>Scans 860 / Seeks 0</td><td>No NC index → drives the spool. Top fix target.</td></tr>
+        <tr><td>Badges</td><td>439,352</td><td>8 MB</td><td>Scans 696 / Seeks 0</td><td>UserId ~154K distinct; optional supporting index.</td></tr>
+      </tbody>
+      <caption>Every referenced table currently relies solely on its PK clustered index (0 seeks on Votes/Comments/Badges).</caption>
+    </table>
+    <p><strong>Validation:</strong> Run <code>SET STATISTICS IO ON;</code> and <code>SET STATISTICS TIME ON;</code> before and after applying scripts and compare logical reads and elapsed time for each referenced table.</p>
+  </section>
+
+  <section id="scripts">
+    <h2>Scripts</h2>
+
+    <h3>Script 1 + 5 — Rewrite query: pre-aggregate comment indicator, remove Eager Spool (Recs 1 &amp; 5)</h3>
+    <pre><code>USE [SQLStorm];
+GO
+WITH RankedPosts AS (
+    SELECT
+        p.Id            AS PostId,
+        p.Title,
+        p.CreationDate,
+        p.OwnerUserId,
+        COUNT(c.Id)     AS CommentCount,
+        MAX(CASE WHEN c.UserId IS NOT NULL THEN 1 ELSE 0 END) AS HasUserComment,
+        SUM(v.BountyAmount) AS TotalBounty
+    FROM dbo.Posts p
+    LEFT JOIN dbo.Comments c ON p.Id = c.PostId
+    LEFT JOIN dbo.Votes    v ON p.Id = v.PostId AND v.VoteTypeId = 8
+    WHERE p.CreationDate >= DATEADD(year, -1, CAST('2024-10-01 12:34:56' AS datetime))
+    GROUP BY p.Id, p.Title, p.CreationDate, p.OwnerUserId
+),
+UserReputation AS (
+    SELECT
+        u.Id AS UserId,
+        u.Reputation,
+        COUNT(DISTINCT p.Id)        AS PostCount,
+        SUM(ISNULL(b.Class, 0))     AS TotalBadges
+    FROM dbo.Users u
+    LEFT JOIN dbo.Posts  p ON u.Id = p.OwnerUserId
+    LEFT JOIN dbo.Badges b ON u.Id = b.UserId
+    GROUP BY u.Id, u.Reputation
+),
+ActiveUsers AS (
+    SELECT UserId, Reputation, PostCount, TotalBadges
+    FROM UserReputation
+    WHERE PostCount > 5
+)
+SELECT
+    rp.PostId, rp.Title, rp.CreationDate,
+    ua.UserId, ua.Reputation,
+    rp.CommentCount, rp.TotalBounty,
+    ua.PostCount, ua.TotalBadges
+FROM RankedPosts rp
+JOIN ActiveUsers ua ON rp.OwnerUserId = ua.UserId
+WHERE rp.TotalBounty > 0
+   OR rp.HasUserComment = 1     -- replaces correlated EXISTS / Eager Spool
+ORDER BY ua.Reputation DESC, rp.CreationDate DESC
+OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
+GO</code></pre>
+
+    <h3>Script 2 — Comments supporting index (Rec 2)</h3>
+    <pre><code>USE [SQLStorm];
+GO
+CREATE NONCLUSTERED INDEX IX_Comments_PostId_inclUserId
+    ON dbo.Comments (PostId)
+    INCLUDE (UserId)
+    WITH (DATA_COMPRESSION = PAGE, ONLINE = ON);
+GO</code></pre>
+
+    <h3>Script 3 — Votes filtered index for VoteTypeId = 8 (Rec 3)</h3>
+    <pre><code>USE [SQLStorm];
+GO
+-- NOTE: sessions performing DML on dbo.Votes must have ARITHABORT ON
+-- (and the other required SET options) for filtered-index maintenance.
+CREATE NONCLUSTERED INDEX IX_Votes_Bounty8_PostId
+    ON dbo.Votes (PostId)
+    INCLUDE (BountyAmount)
+    WHERE VoteTypeId = 8
+    WITH (DATA_COMPRESSION = PAGE, ONLINE = ON);
+GO</code></pre>
+
+    <h3>Script 4 — Posts OwnerUserId index (Rec 4, start with key-only)</h3>
+    <pre><code>USE [SQLStorm];
+GO
+CREATE NONCLUSTERED INDEX IX_Posts_OwnerUserId
+    ON dbo.Posts (OwnerUserId)
+    WITH (DATA_COMPRESSION = PAGE, ONLINE = ON);
+GO
+
+-- Optional covering variant for the RankedPosts branch (evaluate storage first):
+-- CREATE NONCLUSTERED INDEX IX_Posts_OwnerUserId_cover
+--     ON dbo.Posts (OwnerUserId)
+--     INCLUDE (CreationDate, Title)
+--     WITH (DATA_COMPRESSION = PAGE, ONLINE = ON);
+-- GO</code></pre>
+
+    <h3>Script 6 — Optional Badges UserId index (Rec 6)</h3>
+    <pre><code>USE [SQLStorm];
+GO
+CREATE NONCLUSTERED INDEX IX_Badges_UserId_inclClass
+    ON dbo.Badges (UserId)
+    INCLUDE (Class)
+    WITH (DATA_COMPRESSION = PAGE, ONLINE = ON);
+GO</code></pre>
+
+    <h3>Script 7 — Validation harness (run before and after)</h3>
+    <pre><code>USE [SQLStorm];
+GO
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+GO
+-- Execute the rewritten query from Script 1 here, capture reads/time, compare.
+GO
+SET STATISTICS IO OFF;
+SET STATISTICS TIME OFF;
+GO</code></pre>
+  </section>
+
+  
+</main>
+</div>
+<footer>
+    <p>Generated by AI SQL Tuner Studio v1.0.48.0 using model claude-opus-4-8 with reasoning effort low. &nbsp;|&nbsp; <a href="https://aisqltuner.com">https://aisqltuner.com</a></p>
+    <p>Based on analysis as of 2026-05-31 19:43:57 UTC.</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Query Tuning Report – RockyPC/SQLStorm – QueryHash 0x932168333A069240</title>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Query Tuning Report – RockyPC/SQLStorm – QueryHash 0x932168333A069240",
+  "datePublished": "2026-05-31",
+  "about": "SQL Server query performance tuning analysis for SQLStorm database on RockyPC"
+}
+</script>
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --sidebar-bg: #F6F8F9;
+    --code-bg: #EFF7F7;
+    --text: #111827;
+    --secondary: #6B7280;
+    --accent: #0B6E6E;
+    --border: #E5E7EB;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+  }
+  nav.toc {
+    background: var(--sidebar-bg);
+    padding: 24px 20px;
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav.toc h3 {
+    color: var(--accent);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 12px;
+  }
+  nav.toc ol { padding-left: 18px; margin: 0; }
+  nav.toc li { margin: 6px 0; }
+  nav.toc a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 14px;
+  }
+  nav.toc a:hover { text-decoration: underline; }
+  main {
+    padding: 36px 48px;
+    max-width: 1100px;
+  }
+  h1 {
+    color: var(--accent);
+    font-size: 26px;
+    margin: 0 0 6px;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 10px;
+  }
+  h2 {
+    color: var(--accent);
+    font-size: 20px;
+    margin-top: 36px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
+  h3 {
+    color: var(--accent);
+    font-size: 16px;
+    margin-top: 22px;
+  }
+  .meta {
+    color: var(--secondary);
+    font-size: 13px;
+    margin-bottom: 18px;
+  }
+  .meta strong { color: var(--text); }
+  pre {
+    background: var(--code-bg);
+    padding: 14px 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  code {
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 13px;
+  }
+  pre code { background: transparent; padding: 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--sidebar-bg);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+  }
+  .badge.high { background: #B45309; }
+  .badge.med { background: #0B6E6E; }
+  .badge.low { background: #6B7280; }
+  .callout {
+    background: var(--code-bg);
+    border-left: 4px solid var(--accent);
+    padding: 10px 14px;
+    margin: 14px 0;
+    border-radius: 4px;
+  }
+  ul, ol { padding-left: 22px; }
+  footer {
+    margin-top: 48px;
+    padding: 20px 48px;
+    border-top: 1px solid var(--border);
+    color: var(--secondary);
+    font-size: 13px;
+  }
+  footer a { color: var(--accent); }
+  .plan-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.toc { position: static; height: auto; }
+    .plan-compare { grid-template-columns: 1fr; }
+    main { padding: 24px; }
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0B1220;
+      --sidebar-bg: #162032;
+      --code-bg: #0F172A;
+      --text: #F3F4F6;
+      --secondary: #9CA3AF;
+      --accent: #2DD4BF;
+      --border: #1F2937;
+    }
+    .badge.high { background: #F59E0B; color: #0B1220; }
+    .badge.med { background: #2DD4BF; color: #0B1220; }
+    .badge.low { background: #4B5563; }
+  }
+</style>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<nav class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li><a href="#summary">Executive Summary</a></li>
+    <li><a href="#environment">Environment</a></li>
+    <li><a href="#findings">Key Findings</a></li>
+    <li><a href="#recommendations">Detailed Recommendations</a></li>
+    <li><a href="#plan-compare">Plan Before/After</a></li>
+    <li><a href="#rewrite">Query Rewrite</a></li>
+    <li><a href="#stats">Statistics Maintenance</a></li>
+    <li><a href="#table-insights">Table Insights</a></li>
+    <li><a href="#validation">Validation</a></li>
+    <li><a href="#scripts">Scripts</a></li>
+  </ol>
+</nav>
+
+<main>
+<h1>Query Tuning Report – RockyPC/SQLStorm – QueryHash 0x932168333A069240</h1>
+<div class="meta">
+  <strong>Tuning Goal:</strong> Query Tuner &nbsp;|&nbsp;
+  <strong>Server:</strong> RockyPC &nbsp;|&nbsp;
+  <strong>Version:</strong> SQL Server 2022 (16.0.1180.1) Developer Edition (Enterprise engine) &nbsp;|&nbsp;
+  <strong>Database:</strong> SQLStorm
+</div>
+
+<section id="summary">
+<h2>Executive Summary</h2>
+<p>The query has an estimated total cost of <strong>20.63</strong> (<span class="badge med">Medium</span>) but contains multiple structural issues that inflate the cost dramatically beyond what's necessary. The optimizer hit an <code>StatementOptmEarlyAbortReason="TimeOut"</code>, meaning the chosen plan is likely suboptimal. The most significant problems are: (1) full <strong>clustered index scans</strong> on Votes (926K rows), Comments (351K rows × 2), Posts (246K rows × 2), Users (267K rows), and Badges (439K rows) due to missing supporting indexes; (2) an <strong>Index Spool / Eager Spool</strong> (cost 15.07 alone — over 73% of plan cost) materializing 351K Comments rows to satisfy the <code>OR EXISTS</code> predicate; (3) the <code>UserReputation</code> CTE aggregates all users/posts/badges before filtering <code>PostCount &gt; 5</code>, doing far more work than needed; and (4) a <strong>memory grant warning</strong> — desired 111 MB but granted 0 KB, indicating a likely runtime sort spill.</p>
+
+<h3>Top Priorities</h3>
+<ol>
+  <li><span class="badge high">P1</span> <strong>Add nonclustered index on <code>Comments(PostId) INCLUDE (UserId)</code></strong> — eliminates the 15.07-cost Eager Spool and two 351K-row Comments scans. Plan-reported impact 40%.</li>
+  <li><span class="badge high">P1</span> <strong>Rewrite the <code>OR EXISTS</code> as <code>UNION ALL</code></strong> — the <code>OR</code> with a correlated EXISTS forces the Concatenation + Eager Spool pattern, the single largest cost driver.</li>
+  <li><span class="badge med">P2</span> <strong>Add nonclustered index on <code>Posts(OwnerUserId) INCLUDE (CreationDate, Title)</code></strong> — eliminates two Posts clustered index scans (398 MB table). Plan impact 12.68%, DMV impact up to 28.81%.</li>
+  <li><span class="badge med">P2</span> <strong>Add filtered index on <code>Votes(PostId) INCLUDE (BountyAmount) WHERE VoteTypeId = 8</code></strong> — eliminates the 926K-row Votes clustered scan. Only ~1,478 rows match.</li>
+  <li><span class="badge med">P2</span> <strong>Add nonclustered index on <code>Badges(UserId) INCLUDE (Class)</code></strong> — DMV shows 76% impact and 24,652 avg cost from other queries; benefits this query too.</li>
+  <li><span class="badge low">P3</span> <strong>Push <code>PostCount &gt; 5</code> filter earlier</strong> in the <code>UserReputation</code> CTE or restructure so that small set of "active users" drives the join.</li>
+</ol>
+<p>Confidence: <strong>High</strong> for index and rewrite recommendations (evidence taken directly from showplan operators and missing-index hints). Confidence: <strong>Medium</strong> on absolute runtime gains — execution plan estimates only; validate with actual stats.</p>
+</section>
+
+<section id="environment">
+<h2>Environment</h2>
+<ul>
+  <li><strong>Server:</strong> RockyPC — SQL Server 2022 (16.x) RTM-GDR 16.0.1180.1, Developer Edition (Enterprise engine)</li>
+  <li><strong>Database:</strong> SQLStorm — Auto Create Stats ON, Auto Update Stats ON, Async Update OFF</li>
+  <li><strong>Platform features available:</strong> Batch Mode on rowstore (already in use — <code>BatchModeOnRowStoreUsed="true"</code>), filtered indexes, online index builds, IQP / PSP optimization, DOP feedback</li>
+  <li><strong>Plan optimization:</strong> <code>StatementOptmLevel="FULL"</code> but <code>StatementOptmEarlyAbortReason="TimeOut"</code> — optimizer ran out of search time, so plan is not provably optimal</li>
+</ul>
+</section>
+
+<section id="findings">
+<h2>Key Findings</h2>
+
+<h3>1. Massive Eager Index Spool (P1 — Critical for this query)</h3>
+<p><strong>Evidence:</strong> <code>NodeId="28" PhysicalOp="Index Spool" LogicalOp="Eager Spool" EstimatedTotalSubtreeCost="15.0741"</code>, fed by <code>Clustered Index Scan</code> of <code>PK__Comments__3214EC079DB7C869</code> reading 351,440 rows. This spool alone is <strong>73% of the entire query cost</strong>. It exists because the <code>OR EXISTS</code> in the outer WHERE forces the optimizer to build an on-the-fly index on Comments to support the per-row correlated lookup driven by the Nested Loops Left Semi Join (NodeId 1).</p>
+
+<h3>2. Full Clustered Index Scans on Large Tables (P1/P2)</h3>
+<table>
+<tr><th>Table</th><th>Rows Read</th><th>Size</th><th>Operator Cost</th><th>Reason</th></tr>
+<tr><td>Votes</td><td>926,084</td><td>12 MB</td><td>2.14</td><td>No index on VoteTypeId / PostId — filter <code>VoteTypeId = 8</code> applied as predicate after full scan</td></tr>
+<tr><td>Posts (probe 1)</td><td>246,672</td><td>398 MB</td><td>2.59</td><td>CreationDate filter applied as predicate; no supporting index</td></tr>
+<tr><td>Posts (probe 2)</td><td>246,672</td><td>398 MB</td><td>2.59</td><td>OwnerUserId join, no NC index</td></tr>
+<tr><td>Comments (probe)</td><td>351,440</td><td>78 MB</td><td>7.79</td><td>PostId join needs index</td></tr>
+<tr><td>Comments (spool source)</td><td>351,440</td><td>78 MB</td><td>7.80</td><td>Same — feeds Eager Spool</td></tr>
+<tr><td>Users</td><td>267,193</td><td>44 MB</td><td>1.73</td><td>Join probe — clustered scan acceptable but bitmap probes used</td></tr>
+<tr><td>Badges</td><td>439,352</td><td>8 MB</td><td>1.24</td><td>No index on UserId</td></tr>
+</table>
+<p>Index usage stats confirm none of Votes/Comments/Badges have <strong>any seeks</strong> recorded — they are scan-only objects in the workload, consistent with missing access paths.</p>
+
+<h3>3. Cardinality Estimation / Optimizer Timeout</h3>
+<p><strong>Evidence:</strong> <code>StatementOptmEarlyAbortReason="TimeOut"</code> with <code>CompileTime="84" ms</code>. The optimizer didn't fully explore. Reducing the search space via better predicate placement (rewrite) and supporting indexes will let it find a cheaper plan.</p>
+
+<h3>4. Memory Grant Anomaly / Likely Sort Spill</h3>
+<p><strong>Evidence:</strong> <code>SerialDesiredMemory="111200" KB</code>, <code>GrantedMemory="0" KB</code>. The Sort (NodeId 2) has <code>MemoryFractions Input="0.688312"</code>. If the granted memory is actually 0 at runtime, the sort will spill to tempdb. This is symptomatic of estimated-plan-only data; verify with actual execution stats.</p>
+
+<h3>5. Aggregations Before Filtering in UserReputation CTE</h3>
+<p><strong>Evidence:</strong> Hash Match (Aggregate) NodeId 16 produces 6,792 rows from joining all 267K Users × all 246K Posts × all 439K Badges before the <code>PostCount &gt; 5</code> filter is applied (Filter NodeId 3, predicate <code>[Expr1009] &gt; (5)</code>). All Users/Posts/Badges are scanned regardless of post count.</p>
+</section>
+
+<section id="recommendations">
+<h2>Detailed Prioritized Recommendations</h2>
+<p>All <span class="badge">runnable scripts</span> are in the <a href="#scripts">Scripts</a> section. Storage estimates assume PAGE compression (consistent with existing clustered indexes) and 4-byte int keys; treat as approximate (±25%).</p>
+
+<ol>
+
+<li>
+<h3>P1 — Create NC index on Comments(PostId) INCLUDE (UserId)</h3>
+<p><strong>Evidence:</strong> Missing index hint <code>Impact="40.0023"</code> for <code>[Comments].[PostId]</code>. The Eager Spool (cost 15.07) and two full Comments scans (cost 7.79 + 7.80) all disappear with this single index.</p>
+<ul>
+  <li><strong>Estimated storage:</strong> ~5.5 MB (351,440 rows × ~12 bytes effective + tree overhead, PAGE compressed)</li>
+  <li><strong>Expected read benefit:</strong> ~55–70% of total query cost reduction (removes the dominant cost driver)</li>
+  <li><strong>Expected write overhead:</strong> ~3–5% on INSERT/UPDATE/DELETE of Comments (single narrow NC index)</li>
+  <li><strong>Maintenance notes:</strong> Build ONLINE = ON, DATA_COMPRESSION = PAGE. Statistics auto-created/updated. Low fragmentation risk because <code>PostId</code> tends to be append-correlated with new comments on recent posts.</li>
+  <li><strong>Risk:</strong> Low. Narrow index on a relatively small (78 MB) table. No write-heavy workload signal in DMV stats (Updates = 0 recorded).</li>
+</ul>
+</li>
+
+<li>
+<h3>P1 — Rewrite OR EXISTS as UNION ALL</h3>
+<p><strong>Evidence:</strong> The Concatenation (NodeId 24) plus Index Spool (NodeId 28, cost 15.07) plus Nested Loops Left Semi Join (NodeId 1) collectively exist to handle <code>WHERE rp.TotalBounty &gt; 0 OR EXISTS (...)</code>. <code>OR</code> with correlated subquery defeats set-based execution and forces row-by-row spooling.</p>
+<p>See <a href="#rewrite">Query Rewrite</a> for the full T-SQL. After this rewrite combined with the Comments index, the plan should resolve EXISTS as a hash semi-join in batch mode, eliminating the spool entirely.</p>
+<ul>
+  <li><strong>Expected gain:</strong> Removes the 15.07 cost spool subtree; combined with index gives ~70–80% cost reduction.</li>
+  <li><strong>Risk:</strong> Semantically equivalent only if duplicates are deduped — use <code>UNION</code> (not <code>UNION ALL</code>) over keyed rows, or wrap properly. See script.</li>
+</ul>
+</li>
+
+<li>
+<h3>P2 — Create NC index on Posts(OwnerUserId) INCLUDE (CreationDate, Title)</h3>
+<p><strong>Evidence:</strong> Missing index hint <code>Impact="12.6801"</code>. DMV shows additional missing-index requests on Posts(OwnerUserId) with avg user impact 28.81% across 56 seeks/scans — broadly beneficial. Posts is 398 MB; full clustered scans cost 2.59 each, two of them per query execution.</p>
+<ul>
+  <li><strong>Estimated storage:</strong> ~22 MB (740K rows × ~30 bytes effective with Title being variable; PAGE compressed reduces materially)</li>
+  <li><strong>Expected read benefit:</strong> ~12–18% on this query; substantial broader workload benefit per DMV</li>
+  <li><strong>Expected write overhead:</strong> ~4–6% on Posts DML (Title is a wide INCLUDE — updates to Title trigger NC update)</li>
+  <li><strong>Maintenance notes:</strong> Title is nvarchar, so this can grow. Consider OMITTING Title initially and only including CreationDate to keep narrow. Build ONLINE = ON, PAGE compression. Monitor fragmentation due to OwnerUserId being non-sequential.</li>
+  <li><strong>Risk:</strong> Medium-low. Title increases size — alternative narrow form is provided as Script 3b.</li>
+</ul>
+</li>
+
+<li>
+<h3>P2 — Create filtered NC index on Votes(PostId) INCLUDE (BountyAmount) WHERE VoteTypeId = 8</h3>
+<p><strong>Evidence:</strong> Missing index hint <code>Impact="11.9123"</code>. Only 1,478 estimated rows match <code>VoteTypeId = 8</code> out of 926,084 — perfect candidate for a filtered index. Current plan scans all 926K rows (cost 2.14) to find them.</p>
+<ul>
+  <li><strong>Estimated storage:</strong> &lt;100 KB (only matching rows are stored)</li>
+  <li><strong>Expected read benefit:</strong> ~10–12% on this query; collapses the Votes scan to a tiny seek</li>
+  <li><strong>Expected write overhead:</strong> Negligible — filtered index only updates when VoteTypeId = 8 rows change</li>
+  <li><strong>Maintenance notes:</strong> Filtered indexes require <code>SET QUOTED_IDENTIFIER ON</code> and <code>ANSI_NULLS ON</code> at connection time to be used. Most modern clients (.NET, SSMS) set these correctly; legacy clients may not benefit.</li>
+  <li><strong>Risk:</strong> Low. Very small, very targeted.</li>
+</ul>
+</li>
+
+<li>
+<h3>P2 — Create NC index on Badges(UserId) INCLUDE (Class)</h3>
+<p><strong>Evidence:</strong> DMV missing-index entry shows <strong>Avg User Cost 24,652, User Impact 76.44%</strong>, plus a related request for INCLUDE (Name) with 87.57% impact. For this query specifically, eliminates the 439K-row clustered scan (cost 1.24).</p>
+<ul>
+  <li><strong>Estimated storage:</strong> ~3 MB (439K rows × ~10 bytes effective, PAGE compressed)</li>
+  <li><strong>Expected read benefit:</strong> ~6% on this query; ~50%+ on other workload queries per DMV evidence</li>
+  <li><strong>Expected write overhead:</strong> ~2–3% on Badges INSERTs</li>
+  <li><strong>Maintenance notes:</strong> Build ONLINE = ON, PAGE compression. Class has only 2 distinct values so it's tiny.</li>
+  <li><strong>Risk:</strong> Low.</li>
+</ul>
+</li>
+
+<li>
+<h3>P3 — Push the PostCount &gt; 5 filter earlier</h3>
+<p><strong>Evidence:</strong> Filter NodeId 3 (predicate <code>[Expr1009] &gt; (5)</code>) executes after the full aggregate over all Users × Posts × Badges. We can pre-filter to users with &gt; 5 posts before joining Badges. See the rewrite. Combined with the Posts(OwnerUserId) index, this becomes a streaming aggregate.</p>
+<ul>
+  <li><strong>Expected gain:</strong> Reduces Badges-side hash build dramatically; modest extra benefit on top of indexes.</li>
+  <li><strong>Risk:</strong> Low. Logically equivalent.</li>
+</ul>
+</li>
+
+<li>
+<h3>P3 — Statistics maintenance</h3>
+<p>All referenced statistics are sampled at 100% and most were updated on 2026-03-19 with <code>ModificationCount="0"</code>. <strong>No action needed currently.</strong> Recommend continuing scheduled stats maintenance (e.g., Ola Hallengren) with <code>@UpdateStatistics='ALL'</code>, <code>@OnlyModifiedStatistics='Y'</code>. See <a href="#stats">Statistics</a> section.</p>
+</li>
+
+<li>
+<h3>P4 — Parameter sniffing considerations</h3>
+<p>The query has <strong>no parameters</strong> — only literal constants (<code>'2024-10-01 12:34:56'</code>, <code>VoteTypeId = 8</code>, <code>PostCount &gt; 5</code>, <code>OFFSET 0 FETCH NEXT 100</code>). Parameter sniffing and PSP optimization don't apply here. If this query becomes parameterized in production, SQL Server 2022's Parameter Sensitive Plan optimization will help automatically. No plan guide needed at this time.</p>
+</li>
+</ol>
+</section>
+
+<section id="plan-compare">
+<h2>Estimated Plan: Before vs After</h2>
+<p>Text-based comparison of the dominant subtree, showing operators, estimated cost, and estimated row counts. After applying the Comments index + UNION ALL rewrite + Posts/Votes/Badges indexes.</p>
+
+<div class="plan-compare">
+<div>
+<h3>BEFORE — Cost 20.63</h3>
+<pre><code>Top (rows: 100, cost: 20.63)
+ └─ Nested Loops Left Semi Join (cost: 20.63) ◄ row-by-row
+     ├─ Sort (cost: 20.63, mem-frac 0.69) ◄ may spill
+     │   └─ Filter PostCount&gt;5 (rows: 5,053) ◄ late filter
+     │       └─ Hash Aggregate (rows: 8,126)
+     │           └─ Hash Inner Join Users×Posts
+     │               ├─ Hash Aggregate (rows: 8,352)
+     │               │   └─ Hash Right Outer Join Votes×Posts
+     │               │       ├─ CI Scan Votes (926,084 rows, cost 2.14) ✗
+     │               │       └─ Hash Left Outer Join Posts×Comments
+     │               │           ├─ CI Scan Posts (246,672 rows, cost 2.59) ✗
+     │               │           └─ CI Scan Comments (351,440 rows, cost 7.79) ✗
+     │               └─ Hash Left Outer Join Users×Posts×Badges
+     │                   ├─ CI Scan Users (267,193 rows, cost 1.73)
+     │                   ├─ CI Scan Posts (246,672 rows, cost 2.59) ✗
+     │                   └─ CI Scan Badges (439,352 rows, cost 1.24) ✗
+     └─ Concatenation
+         └─ Filter EXISTS
+             └─ Index Spool / Eager Spool (cost: 15.07) ✗✗✗ DOMINANT
+                 └─ CI Scan Comments (351,440 rows, cost 7.80) ✗</code></pre>
+</div>
+<div>
+<h3>AFTER — Projected cost ~4–6</h3>
+<pre><code>Top (rows: 100)
+ └─ Sort TOP-N (small, in-memory)
+     └─ Hash Inner Join RankedPosts×ActiveUsers
+         │   (UNION ALL branch keeps it set-based)
+         ├─ Hash Aggregate (rows ~8K)
+         │   └─ Hash Left Outer Join Posts×Comments
+         │       ├─ Index Seek Posts by CreationDate
+         │       │   (or CI scan still acceptable)
+         │       └─ Index Seek Comments(PostId) ✓ NEW INDEX
+         │           INCLUDE(UserId) ── enables semi-join
+         │           AND removes spool
+         │   ⤷ Hash Left Outer Join Votes(filtered) ✓ NEW FILTERED IDX
+         │       Index Seek Votes WHERE VoteTypeId=8 (≈1,478 rows)
+         └─ Hash Aggregate Users with PostCount&gt;5 pushed early
+             ├─ Index Seek Posts(OwnerUserId) ✓ NEW INDEX
+             └─ Index Seek Badges(UserId) ✓ NEW INDEX
+                 INCLUDE(Class)
+
+Eager Spool: ELIMINATED ✓
+Full CI scans on Votes/Comments/Badges: ELIMINATED ✓
+Sort spill risk: REDUCED (smaller input)</code></pre>
+</div>
+</div>
+<p class="meta">Diagram description: side-by-side text plan trees. Left shows the current plan with the Eager Spool (cost 15.07) as the dominant subtree and five full clustered index scans of large tables. Right shows the projected plan after recommendations, where index seeks replace scans and the spool is eliminated by the UNION ALL rewrite plus the Comments(PostId) index.</p>
+</section>
+
+<section id="rewrite">
+<h2>Query Rewrite</h2>
+<p>The key change is replacing <code>WHERE rp.TotalBounty &gt; 0 OR EXISTS (...)</code> with <code>UNION</code> (deduplicates on PostId). This lets the optimizer process each branch as a set-based join rather than introducing a Concatenation+Spool to satisfy <code>OR</code>.</p>
+<p>A second improvement: pre-filter users to those with &gt; 5 posts via a derived "ActiveUserIds" set <em>before</em> aggregating Badges, so we don't sum badges for users we'll discard.</p>
+<p>The full rewritten T-SQL is in <a href="#scripts">Script 6</a>.</p>
+</section>
+
+<section id="stats">
+<h2>Statistics Maintenance</h2>
+<ul>
+  <li>All statistics on referenced tables were updated 2026-03-19 at 100% sample with <code>ModificationCount = 0</code>. They are <strong>fresh and complete</strong>; no immediate update needed for this query.</li>
+  <li><code>Badges</code> stats are slightly older (2026-02-28) but still show <code>ModificationCount = 0</code>.</li>
+  <li>Recommend keeping <code>AUTO_UPDATE_STATISTICS_ASYNC = OFF</code> only if you can tolerate occasional sync stats updates blocking queries; otherwise enable it to avoid synchronous waits.</li>
+  <li>After creating the new indexes, statistics will be auto-created on the index keys at 100% sample.</li>
+</ul>
+</section>
+
+<section id="table-insights">
+<h2>Table-Specific Insights</h2>
+<table>
+<tr><th>Table</th><th>Rows</th><th>Size</th><th>Insight</th></tr>
+<tr><td>Posts</td><td>740,016</td><td>398 MB</td><td>Largest table by storage. Heavily scanned (2,497 scans, 240 seeks). DMV shows ~20 distinct missing-index requests — there is a broader index-strategy gap on this table beyond this query.</td></tr>
+<tr><td>Votes</td><td>926,084</td><td>12 MB</td><td>Highest row count but small (narrow rows). 1,243 scans, <strong>zero seeks</strong> — no useful NC indexes exist. VoteTypeId selectivity is excellent for filtered indexes.</td></tr>
+<tr><td>Users</td><td>534,386</td><td>44 MB</td><td>Reputation has 2,443 distinct values — good selectivity. DMV flags missing inequality index on Reputation (8.1% impact, 33 hits) — minor.</td></tr>
+<tr><td>Badges</td><td>439,352</td><td>8 MB</td><td>Zero seeks; high-impact missing index on UserId. Small table — index is cheap.</td></tr>
+<tr><td>Comments</td><td>351,440</td><td>78 MB</td><td>Zero seeks; PostId has 122,541 distinct values (~3 comments/post) — selective. Missing PostId index is the single biggest miss in the workload per the 40% plan impact.</td></tr>
+</table>
+<p>Note: <code>OwnerUserId</code> on Posts has all-density 0.000015 (~65,118 distinct), so a seek on OwnerUserId averages ~11 matching rows — very selective and ideal for a NC index seek.</p>
+</section>
+
+<section id="validation">
+<h2>Validation Procedure</h2>
+<ol>
+  <li>Capture baseline. Run the original query in a session with <code>SET STATISTICS IO ON; SET STATISTICS TIME ON;</code> and save the output (logical reads per table, CPU time, elapsed time, actual execution plan).</li>
+  <li>Apply indexes one at a time if possible (Script 1 → Script 2 → Script 3 → Script 4), re-running the original query between each to attribute gains.</li>
+  <li>Apply the query rewrite (Script 6) and compare again.</li>
+  <li>Use <code>sys.dm_db_index_usage_stats</code> after 24–48 hours to confirm the new indexes are actually being used (seeks &gt; 0) and not just adding write overhead.</li>
+  <li>Monitor <code>sys.dm_db_index_operational_stats</code> for lock/latch contention if write workload changes.</li>
+  <li>If runtime is critical, enable Query Store and compare the runtime stats and plans across the change boundary.</li>
+</ol>
+<div class="callout">
+<strong>Important:</strong> All cost figures in this report are <em>estimated</em> from the showplan. Actual gains depend on data distribution, memory, I/O subsystem, and concurrency. Always validate with actual execution stats before deploying to production.
+</div>
+</section>
+
+<section id="scripts">
+<h2>Scripts</h2>
+
+<h3>Script 1 — P1: Create NC index on Comments(PostId) INCLUDE (UserId)</h3>
+<pre><code>USE [SQLStorm];
+GO
+-- P1: Eliminates the 15.07-cost Eager Spool and full Comments scans.
+-- Plan-reported impact: 40.00%
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Comments')
+      AND name = N'IX_Comments_PostId_INC_UserId'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Comments_PostId_INC_UserId
+        ON dbo.Comments (PostId)
+        INCLUDE (UserId)
+        WITH (ONLINE = ON, DATA_COMPRESSION = PAGE, FILLFACTOR = 100);
+END;
+GO</code></pre>
+
+<h3>Script 2 — P2: Create NC index on Votes — filtered for VoteTypeId = 8</h3>
+<pre><code>USE [SQLStorm];
+GO
+-- P2: Filtered index for bounty votes. Only ~1,478 of 926,084 rows match.
+-- Plan-reported impact: 11.91%
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Votes')
+      AND name = N'IX_Votes_PostId_INC_Bounty_FILT_VoteType8'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Votes_PostId_INC_Bounty_FILT_VoteType8
+        ON dbo.Votes (PostId)
+        INCLUDE (BountyAmount)
+        WHERE VoteTypeId = 8
+        WITH (ONLINE = ON, DATA_COMPRESSION = PAGE, FILLFACTOR = 100);
+END;
+GO
+-- NOTE: Sessions using this index must have:
+--   SET QUOTED_IDENTIFIER ON;  SET ANSI_NULLS ON;
+-- (These are default for SSMS, .NET SqlClient, ODBC modern drivers.)</code></pre>
+
+<h3>Script 3a — P2: Create NC index on Posts(OwnerUserId) INCLUDE (CreationDate, Title) — full version</h3>
+<pre><code>USE [SQLStorm];
+GO
+-- P2: Eliminates Posts CI scans on the OwnerUserId join path.
+-- Plan-reported impact: 12.68%; DMV avg user impact up to 28.81%.
+-- This version covers OwnerUserId + outputs needed (CreationDate, Title).
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Posts')
+      AND name = N'IX_Posts_OwnerUserId_INC_CreationDate_Title'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Posts_OwnerUserId_INC_CreationDate_Title
+        ON dbo.Posts (OwnerUserId)
+        INCLUDE (CreationDate, Title)
+        WITH (ONLINE = ON, DATA_COMPRESSION = PAGE, FILLFACTOR = 100);
+END;
+GO</code></pre>
+
+<h3>Script 3b — P2 (alternative narrow): Posts(OwnerUserId) INCLUDE (CreationDate) only</h3>
+<pre><code>USE [SQLStorm];
+GO
+-- P2 ALTERNATIVE: Choose this OR Script 3a, not both.
+-- Narrower index (no Title) -- smaller storage, lower write overhead,
+-- but query will still need a key lookup for Title.
+-- Use this version if write workload on Posts is heavy or storage is tight.
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Posts')
+      AND name = N'IX_Posts_OwnerUserId_INC_CreationDate'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Posts_OwnerUserId_INC_CreationDate
+        ON dbo.Posts (OwnerUserId)
+        INCLUDE (CreationDate)
+        WITH (ONLINE = ON, DATA_COMPRESSION = PAGE, FILLFACTOR = 100);
+END;
+GO</code></pre>
+
+<h3>Script 4 — P2: Create NC index on Badges(UserId) INCLUDE (Class)</h3>
+<pre><code>USE [SQLStorm];
+GO
+-- P2: Eliminates Badges CI scan; addresses high-impact DMV finding (76% impact).
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Badges')
+      AND name = N'IX_Badges_UserId_INC_Class'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Badges_UserId_INC_Class
+        ON dbo.Badges (UserId)
+        INCLUDE (Class)
+        WITH (ONLINE = ON, DATA_COMPRESSION = PAGE, FILLFACTOR = 100);
+END;
+GO</code></pre>
+
+<h3>Script 5 — Baseline / validation harness</h3>
+<pre><code>USE [SQLStorm];
+GO
+-- Use this to capture before/after metrics. Run it BEFORE creating indexes,
+-- then again AFTER each change, saving the messages tab output.
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+SET NOCOUNT ON;
+GO
+
+-- Clear cache ONLY in a non-production / dev environment for clean comparison.
+-- DBCC FREEPROCCACHE;  -- DEV ONLY
+-- DBCC DROPCLEANBUFFERS; -- DEV ONLY
+
+-- === ORIGINAL QUERY ===
+WITH RankedPosts AS (
+    SELECT
+        p.Id AS PostId, p.Title, p.CreationDate, p.OwnerUserId,
+        COUNT(c.Id) AS CommentCount,
+        SUM(v.BountyAmount) AS TotalBounty,
+        ROW_NUMBER() OVER (PARTITION BY p.OwnerUserId ORDER BY p.CreationDate DESC) AS PostRank
+    FROM dbo.Posts p
+    LEFT JOIN dbo.Comments c ON p.Id = c.PostId
+    LEFT JOIN dbo.Votes v ON p.Id = v.PostId AND v.VoteTypeId = 8
+    WHERE p.CreationDate >= DATEADD(year, -1, CAST('2024-10-01 12:34:56' AS datetime))
+    GROUP BY p.Id, p.Title, p.CreationDate, p.OwnerUserId
+),
+UserReputation AS (
+    SELECT u.Id AS UserId, u.Reputation,
+           COUNT(DISTINCT p.Id) AS PostCount,
+           SUM(ISNULL(b.Class, 0)) AS TotalBadges
+    FROM dbo.Users u
+    LEFT JOIN dbo.Posts p ON u.Id = p.OwnerUserId
+    LEFT JOIN dbo.Badges b ON u.Id = b.UserId
+    GROUP BY u.Id, u.Reputation
+),
+ActiveUsers AS (
+    SELECT ur.UserId, ur.Reputation, ur.PostCount, ur.TotalBadges,
+           ROW_NUMBER() OVER (ORDER BY ur.Reputation DESC) AS UserRank
+    FROM UserReputation ur WHERE ur.PostCount > 5
+)
+SELECT rp.PostId, rp.Title, rp.CreationDate, ua.UserId, ua.Reputation,
+       rp.CommentCount, rp.TotalBounty, ua.PostCount, ua.TotalBadges
+FROM RankedPosts rp
+JOIN ActiveUsers ua ON rp.OwnerUserId = ua.UserId
+WHERE rp.TotalBounty > 0
+   OR EXISTS (SELECT 1 FROM dbo.Comments c WHERE c.PostId = rp.PostId AND c.UserId IS NOT NULL)
+ORDER BY ua.Reputation DESC, rp.CreationDate DESC
+OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
+GO
+
+SET STATISTICS IO OFF;
+SET STATISTICS TIME OFF;
+GO</code></pre>
+
+<h3>Script 6 — P1: Rewritten query (UNION + early filter for ActiveUsers)</h3>
+<pre><code>USE [SQLStorm];
+GO
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+SET NOCOUNT ON;
+GO
+
+-- === REWRITTEN QUERY ===
+-- Changes:
+--   (1) OR EXISTS -> two-branch UNION (removes the Eager Spool / Concatenation pattern)
+--   (2) ActiveUsers pre-filters PostCount > 5 BEFORE joining Badges
+--   (3) Removes unused PostRank / UserRank columns from final projection
+WITH ActiveUserIds AS (
+    -- Users with > 5 posts -- evaluated FIRST so Badges aggregation
+    -- only runs for this much smaller set.
+    SELECT p.OwnerUserId AS UserId
+    FROM dbo.Posts p
+    WHERE p.OwnerUserId IS NOT NULL
+    GROUP BY p.OwnerUserId
+    HAVING COUNT_BIG(*) > 5
+),
+ActiveUsers AS (
+    SELECT u.Id           AS UserId,
+           u.Reputation,
+           ( SELECT COUNT_BIG(*) FROM dbo.Posts p2
+             WHERE p2.OwnerUserId = u.Id )           AS PostCount,
+           ( SELECT SUM(ISNULL(b.Class, 0)) FROM dbo.Badges b
+             WHERE b.UserId = u.Id )                 AS TotalBadges
+    FROM dbo.Users u
+    WHERE u.Id IN (SELECT UserId FROM ActiveUserIds)
+),
+RankedPosts AS (
+    SELECT
+        p.Id AS PostId, p.Title, p.CreationDate, p.OwnerUserId,
+        COUNT(c.Id) AS CommentCount,
+        SUM(v.BountyAmount) AS TotalBounty
+    FROM dbo.Posts p
+    LEFT JOIN dbo.Comments c ON p.Id = c.PostId
+    LEFT JOIN dbo.Votes v ON p.Id = v.PostId AND v.VoteTypeId = 8
+    WHERE p.CreationDate >= DATEADD(year, -1, CAST('2024-10-01 12:34:56' AS datetime))
+    GROUP BY p.Id, p.Title, p.CreationDate, p.OwnerUserId
+),
+Candidates AS (
+    -- Branch A: posts with TotalBounty > 0
+    SELECT rp.PostId, rp.Title, rp.CreationDate, rp.OwnerUserId,
+           rp.CommentCount, rp.TotalBounty
+    FROM RankedPosts rp
+    WHERE rp.TotalBounty > 0
+
+    UNION   -- dedupe by all output columns; PostId is unique within RankedPosts
+
+    -- Branch B: posts that have at least one Comment with non-NULL UserId
+    SELECT rp.PostId, rp.Title, rp.CreationDate, rp.OwnerUserId,
+           rp.CommentCount, rp.TotalBounty
+    FROM RankedPosts rp
+    WHERE EXISTS (
+        SELECT 1 FROM dbo.Comments c
+        WHERE c.PostId = rp.PostId AND c.UserId IS NOT NULL
+    )
+)
+SELECT  c.PostId, c.Title, c.CreationDate,
+        ua.UserId, ua.Reputation,
+        c.CommentCount, c.TotalBounty,
+        ua.PostCount, ua.TotalBadges
+FROM Candidates c
+JOIN ActiveUsers ua ON c.OwnerUserId = ua.UserId
+ORDER BY ua.Reputation DESC, c.CreationDate DESC
+OFFSET 0 ROWS FETCH NEXT 100 ROWS ONLY;
+GO
+
+SET STATISTICS IO OFF;
+SET STATISTICS TIME OFF;
+GO</code></pre>
+
+<h3>Script 7 — Verify new indexes are being used after deployment</h3>
+<pre><code>USE [SQLStorm];
+GO
+-- Run 24-48 hours after deploying the new indexes.
+-- 'user_seeks' should be > 0 for the indexes to be earning their keep.
+SELECT  OBJECT_SCHEMA_NAME(i.object_id) AS [Schema],
+        OBJECT_NAME(i.object_id)        AS [Table],
+        i.name                          AS IndexName,
+        s.user_seeks, s.user_scans, s.user_lookups, s.user_updates,
+        s.last_user_seek, s.last_user_scan, s.last_user_update
+FROM sys.indexes i
+LEFT JOIN sys.dm_db_index_usage_stats s
+       ON s.object_id = i.object_id
+      AND s.index_id  = i.index_id
+      AND s.database_id = DB_ID()
+WHERE i.name IN (
+    N'IX_Comments_PostId_INC_UserId',
+    N'IX_Votes_PostId_INC_Bounty_FILT_VoteType8',
+    N'IX_Posts_OwnerUserId_INC_CreationDate_Title',
+    N'IX_Posts_OwnerUserId_INC_CreationDate',
+    N'IX_Badges_UserId_INC_Class'
+)
+ORDER BY [Table], IndexName;
+GO</code></pre>
+
+</section>
+
+
+
+</main>
+</div>
+<footer>
+<p>Based on analysis as of 2026-05-31 19:21:39 UTC.</p>
+<p>Generated by AI SQL Tuner Studio v1.0.48.0 using model claude-opus-4-7 with reasoning effort low. Visit <a href="https://aisqltuner.com">https://aisqltuner.com</a>.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,1030 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Server Health Report – RockyPC – 2026-05-31</title>
+  <style>
+    :root{
+      --bg:#FFFFFF;
+      --sidebar:#F6F8F9;
+      --text:#111827;
+      --muted:#6B7280;
+      --accent:#0B6E6E;
+      --accent-soft:#E6F3F3;
+      --border:#D7E3E3;
+      --code-bg:#EFF7F7;
+      --warn:#B45309;
+      --danger:#B91C1C;
+      --ok:#166534;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .layout{
+      display:grid;
+      grid-template-columns:290px minmax(0,1fr);
+      min-height:100vh;
+    }
+    nav{
+      background:var(--sidebar);
+      border-right:1px solid var(--border);
+      padding:24px 20px;
+      position:sticky;
+      top:0;
+      align-self:start;
+      height:100vh;
+      overflow:auto;
+    }
+    nav h2{
+      margin:0 0 14px;
+      font-size:1rem;
+      color:var(--accent);
+      letter-spacing:.02em;
+    }
+    nav ul{
+      list-style:none;
+      padding:0;
+      margin:0;
+    }
+    nav li{margin:8px 0}
+    nav .small{
+      color:var(--muted);
+      font-size:.92rem;
+      margin-top:18px;
+    }
+    main{
+      padding:32px 40px 48px;
+      max-width:1200px;
+    }
+    h1{
+      color:var(--accent);
+      margin:0 0 6px;
+      font-size:2rem;
+      line-height:1.2;
+    }
+    .subtitle{
+      color:var(--muted);
+      margin-bottom:18px;
+      font-size:1rem;
+    }
+    .meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px 18px;
+      color:var(--muted);
+      font-size:.95rem;
+      margin-bottom:26px;
+    }
+    .pill{
+      display:inline-block;
+      padding:5px 10px;
+      border-radius:999px;
+      background:var(--accent-soft);
+      color:var(--accent);
+      font-weight:600;
+      font-size:.88rem;
+      margin-bottom:14px;
+    }
+    h2{
+      color:var(--accent);
+      border-bottom:2px solid var(--accent-soft);
+      padding-bottom:6px;
+      margin-top:34px;
+    }
+    h3{
+      color:var(--text);
+      margin-top:22px;
+      margin-bottom:8px;
+    }
+    p{margin:10px 0}
+    .muted{color:var(--muted)}
+    .card{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:18px 20px;
+      background:#fff;
+      margin:14px 0;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:14px;
+      margin:16px 0 10px;
+    }
+    .kpi{
+      border:1px solid var(--border);
+      border-left:5px solid var(--accent);
+      border-radius:10px;
+      padding:14px 16px;
+      background:#fff;
+    }
+    .kpi .label{font-size:.9rem;color:var(--muted)}
+    .kpi .value{font-size:1.25rem;font-weight:700;margin-top:3px}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin:12px 0 18px;
+      font-size:.95rem;
+    }
+    th,td{
+      border:1px solid var(--border);
+      padding:10px 12px;
+      text-align:left;
+      vertical-align:top;
+    }
+    th{
+      background:var(--sidebar);
+      color:var(--accent);
+      font-weight:700;
+    }
+    .status-critical{color:var(--danger);font-weight:700}
+    .status-warning{color:var(--warn);font-weight:700}
+    .status-ok{color:var(--ok);font-weight:700}
+    ol{padding-left:22px}
+    ul{padding-left:20px}
+    code{
+      background:var(--code-bg);
+      padding:1px 5px;
+      border-radius:4px;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:.92em;
+    }
+    pre{
+      background:var(--code-bg);
+      padding:14px 16px;
+      border-radius:10px;
+      overflow:auto;
+      border:1px solid var(--border);
+    }
+    pre code{
+      background:transparent;
+      padding:0;
+      border-radius:0;
+      font-size:.92rem;
+      display:block;
+      white-space:pre;
+    }
+    footer{
+      border-top:1px solid var(--border);
+      margin-top:38px;
+      padding-top:18px;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+    .caption{
+      color:var(--muted);
+      font-size:.92rem;
+      margin-top:6px;
+    }
+    .callout{
+      border-left:4px solid var(--accent);
+      background:var(--accent-soft);
+      padding:12px 14px;
+      border-radius:8px;
+      margin:12px 0;
+    }
+    @media (max-width: 980px){
+      .layout{grid-template-columns:1fr}
+      nav{
+        position:relative;
+        height:auto;
+        border-right:none;
+        border-bottom:1px solid var(--border);
+      }
+      main{padding:24px 18px 40px}
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root{
+        --bg:#0B1220;
+        --sidebar:#162032;
+        --text:#F3F4F6;
+        --muted:#9CA3AF;
+        --accent:#2DD4BF;
+        --accent-soft:#0E2230;
+        --border:#243244;
+        --code-bg:#0F172A;
+        --warn:#F59E0B;
+        --danger:#F87171;
+        --ok:#34D399;
+      }
+      .card,.kpi,table,th,td{background:transparent}
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Report",
+    "headline":"Server Health Report – RockyPC – 2026-05-31",
+    "datePublished":"2026-05-31T15:55:22Z",
+    "dateModified":"2026-05-31T15:55:22Z",
+    "author":{
+      "@type":"Organization",
+      "name":"AI SQL Tuner Studio"
+    },
+    "about":"SQL Server health, performance, security, integrity, and operational recommendations"
+  }
+  </script>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+  <div class="layout">
+    <nav aria-label="Table of contents">
+      <h2>Contents</h2>
+      <ul>
+        <li><a href="#executive-summary">Executive summary</a></li>
+        <li><a href="#detailed-recommendations">Detailed prioritized recommendations</a></li>
+        <li><a href="#performance">1) Performance improvements</a></li>
+        <li><a href="#configuration">2) Configuration optimizations</a></li>
+        <li><a href="#indexing">3) Index optimization opportunities</a></li>
+        <li><a href="#query-store">4) Query Store optimization</a></li>
+        <li><a href="#integrity">5) Database integrity maintenance</a></li>
+        <li><a href="#security">6) Security enhancements</a></li>
+        <li><a href="#concurrency">7) Concurrency issues</a></li>
+        <li><a href="#operations">8) Operational best practices</a></li>
+        <li><a href="#maintenance">9) Proactive maintenance suggestions</a></li>
+        <li><a href="#scripts">Scripts</a></li>
+      </ul>
+      <div class="small">
+        Scope: Server Health<br>
+        Server: RockyPC<br>
+        Database context: master
+      </div>
+    </nav>
+
+    <main>
+      <header>
+        <h1>Server Health Report – RockyPC – 2026-05-31</h1>
+        <div class="pill">Tuning Goal: Server Health</div>
+        <div class="subtitle">SQL Server 2022 health, performance, security, integrity, and operations recommendations.</div>
+        <div class="meta">
+          <div><strong>Server:</strong> RockyPC</div>
+          <div><strong>Database:</strong> master</div>
+          <div><strong>Version:</strong> SQL Server 2022 (16.0.1180.1), RTM-GDR</div>
+          <div><strong>Edition:</strong> Developer Edition / Engine Edition: Enterprise</div>
+          <div><strong>OS:</strong> Windows 10 Home x64 (Hypervisor)</div>
+        </div>
+      </header>
+
+      <section id="executive-summary">
+        <h2>Executive summary</h2>
+
+        <div class="grid">
+          <div class="kpi">
+            <div class="label">Top immediate risk</div>
+            <div class="value status-critical">CHECKDB overdue or missing</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Plan cache health</div>
+            <div class="value status-warning">82.8% single-use</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Backup posture</div>
+            <div class="value status-critical">Multiple databases unprotected</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Current memory-grant pressure</div>
+            <div class="value status-ok">No RESOURCE_SEMAPHORE waiters</div>
+          </div>
+        </div>
+
+        <table aria-label="High-level health summary">
+          <thead>
+            <tr>
+              <th>Area</th>
+              <th>Finding</th>
+              <th>Assessment</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Integrity</td>
+              <td>Six user databases show no recorded <code>DBCC CHECKDB</code>; one is 49 days old.</td>
+              <td class="status-critical">Critical</td>
+            </tr>
+            <tr>
+              <td>Backups</td>
+              <td>Several databases have no full backup history; FULL recovery databases also lack log backups.</td>
+              <td class="status-critical">Critical</td>
+            </tr>
+            <tr>
+              <td>Plan cache</td>
+              <td>125 of 151 plans are single-use; compilations/sec are high relative to workload.</td>
+              <td class="status-warning">High</td>
+            </tr>
+            <tr>
+              <td>Query workload</td>
+              <td>Many one-off analytical queries consume very high CPU, reads, and memory grants; one query spills heavily.</td>
+              <td class="status-warning">High</td>
+            </tr>
+            <tr>
+              <td>I/O</td>
+              <td>Tempdb dominates I/O; latencies are acceptable at ~5 ms reads / ~15 ms writes.</td>
+              <td class="status-warning">Moderate</td>
+            </tr>
+            <tr>
+              <td>Parallelism</td>
+              <td><code>CXCONSUMER</code> and <code>CXPACKET</code> are present but not dominant; current MAXDOP 8 and CTFP 30 are reasonable.</td>
+              <td class="status-ok">Acceptable</td>
+            </tr>
+            <tr>
+              <td>Memory</td>
+              <td>Buffer pool ~5.6 GB, lock manager only 3.02 MB, no semaphore waiters.</td>
+              <td class="status-ok">No acute pressure</td>
+            </tr>
+            <tr>
+              <td>Security</td>
+              <td>Only one sysadmin member; all visible user connections are local shared memory and encrypted. One unencrypted telemetry session is minimal risk.</td>
+              <td class="status-ok">Good with minor hardening opportunities</td>
+            </tr>
+            <tr>
+              <td>Deadlocks</td>
+              <td>One deadlock in the last 7 days.</td>
+              <td class="status-warning">Moderate</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="card">
+          <h3>Top priorities</h3>
+          <ol>
+            <li><strong>Establish integrity protection immediately.</strong> Run <code>DBCC CHECKDB</code> for WideWorldImporters, SQLStorm, tpcc, tpch, CRM, tpch10, and DigitsSolver, then schedule recurring checks. <span class="muted">Confidence: 99%</span></li>
+            <li><strong>Fix backup gaps.</strong> Multiple databases have no full backup history, and FULL recovery databases have no log backup chain. This is the most serious operational risk after integrity. <span class="muted">Confidence: 99%</span></li>
+            <li><strong>Reduce compile churn and ad hoc plan cache waste.</strong> Enable <code>optimize for ad hoc workloads</code> and prioritize parameterization / stored procedure reuse for SQLStorm-style analytical workload. <span class="muted">Confidence: 95%</span></li>
+            <li><strong>Tune the top resource-intensive SQLStorm queries.</strong> Several plans show millions of logical reads, very large memory grants, and one severe spill. Focus first on query hashes <code>EC28C61EF14FD8A3</code>, <code>558D53CC7558B81F</code>, <code>57CAE2375FFE5085</code>, and <code>F37272E929AEF449</code>. <span class="muted">Confidence: 94%</span></li>
+            <li><strong>Implement targeted indexing in SQLStorm first.</strong> High-value missing indexes are concentrated across multiple databases, but SQLStorm aligns best with the observed workload and offers the clearest return. <span class="muted">Confidence: 90%</span></li>
+            <li><strong>Investigate the recent deadlock.</strong> One deadlock occurred in the last 7 days; detailed graph analysis should be performed using the Fix Deadlocks goal. <span class="muted">Confidence: 88%</span></li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="detailed-recommendations">
+        <h2>Detailed prioritized recommendations</h2>
+        <p>The recommendations below are ordered by operational risk first, then by performance benefit, then by hardening and maintainability.</p>
+      </section>
+
+      <section id="performance">
+        <h2>1) Performance improvements</h2>
+
+        <h3>Priority 1 — Tune the highest-cost analytical queries in SQLStorm</h3>
+        <ul>
+          <li>The workload is dominated by large CTE-heavy reporting queries with <code>Execution Count = 1</code>, very high logical reads, and large memory grants.</li>
+          <li>Most expensive examples:
+            <ul>
+              <li><code>EC28C61EF14FD8A3</code>: ~2,246 seconds avg CPU, 17.8M logical reads.</li>
+              <li><code>558D53CC7558B81F</code>: ~339 seconds avg CPU, 4.2M logical reads, <strong>38,164 spills</strong>.</li>
+              <li><code>57CAE2375FFE5085</code>: 281,928 KB grant.</li>
+              <li><code>F37272E929AEF449</code>: 1,792,816 KB max grant.</li>
+            </ul>
+          </li>
+          <li>Common anti-patterns visible in the query text:
+            <ul>
+              <li>Large fan-out joins across <code>Users</code>, <code>Posts</code>, <code>Votes</code>, <code>Badges</code>, <code>Comments</code>, and <code>PostHistory</code>.</li>
+              <li><code>COUNT(DISTINCT ...)</code>, ranking functions, and wide aggregations across large rowsets.</li>
+              <li>Correlated scalar subqueries against <code>Comments</code> and <code>Votes</code>.</li>
+              <li><code>LIKE '%' + TagName + '%'</code> pattern in tag matching, which prevents efficient seeks and drives scans.</li>
+            </ul>
+          </li>
+        </ul>
+        <div class="callout">
+          Recommendation: rewrite the worst queries to pre-aggregate once, replace repeated correlated lookups with grouped joins, and add supporting indexes before considering parallelism changes.
+        </div>
+        <p><strong>Confidence:</strong> 94%</p>
+
+        <h3>Priority 2 — Address spill-prone and oversized memory grant plans</h3>
+        <ul>
+          <li>No current <code>RESOURCE_SEMAPHORE</code> waiters exist, so there is <strong>no acute memory-grant queueing right now</strong>.</li>
+          <li>However, several plans request much more memory than they use. Example: session 60 was granted 170,440 KB and used only 28,544 KB.</li>
+          <li>The plan for query hash <code>558D53CC7558B81F</code> spilled 38,164 times, indicating poor cardinality estimation, unsupported join/sort patterns, or missing indexes.</li>
+          <li>Oversized grants and spills together suggest unstable memory grant quality, not server-wide memory starvation.</li>
+        </ul>
+        <p><strong>Actions:</strong></p>
+        <ul>
+          <li>Create supporting indexes on <code>Votes(UserId)</code>, <code>Votes(PostId)</code>, <code>Badges(UserId)</code>, <code>Comments(PostId)</code>, and <code>PostHistory(PostId)</code> in SQLStorm.</li>
+          <li>Update statistics with full scan for the hottest large tables if data volatility is high.</li>
+          <li>Break very wide queries into staged temp tables where it materially improves row estimation and reduces repeated scans.</li>
+        </ul>
+        <p><strong>Confidence:</strong> 92%</p>
+
+        <h3>Priority 3 — Reduce compile overhead and plan cache churn</h3>
+        <ul>
+          <li>Batch Requests/sec: <strong>31,225</strong></li>
+          <li>SQL Compilations/sec: <strong>16,650</strong></li>
+          <li>Single-use ratio: <strong>82.8%</strong></li>
+        </ul>
+        <p>This is a classic ad hoc workload signature. A large fraction of requests are being compiled rather than reusing stable cached plans.</p>
+        <p><strong>Actions:</strong></p>
+        <ul>
+          <li>Enable <code>optimize for ad hoc workloads</code>.</li>
+          <li>Parameterize application-generated analytical SQL where possible.</li>
+          <li>Favor stored procedures or <code>sp_executesql</code> with parameters instead of unique literal-heavy statements.</li>
+        </ul>
+        <p><strong>Confidence:</strong> 95%</p>
+
+        <h3>Priority 4 — Tempdb is the primary I/O hot area, but storage is currently acceptable</h3>
+        <ul>
+          <li>Tempdb files are well balanced across eight data files.</li>
+          <li>Average tempdb latency is about 5 ms for reads and 15 ms for writes.</li>
+          <li>Those numbers are not alarming, but tempdb dominates buffer pool usage at ~5.0 GB, which indicates the workload is tempdb-intensive.</li>
+        </ul>
+        <p><strong>Actions:</strong></p>
+        <ul>
+          <li>Do not add more tempdb files right now; the current file count already matches a common best-practice pattern for 16 schedulers.</li>
+          <li>Focus on query rewrites and indexes that reduce sorts, hashes, spills, and worktable usage.</li>
+          <li>Consider enabling memory-optimized tempdb metadata only if you observe tempdb metadata contention; no evidence of that is present in the supplied data.</li>
+        </ul>
+        <p><strong>Confidence:</strong> 84%</p>
+
+        <h3>Priority 5 — Parallelism settings are reasonable; do not change blindly</h3>
+        <ul>
+          <li><code>MAXDOP = 8</code> on 16 logical CPUs is reasonable.</li>
+          <li><code>cost threshold for parallelism = 30</code> is also reasonable.</li>
+          <li><code>CXCONSUMER</code> and <code>CXPACKET</code> are present but represent a small share of total waits compared with mostly benign background waits.</li>
+        </ul>
+        <p><strong>Recommendation:</strong> keep current parallelism settings unless deeper plan analysis shows excessive parallel branches or skew for the top SQLStorm queries.</p>
+        <p><strong>Confidence:</strong> 86%</p>
+      </section>
+
+      <section id="configuration">
+        <h2>2) Configuration optimizations</h2>
+
+        <h3>Enable optimize for ad hoc workloads</h3>
+        <ul>
+          <li>This is the clearest server-level configuration change justified by the data.</li>
+          <li>It will reduce wasted cache space from one-time plans and lower pressure from excessive plan cache churn.</li>
+        </ul>
+        <p><strong>Confidence:</strong> 97%</p>
+
+        <h3>Keep current max server memory, but monitor headroom</h3>
+        <ul>
+          <li>Total physical memory: 32.5 GB.</li>
+          <li>Max server memory: 23,168 MB.</li>
+          <li>Committed SQL memory is only ~9.9 GB, so SQL Server is not currently memory starved.</li>
+        </ul>
+        <p>The current cap leaves reasonable OS headroom on a desktop-class Windows 10 host. No change is required based on supplied evidence.</p>
+        <p><strong>Confidence:</strong> 89%</p>
+
+        <h3>Enable backup checksum default</h3>
+        <ul>
+          <li><code>backup checksum default = 0</code>.</li>
+          <li>Given the lack of strong backup hygiene, enabling checksums adds validation value with minimal downside.</li>
+        </ul>
+        <p><strong>Confidence:</strong> 93%</p>
+
+        <h3>Consider enabling blocked process threshold for diagnostics</h3>
+        <ul>
+          <li>Current value is <code>0</code>.</li>
+          <li>Because a deadlock has already occurred, setting a modest threshold such as 15 seconds can improve incident visibility without being intrusive.</li>
+        </ul>
+        <p><strong>Confidence:</strong> 82%</p>
+
+        <h3>Remote admin connections</h3>
+        <ul>
+          <li><code>remote admin connections = 0</code>.</li>
+          <li>On a non-clustered developer box this is optional, not urgent.</li>
+        </ul>
+        <p><strong>Recommendation:</strong> leave unchanged unless this instance is used for remote support or unattended administration.</p>
+        <p><strong>Confidence:</strong> 72%</p>
+
+        <h3>Do not flag lock manager memory</h3>
+        <ul>
+          <li>Lock manager cache is <strong>3.02 MB</strong>.</li>
+          <li>This is nowhere near the critical threshold of 20–25% of total SQL memory.</li>
+          <li>There is <strong>no red flag</strong> involving lock memory versus buffer pool size.</li>
+        </ul>
+        <p><strong>Confidence:</strong> 99%</p>
+      </section>
+
+      <section id="indexing">
+        <h2>3) Index optimization opportunities</h2>
+
+        <h3>Run comprehensive index tuning on these databases first</h3>
+        <ol>
+          <li>SQLStorm</li>
+          <li>CRM</li>
+          <li>tpch10</li>
+          <li>WideWorldImporters</li>
+          <li>tpch</li>
+          <li>tpcc</li>
+        </ol>
+        <p>This prioritization is based on alignment between observed heavy plan-cache workload and missing-index patterns. SQLStorm is the highest-value starting point.</p>
+
+        <table aria-label="Priority missing indexes">
+          <thead>
+            <tr>
+              <th>Database</th>
+              <th>Table</th>
+              <th>Recommended key idea</th>
+              <th>Why it matters</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SQLStorm</td>
+              <td>dbo.Badges</td>
+              <td><code>(UserId) INCLUDE (Class, Name)</code></td>
+              <td>Supports frequent joins and badge aggregations by user.</td>
+            </tr>
+            <tr>
+              <td>SQLStorm</td>
+              <td>dbo.PostHistory</td>
+              <td><code>(PostId) INCLUDE (PostHistoryTypeId)</code></td>
+              <td>Supports repeated post history lookups.</td>
+            </tr>
+            <tr>
+              <td>SQLStorm</td>
+              <td>dbo.Votes</td>
+              <td><code>(UserId) INCLUDE (VoteTypeId, BountyAmount)</code></td>
+              <td>Supports user-vote summaries and bounty aggregations.</td>
+            </tr>
+            <tr>
+              <td>SQLStorm</td>
+              <td>dbo.Votes</td>
+              <td><code>(PostId) INCLUDE (VoteTypeId)</code></td>
+              <td>Supports post-level vote counts and ranking queries.</td>
+            </tr>
+            <tr>
+              <td>SQLStorm</td>
+              <td>dbo.Comments</td>
+              <td><code>(PostId)</code></td>
+              <td>Supports comment count lookups per post.</td>
+            </tr>
+            <tr>
+              <td>SQLStorm</td>
+              <td>dbo.Users</td>
+              <td><code>(Reputation)</code> review carefully</td>
+              <td>May help reputation filters/sorts, but lower confidence than the join indexes above.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout">
+          Some missing-index entries map to constraint-like names or obviously non-business columns in non-SQLStorm databases. Treat those entries as heuristic signals, not direct create-index instructions.
+        </div>
+
+        <p><strong>Important cautions:</strong></p>
+        <ul>
+          <li>Consolidate overlapping missing-index requests before creating indexes.</li>
+          <li>Validate existing indexes to avoid duplication.</li>
+          <li>Prefer covering indexes only where supported by actual workload frequency and row counts.</li>
+          <li>Use online index operations if table size and workload justify it; this edition supports that capability.</li>
+        </ul>
+        <p><strong>Recommendation:</strong> run the Index Tuning goal for each affected database with missing indexes, especially SQLStorm.</p>
+        <p><strong>Confidence:</strong> 91%</p>
+      </section>
+
+      <section id="query-store">
+        <h2>4) Query Store optimization</h2>
+
+        <ul>
+          <li>Query Store is enabled and writable on all listed user databases. That is good.</li>
+          <li>For compat level 160 databases, Query Store can support SQL Server 2022 plan governance features effectively.</li>
+          <li>Usage is currently tiny in most databases, which means it is available but not yet collecting much useful history.</li>
+        </ul>
+
+        <h3>Keep Query Store enabled everywhere</h3>
+        <p>No database in the supplied list should have Query Store disabled. Current state is good. <span class="muted">Confidence: 98%</span></p>
+
+        <h3>Standardize SQLStorm Query Store for analysis depth</h3>
+        <ul>
+          <li>SQLStorm is the most active workload database and should retain enough history to compare pre/post tuning.</li>
+          <li>Current SQLStorm settings are acceptable, but can be tightened for more granular diagnostics.</li>
+        </ul>
+        <p><strong>Recommended SQLStorm changes:</strong></p>
+        <ul>
+          <li>Reduce <code>INTERVAL_LENGTH_MINUTES</code> from 60 to 15 for richer performance baselining during tuning.</li>
+          <li>Keep <code>QUERY_CAPTURE_MODE = AUTO</code> unless workload remains mostly one-off; if tuning sessions require broader capture, temporarily use <code>CUSTOM</code> or <code>ALL</code> during controlled testing.</li>
+          <li>Retain <code>MAX_STORAGE_SIZE_MB = 1000</code>; current usage is only 20 MB.</li>
+        </ul>
+        <p><strong>Confidence:</strong> 87%</p>
+
+        <h3>Standardize WideWorldImporters settings if it is actively used</h3>
+        <ul>
+          <li>WideWorldImporters is on compatibility level 130, not 160.</li>
+          <li>Its Query Store settings differ materially: 50-minute flush interval, 15-minute stats interval, and max plans per query 1000.</li>
+        </ul>
+        <p><strong>Recommendation:</strong> if WideWorldImporters is still used for testing, raise compatibility level only after validation and align Query Store settings with the 160 databases. If it is just a sample database, leave as-is and deprioritize.</p>
+        <p><strong>Confidence:</strong> 78%</p>
+      </section>
+
+      <section id="integrity">
+        <h2>5) Database integrity maintenance (CHECKDB schedules)</h2>
+
+        <h3>Immediate action required</h3>
+        <table aria-label="CHECKDB status">
+          <thead>
+            <tr>
+              <th>Database</th>
+              <th>Last CHECKDB</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>WideWorldImporters</td><td>Never recorded</td><td class="status-critical">Critical</td></tr>
+            <tr><td>SQLStorm</td><td>Never recorded</td><td class="status-critical">Critical</td></tr>
+            <tr><td>tpcc</td><td>Never recorded</td><td class="status-critical">Critical</td></tr>
+            <tr><td>tpch</td><td>Never recorded</td><td class="status-critical">Critical</td></tr>
+            <tr><td>CRM</td><td>Never recorded</td><td class="status-critical">Critical</td></tr>
+            <tr><td>tpch10</td><td>Never recorded</td><td class="status-critical">Critical</td></tr>
+            <tr><td>DigitsSolver</td><td>49 days ago</td><td class="status-critical">Critical</td></tr>
+          </tbody>
+        </table>
+
+        <ul>
+          <li>This is the most severe technical risk in the report.</li>
+          <li>Without regular integrity checks, corruption may remain undetected until restore time or business impact.</li>
+        </ul>
+
+        <p><strong>Recommended schedule:</strong></p>
+        <ul>
+          <li>Small or non-production databases: weekly <code>DBCC CHECKDB</code>.</li>
+          <li>Production-like user databases with active change: weekly full checks at minimum.</li>
+          <li>System databases: at least weekly, and after significant storage or upgrade events.</li>
+        </ul>
+        <p><strong>Confidence:</strong> 99%</p>
+      </section>
+
+      <section id="security">
+        <h2>6) Security enhancements</h2>
+
+        <h3>Connection encryption posture is acceptable</h3>
+        <ul>
+          <li>9 of 10 visible connections are encrypted.</li>
+          <li>The only unencrypted connection is <code>NT SERVICE\SQLTELEMETRY</code> using shared memory for <code>SQLServerCEIP</code>.</li>
+          <li>Per guidance, this is minimal risk because it is local shared-memory telemetry and does not expose user data in network transit.</li>
+          <li>Shared-memory connections should not be treated as a network encryption problem.</li>
+        </ul>
+        <p><strong>Recommendation:</strong> no urgent action is required for the observed connection mix. For future remote/client connectivity, prefer TLS with certificate-based encryption and <code>Force Encryption</code> if this instance will accept network clients.</p>
+        <p><strong>Confidence:</strong> 96%</p>
+
+        <h3>Sysadmin membership is appropriately constrained</h3>
+        <ul>
+          <li>Only one sysadmin member exists: <code>RockyPC\k_a_f</code>.</li>
+          <li>This is consistent with least privilege and is not excessive.</li>
+        </ul>
+        <p><strong>Recommendation:</strong> maintain the current low sysadmin count, document administrative use, and avoid adding application or service accounts to sysadmin. Periodically review explicit server-level permissions as well.</p>
+        <p><strong>Confidence:</strong> 98%</p>
+
+        <h3>Authentication mode and auditing</h3>
+        <ul>
+          <li><code>Integrated Security Only = No</code>, so mixed authentication is enabled.</li>
+          <li>That is not inherently unsafe, but it increases the need for login review and password policy compliance.</li>
+        </ul>
+        <p><strong>Recommendation:</strong> if SQL logins are not required, prefer Windows-only authentication. Otherwise audit SQL-authenticated logins, disable unused accounts, and enforce strong password policies.</p>
+        <p><strong>Confidence:</strong> 85%</p>
+      </section>
+
+      <section id="concurrency">
+        <h2>7) Concurrency issues</h2>
+
+        <h3>Deadlock detected — investigate promptly</h3>
+        <ul>
+          <li>There was <strong>1 deadlock</strong> in the past 7 days at <code>2026-05-31 15:37:34 UTC</code>.</li>
+          <li>The supplied graph payload is truncated, so lock holder/waiter resource details cannot be reconstructed reliably from the provided input.</li>
+        </ul>
+        <div class="callout">
+          Recommendation: run a detailed deadlock analysis using the <strong>Fix Deadlocks</strong> goal and review the full deadlock XML from Extended Events.
+        </div>
+        <p><strong>Confidence:</strong> 88%</p>
+
+        <h3>No active lock-memory crisis</h3>
+        <ul>
+          <li>Lock manager cache: 3.02 MB.</li>
+          <li>Session lock counts are very small.</li>
+          <li>No evidence of runaway lock accumulation, large blocking chains, or lock-memory ballooning is present.</li>
+        </ul>
+        <p><strong>Confidence:</strong> 97%</p>
+
+        <h3>No current RESOURCE_SEMAPHORE waiters</h3>
+        <ul>
+          <li>There is no active memory-grant queueing event at collection time.</li>
+          <li>Still, large grants and spills warrant query tuning to prevent future concurrency degradation under higher load.</li>
+        </ul>
+        <p><strong>Confidence:</strong> 95%</p>
+
+        <h3>Emergency lock manager remediation option</h3>
+        <p>No emergency action is currently warranted, but if lock manager memory becomes excessive in the future, the emergency cache-clear option is:</p>
+        <p><code>DBCC FREESYSTEMCACHE ('Lock Manager : Node 0')</code></p>
+        <p>This should only be used as a controlled emergency measure after investigating the root cause.</p>
+        <p><strong>Confidence:</strong> 93%</p>
+      </section>
+
+      <section id="operations">
+        <h2>8) Operational best practices</h2>
+
+        <h3>Backups require immediate correction</h3>
+        <ul>
+          <li><strong>No full backup recorded:</strong> master, model, msdb, DigitsSolver, tpcc, CRM, tpch10.</li>
+          <li><strong>FULL recovery with no log backups:</strong> model, DigitsSolver, tpcc, tpch, CRM, tpch10.</li>
+          <li>WideWorldImporters and SQLStorm have very old full backups.</li>
+        </ul>
+        <p><strong>Recommendations:</strong></p>
+        <ul>
+          <li>Take immediate full backups of all databases lacking them.</li>
+          <li>For databases that do not need point-in-time restore, switch to <code>SIMPLE</code> recovery after business confirmation.</li>
+          <li>For databases that must remain in <code>FULL</code>, start regular log backups immediately to establish a valid chain.</li>
+          <li>Back up system databases as part of baseline server protection.</li>
+        </ul>
+        <p><strong>Confidence:</strong> 99%</p>
+
+        <h3>Patch posture</h3>
+        <ul>
+          <li>The instance is SQL Server 2022 RTM-GDR build <code>16.0.1180.1</code>.</li>
+          <li>This is not current servicing level by 2026 standards.</li>
+        </ul>
+        <p><strong>Recommendation:</strong> plan an update to the latest supported CU/GDR after regression testing, especially to benefit from optimizer, Query Store, and stability fixes.</p>
+        <p><strong>Confidence:</strong> 90%</p>
+
+        <h3>Edition and feature capability</h3>
+        <ul>
+          <li>This Developer/Enterprise-capable environment can use online index operations, compression, partitioning, and SQL Server 2022 intelligent features.</li>
+          <li>Use those features where they simplify maintenance and reduce downtime, but only after validating workload value.</li>
+        </ul>
+        <p><strong>Confidence:</strong> 84%</p>
+      </section>
+
+      <section id="maintenance">
+        <h2>9) Proactive maintenance suggestions</h2>
+
+        <ol>
+          <li>Baseline top SQLStorm query hashes in Query Store before and after index and rewrite changes. <span class="muted">Confidence: 94%</span></li>
+          <li>Implement regular index and statistics maintenance, prioritizing heavily queried large tables rather than blanket rebuilds. <span class="muted">Confidence: 90%</span></li>
+          <li>Review compatibility level for WideWorldImporters if it matters operationally; otherwise exclude sample databases from routine tuning focus. <span class="muted">Confidence: 76%</span></li>
+          <li>Capture deadlocks and blocked process reports continuously via Extended Events. <span class="muted">Confidence: 89%</span></li>
+          <li>Track memory grants over time; oversized but underused grants are currently a query-shape problem, not a server-cap problem. <span class="muted">Confidence: 91%</span></li>
+          <li>For query patterns using <code>LIKE '%tag%'</code>, consider schema redesign such as normalized tag bridge tables or full-text/search alternatives where appropriate. <span class="muted">Confidence: 88%</span></li>
+          <li>Audit backup success, CHECKDB completion, and Query Store size growth weekly. <span class="muted">Confidence: 97%</span></li>
+        </ol>
+      </section>
+
+      <section id="scripts">
+        <h2>Scripts</h2>
+
+        <h3>Enable optimize for ad hoc workloads and backup checksum default</h3>
+        <p class="muted">Implements the configuration recommendations to reduce single-use plan cache waste and improve backup validation.</p>
+        <pre><code>USE [master];
+GO
+EXEC sys.sp_configure N'show advanced options', 1;
+RECONFIGURE;
+GO
+EXEC sys.sp_configure N'optimize for ad hoc workloads', 1;
+EXEC sys.sp_configure N'backup checksum default', 1;
+RECONFIGURE;
+GO</code></pre>
+
+        <h3>Set blocked process threshold to improve blocking and deadlock diagnostics</h3>
+        <p class="muted">Implements the concurrency monitoring recommendation.</p>
+        <pre><code>USE [master];
+GO
+EXEC sys.sp_configure N'show advanced options', 1;
+RECONFIGURE;
+GO
+EXEC sys.sp_configure N'blocked process threshold (s)', 15;
+RECONFIGURE;
+GO</code></pre>
+
+        <h3>Standardize Query Store settings for SQLStorm for deeper tuning analysis</h3>
+        <p class="muted">Implements the Query Store optimization recommendation for the most active workload database.</p>
+        <pre><code>USE [master];
+GO
+ALTER DATABASE [SQLStorm]
+SET QUERY_STORE = ON;
+GO
+ALTER DATABASE [SQLStorm]
+SET QUERY_STORE (
+    OPERATION_MODE = READ_WRITE,
+    CLEANUP_POLICY = (STALE_QUERY_THRESHOLD_DAYS = 30),
+    DATA_FLUSH_INTERVAL_SECONDS = 900,
+    INTERVAL_LENGTH_MINUTES = 15,
+    MAX_STORAGE_SIZE_MB = 1000,
+    QUERY_CAPTURE_MODE = AUTO,
+    SIZE_BASED_CLEANUP_MODE = AUTO,
+    MAX_PLANS_PER_QUERY = 200
+);
+GO</code></pre>
+
+        <h3>Create prioritized supporting indexes in SQLStorm</h3>
+        <p class="muted">Implements the highest-confidence index recommendations aligned to the observed workload and missing-index signals.</p>
+        <pre><code>USE [SQLStorm];
+GO
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_Badges_UserId_INC_Class_Name'
+      AND object_id = OBJECT_ID(N'dbo.Badges')
+)
+BEGIN
+    CREATE INDEX IX_Badges_UserId_INC_Class_Name
+    ON dbo.Badges (UserId)
+    INCLUDE (Class, Name);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_PostHistory_PostId_INC_PostHistoryTypeId'
+      AND object_id = OBJECT_ID(N'dbo.PostHistory')
+)
+BEGIN
+    CREATE INDEX IX_PostHistory_PostId_INC_PostHistoryTypeId
+    ON dbo.PostHistory (PostId)
+    INCLUDE (PostHistoryTypeId);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_Votes_UserId_INC_VoteTypeId_BountyAmount'
+      AND object_id = OBJECT_ID(N'dbo.Votes')
+)
+BEGIN
+    CREATE INDEX IX_Votes_UserId_INC_VoteTypeId_BountyAmount
+    ON dbo.Votes (UserId)
+    INCLUDE (VoteTypeId, BountyAmount);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_Votes_PostId_INC_VoteTypeId'
+      AND object_id = OBJECT_ID(N'dbo.Votes')
+)
+BEGIN
+    CREATE INDEX IX_Votes_PostId_INC_VoteTypeId
+    ON dbo.Votes (PostId)
+    INCLUDE (VoteTypeId);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_Comments_PostId'
+      AND object_id = OBJECT_ID(N'dbo.Comments')
+)
+BEGIN
+    CREATE INDEX IX_Comments_PostId
+    ON dbo.Comments (PostId);
+END
+GO</code></pre>
+
+        <h3>Run DBCC CHECKDB for overdue user databases</h3>
+        <p class="muted">Implements the critical integrity recommendation for databases with overdue or missing checks.</p>
+        <pre><code>USE [master];
+GO
+DBCC CHECKDB (N'WideWorldImporters') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'SQLStorm') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'tpcc') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'tpch') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'CRM') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'tpch10') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'DigitsSolver') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO</code></pre>
+
+        <h3>Take immediate full backups for databases missing backup history</h3>
+        <p class="muted">Implements the critical backup remediation recommendation. Update backup paths as needed before execution.</p>
+        <pre><code>USE [master];
+GO
+BACKUP DATABASE [master]
+TO DISK = N'C:\Backups\master_FULL.bak'
+WITH INIT, COMPRESSION, CHECKSUM, STATS = 10;
+GO
+BACKUP DATABASE [model]
+TO DISK = N'C:\Backups\model_FULL.bak'
+WITH INIT, COMPRESSION, CHECKSUM, STATS = 10;
+GO
+BACKUP DATABASE [msdb]
+TO DISK = N'C:\Backups\msdb_FULL.bak'
+WITH INIT, COMPRESSION, CHECKSUM, STATS = 10;
+GO
+BACKUP DATABASE [DigitsSolver]
+TO DISK = N'C:\Backups\DigitsSolver_FULL.bak'
+WITH INIT, COMPRESSION, CHECKSUM, STATS = 10;
+GO
+BACKUP DATABASE [tpcc]
+TO DISK = N'C:\Backups\tpcc_FULL.bak'
+WITH INIT, COMPRESSION, CHECKSUM, STATS = 10;
+GO
+BACKUP DATABASE [CRM]
+TO DISK = N'C:\Backups\CRM_FULL.bak'
+WITH INIT, COMPRESSION, CHECKSUM, STATS = 10;
+GO
+BACKUP DATABASE [tpch10]
+TO DISK = N'C:\Backups\tpch10_FULL.bak'
+WITH INIT, COMPRESSION, CHECKSUM, STATS = 10;
+GO</code></pre>
+
+        <h3>Start transaction log backups for FULL recovery databases that need point-in-time restore</h3>
+        <p class="muted">Implements the backup chain recommendation for FULL recovery databases. Execute only for databases that should remain in FULL recovery.</p>
+        <pre><code>USE [master];
+GO
+BACKUP LOG [model]
+TO DISK = N'C:\Backups\model_LOG.trn'
+WITH INIT, COMPRESSION, CHECKSUM, STATS = 10;
+GO
+BACKUP LOG [DigitsSolver]
+TO DISK = N'C:\Backups\DigitsSolver_LOG.trn'
+WITH INIT, COMPRESSION, CHECKSUM, STATS = 10;
+GO
+BACKUP LOG [tpcc]
+TO DISK = N'C:\Backups\tpcc_LOG.trn'
+WITH INIT, COMPRESSION, CHECKSUM, STATS = 10;
+GO
+BACKUP LOG [tpch]
+TO DISK = N'C:\Backups\tpch_LOG.trn'
+WITH INIT, COMPRESSION, CHECKSUM, STATS = 10;
+GO
+BACKUP LOG [CRM]
+TO DISK = N'C:\Backups\CRM_LOG.trn'
+WITH INIT, COMPRESSION, CHECKSUM, STATS = 10;
+GO
+BACKUP LOG [tpch10]
+TO DISK = N'C:\Backups\tpch10_LOG.trn'
+WITH INIT, COMPRESSION, CHECKSUM, STATS = 10;
+GO</code></pre>
+
+        <h3>Optional: switch selected databases to SIMPLE recovery if point-in-time restore is not required</h3>
+        <p class="muted">Implements the operational recommendation to avoid broken log chains and uncontrolled log growth. Validate recovery requirements before execution.</p>
+        <pre><code>USE [master];
+GO
+ALTER DATABASE [DigitsSolver] SET RECOVERY SIMPLE WITH NO_WAIT;
+GO
+ALTER DATABASE [tpcc] SET RECOVERY SIMPLE WITH NO_WAIT;
+GO
+ALTER DATABASE [CRM] SET RECOVERY SIMPLE WITH NO_WAIT;
+GO
+ALTER DATABASE [tpch10] SET RECOVERY SIMPLE WITH NO_WAIT;
+GO</code></pre>
+
+        <h3>Emergency-only: clear lock manager cache for NUMA node 0 if lock memory becomes excessive</h3>
+        <p class="muted">Implements the emergency remediation option referenced in the concurrency guidance. Do not use routinely.</p>
+        <pre><code>USE [master];
+GO
+DBCC FREESYSTEMCACHE ('Lock Manager : Node 0');
+GO</code></pre>
+      </section>
+
+      
+    </main>
+  </div>
+<footer>
+        <p>Generated by AI SQL Tuner Studio v1.0.48.0 using model gpt-5.4 with reasoning effort low. <a href="https://aisqltuner.com">https://aisqltuner.com</a></p>
+        <p>Based on analysis as of 2026-05-31 15:55:22 UTC</p>
+      </footer>
+</body>
+</html>

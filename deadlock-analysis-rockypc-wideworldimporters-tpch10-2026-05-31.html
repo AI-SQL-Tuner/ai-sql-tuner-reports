@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Deadlock Analysis – RockyPC / WideWorldImporters, tpch10 – 2026-05-31</title>
+  <style>
+    :root{
+      --bg:#FFFFFF;
+      --panel:#F6F8F9;
+      --text:#111827;
+      --muted:#6B7280;
+      --accent:#0B6E6E;
+      --border:#D9E3E6;
+      --codebg:#EFF7F7;
+      --card:#FFFFFF;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font:16px/1.55 Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .layout{
+      display:grid;
+      grid-template-columns:290px 1fr;
+      min-height:100vh;
+    }
+    .sidebar{
+      background:var(--panel);
+      border-right:1px solid var(--border);
+      padding:24px 20px;
+      position:sticky;
+      top:0;
+      align-self:start;
+      height:100vh;
+      overflow:auto;
+    }
+    .sidebar h2{
+      font-size:1rem;
+      margin:0 0 12px 0;
+      color:var(--accent);
+    }
+    .sidebar ol{
+      margin:0;
+      padding-left:20px;
+    }
+    .sidebar li{margin:8px 0}
+    .content{
+      padding:32px 40px 48px;
+      max-width:1200px;
+    }
+    h1,h2,h3{
+      color:var(--accent);
+      line-height:1.2;
+    }
+    h1{font-size:2rem;margin:0 0 8px}
+    h2{font-size:1.35rem;margin:32px 0 14px}
+    h3{font-size:1.05rem;margin:24px 0 10px}
+    p{margin:10px 0}
+    .meta,.muted{color:var(--muted)}
+    .title-block{
+      border-bottom:2px solid var(--border);
+      padding-bottom:18px;
+      margin-bottom:24px;
+    }
+    .goal{
+      font-weight:600;
+      margin-top:6px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      gap:14px;
+      margin:18px 0;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:14px 16px;
+    }
+    .card strong{
+      display:block;
+      color:var(--accent);
+      margin-bottom:4px;
+    }
+    .priority{
+      border-left:4px solid var(--accent);
+      padding-left:14px;
+      margin:18px 0 24px;
+    }
+    ol{padding-left:22px}
+    ul{padding-left:20px}
+    li{margin:8px 0}
+    code{
+      background:var(--codebg);
+      padding:1px 5px;
+      border-radius:4px;
+      font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size:.95em;
+    }
+    pre{
+      background:var(--codebg);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:14px;
+      overflow:auto;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    pre code{
+      background:transparent;
+      padding:0;
+      border-radius:0;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin:12px 0 18px;
+    }
+    th,td{
+      border:1px solid var(--border);
+      padding:10px 12px;
+      text-align:left;
+      vertical-align:top;
+    }
+    th{
+      background:var(--panel);
+      color:var(--accent);
+    }
+    .caption{
+      color:var(--muted);
+      font-size:.95rem;
+      margin-top:8px;
+    }
+    .badge{
+      display:inline-block;
+      padding:3px 8px;
+      border-radius:999px;
+      background:var(--codebg);
+      color:var(--accent);
+      font-size:.85rem;
+      font-weight:600;
+      margin-right:8px;
+    }
+    footer{
+      border-top:1px solid var(--border);
+      margin-top:36px;
+      padding-top:18px;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+    .small{font-size:.92rem}
+    .diagram-wrap{
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:12px;
+      background:#FCFEFE;
+    }
+    @media (max-width: 980px){
+      .layout{grid-template-columns:1fr}
+      .sidebar{
+        position:relative;
+        height:auto;
+        border-right:none;
+        border-bottom:1px solid var(--border);
+      }
+      .content{padding:24px 18px 40px}
+    }
+    @media (prefers-color-scheme: dark) {
+      :root{
+        --bg:#0B1220;
+        --panel:#162032;
+        --text:#F3F4F6;
+        --muted:#9CA3AF;
+        --accent:#2DD4BF;
+        --border:#29415A;
+        --codebg:#0F172A;
+        --card:#0B1220;
+      }
+      .diagram-wrap{background:#0E1626}
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Report",
+    "headline":"Deadlock Analysis – RockyPC / WideWorldImporters, tpch10 – 2026-05-31",
+    "dateCreated":"2026-05-31T16:47:24Z",
+    "about":[
+      {"@type":"SoftwareApplication","name":"Microsoft SQL Server 2022"},
+      {"@type":"Thing","name":"Deadlock analysis"},
+      {"@type":"Thing","name":"RockyPC"}
+    ]
+  }
+  </script>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#executive-summary">Executive summary</a></li>
+        <li><a href="#deadlock-visuals">Deadlock visuals</a></li>
+        <li><a href="#detailed-recommendations">Detailed prioritized recommendations</a></li>
+        <li><a href="#scripts">Scripts</a></li>
+      </ol>
+    </aside>
+
+    <main class="content">
+      <header class="title-block">
+        <h1>Deadlock Analysis – RockyPC / WideWorldImporters, tpch10 – 2026-05-31</h1>
+        <div class="goal">Tuning Goal: <strong>Fix Deadlocks</strong></div>
+        <p class="meta">Server: RockyPC<br>Database(s): WideWorldImporters, tpch10<br>Version: Microsoft SQL Server 2022 (RTM-GDR) 16.0.1180.1, Developer Edition (64-bit), Engine Edition: Enterprise<br>RCSI: Disabled</p>
+      </header>
+
+      <section id="executive-summary">
+        <h2>Executive summary</h2>
+        <div class="grid">
+          <div class="card">
+            <strong>Top cause #1</strong>
+            Opposite object access order in <code>WideWorldImporters</code>: one session updates <code>Application.StateProvinces</code> then <code>Application.Countries</code>, while another does the reverse.
+          </div>
+          <div class="card">
+            <strong>Top cause #2</strong>
+            Parallel update deadlocks in <code>tpch10</code>: workers from <code>dbo.usp_UpdateOrdersAndLineitem</code> hold <code>U</code> key locks on different <code>orders_pk</code> keys while also deadlocking through exchange ports.
+          </div>
+          <div class="card">
+            <strong>Top priority</strong>
+            Enforce one deterministic write order everywhere that touches the same entities, and make the <code>tpch10</code> update run serially or by ordered small batches.
+          </div>
+          <div class="card">
+            <strong>Expected impact</strong>
+            High likelihood of eliminating the captured deadlocks without risky server-wide changes.
+          </div>
+        </div>
+
+        <ol>
+          <li>
+            <strong>Standardize object update order in WideWorldImporters</strong> so every code path updates <code>Application.Countries</code> and <code>Application.StateProvinces</code> in the same order, with no exceptions.
+            <span class="badge">Impact: Very High</span>
+            <span class="badge">Confidence: 99%</span>
+          </li>
+          <li>
+            <strong>Remove or sharply shorten lock hold time inside the transaction</strong> in the WideWorldImporters pattern; the <code>WAITFOR DELAY '00:00:10'</code> materially increases deadlock probability.
+            <span class="badge">Impact: Very High</span>
+            <span class="badge">Confidence: 99%</span>
+          </li>
+          <li>
+            <strong>Make <code>tpch10.dbo.usp_UpdateOrdersAndLineitem</code> execute the <code>orders</code> update serially</strong> using <code>MAXDOP 1</code> for the update statement or equivalent single-threaded plan enforcement.
+            <span class="badge">Impact: Very High</span>
+            <span class="badge">Confidence: 95%</span>
+          </li>
+          <li>
+            <strong>Update <code>orders</code> in deterministic key order and in smaller batches</strong> instead of one larger parallel key-update operation driven by a table variable.
+            <span class="badge">Impact: High</span>
+            <span class="badge">Confidence: 92%</span>
+          </li>
+          <li>
+            <strong>Prefer a temp table with an index over a table variable for <code>@BatchOrders</code></strong> if that object is currently a table variable, so the optimizer has statistics and is less likely to choose unstable/parallel update behavior.
+            <span class="badge">Impact: High</span>
+            <span class="badge">Confidence: 84%</span>
+          </li>
+          <li>
+            <strong>Do not rely on enabling RCSI as the primary fix</strong>; these captured deadlocks are writer-versus-writer and exchange-related, not reader-versus-writer.
+            <span class="badge">Impact: Medium</span>
+            <span class="badge">Confidence: 96%</span>
+          </li>
+        </ol>
+      </section>
+
+      <section id="deadlock-visuals">
+        <h2>Deadlock visuals</h2>
+
+        <h3>Deadlock #1: classic cycle from opposite table order</h3>
+        <div class="diagram-wrap">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 260" role="img" aria-labelledby="d1title d1desc">
+            <title id="d1title">WideWorldImporters deadlock caused by opposite update order</title>
+            <desc id="d1desc">Session 61 holds an exclusive lock on StateProvinces and waits for Countries. Session 63 holds an exclusive lock on Countries and waits for StateProvinces, creating a cycle.</desc>
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L9,3 z" fill="#0B6E6E"/>
+              </marker>
+            </defs>
+            <rect x="30" y="35" width="280" height="88" rx="10" fill="#EFF7F7" stroke="#0B6E6E" stroke-width="2"/>
+            <text x="50" y="62" font-size="18" fill="#111827" font-family="Arial">SPID 61</text>
+            <text x="50" y="88" font-size="15" fill="#111827" font-family="Arial">Holds X on StateProvinces (VA)</text>
+            <text x="50" y="110" font-size="15" fill="#111827" font-family="Arial">Wants U on Countries (840)</text>
+
+            <rect x="610" y="35" width="280" height="88" rx="10" fill="#EFF7F7" stroke="#0B6E6E" stroke-width="2"/>
+            <text x="630" y="62" font-size="18" fill="#111827" font-family="Arial">SPID 63</text>
+            <text x="630" y="88" font-size="15" fill="#111827" font-family="Arial">Holds X on Countries (840)</text>
+            <text x="630" y="110" font-size="15" fill="#111827" font-family="Arial">Wants U on StateProvinces (VA)</text>
+
+            <rect x="115" y="165" width="180" height="52" rx="8" fill="#FFFFFF" stroke="#0B6E6E"/>
+            <text x="135" y="196" font-size="15" fill="#111827" font-family="Arial">Application.StateProvinces</text>
+
+            <rect x="620" y="165" width="160" height="52" rx="8" fill="#FFFFFF" stroke="#0B6E6E"/>
+            <text x="646" y="196" font-size="15" fill="#111827" font-family="Arial">Application.Countries</text>
+
+            <line x1="310" y1="78" x2="610" y2="78" stroke="#0B6E6E" stroke-width="3" marker-end="url(#arrow)"/>
+            <text x="405" y="68" font-size="14" fill="#111827" font-family="Arial">waits for Countries</text>
+
+            <line x1="610" y1="103" x2="310" y2="103" stroke="#0B6E6E" stroke-width="3" marker-end="url(#arrow)"/>
+            <text x="400" y="122" font-size="14" fill="#111827" font-family="Arial">waits for StateProvinces</text>
+
+            <line x1="175" y1="123" x2="195" y2="165" stroke="#0B6E6E" stroke-width="2"/>
+            <line x1="710" y1="123" x2="700" y2="165" stroke="#0B6E6E" stroke-width="2"/>
+          </svg>
+          <p class="caption">This is a deterministic application design deadlock. It is not random; it occurs because the two transactions acquire locks in reverse order and one transaction deliberately holds the first lock for 10 seconds.</p>
+        </div>
+
+        <h3>Deadlocks #2–#5: parallel update / exchange deadlock pattern in tpch10</h3>
+        <div class="diagram-wrap">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 360" role="img" aria-labelledby="d2title d2desc">
+            <title id="d2title">Parallel orders update deadlock with exchange ports</title>
+            <desc id="d2desc">Multiple workers from the same stored procedure or concurrent executions hold update locks on different orders primary key entries while also waiting on exchange port open events, creating a combined lock and parallelism deadlock cycle.</desc>
+            <defs>
+              <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L9,3 z" fill="#0B6E6E"/>
+              </marker>
+            </defs>
+            <rect x="40" y="45" width="190" height="70" rx="10" fill="#EFF7F7" stroke="#0B6E6E" stroke-width="2"/>
+            <text x="58" y="72" font-size="16" fill="#111827" font-family="Arial">Worker A</text>
+            <text x="58" y="97" font-size="14" fill="#111827" font-family="Arial">Holds U on key K1</text>
+
+            <rect x="285" y="45" width="190" height="70" rx="10" fill="#EFF7F7" stroke="#0B6E6E" stroke-width="2"/>
+            <text x="303" y="72" font-size="16" fill="#111827" font-family="Arial">Worker B</text>
+            <text x="303" y="97" font-size="14" fill="#111827" font-family="Arial">Holds U on key K2</text>
+
+            <rect x="530" y="45" width="190" height="70" rx="10" fill="#EFF7F7" stroke="#0B6E6E" stroke-width="2"/>
+            <text x="548" y="72" font-size="16" fill="#111827" font-family="Arial">Worker C</text>
+            <text x="548" y="97" font-size="14" fill="#111827" font-family="Arial">Holds U on key K3</text>
+
+            <rect x="775" y="45" width="160" height="70" rx="10" fill="#EFF7F7" stroke="#0B6E6E" stroke-width="2"/>
+            <text x="793" y="72" font-size="16" fill="#111827" font-family="Arial">Worker D</text>
+            <text x="793" y="97" font-size="14" fill="#111827" font-family="Arial">Exchange wait</text>
+
+            <line x1="230" y1="80" x2="285" y2="80" stroke="#0B6E6E" stroke-width="3" marker-end="url(#arrow2)"/>
+            <line x1="475" y1="80" x2="530" y2="80" stroke="#0B6E6E" stroke-width="3" marker-end="url(#arrow2)"/>
+            <line x1="720" y1="80" x2="775" y2="80" stroke="#0B6E6E" stroke-width="3" marker-end="url(#arrow2)"/>
+
+            <line x1="855" y1="115" x2="855" y2="210" stroke="#0B6E6E" stroke-width="3" marker-end="url(#arrow2)"/>
+            <line x1="855" y1="210" x2="135" y2="210" stroke="#0B6E6E" stroke-width="3" marker-end="url(#arrow2)"/>
+            <text x="355" y="198" font-size="14" fill="#111827" font-family="Arial">cycle returns through exchange port dependency</text>
+
+            <rect x="300" y="255" width="390" height="58" rx="10" fill="#FFFFFF" stroke="#0B6E6E"/>
+            <text x="325" y="279" font-size="16" fill="#111827" font-family="Arial">tpch10.dbo.orders / orders_pk</text>
+            <text x="325" y="301" font-size="14" fill="#111827" font-family="Arial">Parallel workers acquire U locks on different keys, then wait on each other and exchange ports</text>
+          </svg>
+          <p class="caption">The recurring <code>tpch10</code> pattern is not a simple two-session deadlock. It is a parallel worker deadlock: key-level <code>U</code> locks and <code>exchangeEvent</code> waits combine into a cycle. The strongest fix is to remove parallelism from the update statement and process keys in a stable order.</p>
+        </div>
+      </section>
+
+      <section id="detailed-recommendations">
+        <h2>Detailed prioritized recommendations</h2>
+
+        <div class="priority">
+          <h3>1) Enforce one write order for WideWorldImporters transactions touching Countries and StateProvinces</h3>
+          <p><strong>Recommendation:</strong> Make every code path acquire locks and perform updates in the same object order. Use one canonical sequence, for example: <code>Application.Countries</code> first, then <code>Application.StateProvinces</code>, or the reverse—just keep it identical everywhere.</p>
+          <ul>
+            <li>The deadlock graph shows a textbook cycle:
+              <ul>
+                <li>SPID 61: updates <code>StateProvinces</code>, then waits for <code>Countries</code></li>
+                <li>SPID 63: updates <code>Countries</code>, then waits for <code>StateProvinces</code></li>
+              </ul>
+            </li>
+            <li>This is the highest-confidence fix because the deadlock is caused directly by inconsistent object ordering.</li>
+            <li>If the business action must touch both entities, encapsulate both writes in one procedure so the order cannot drift between callers.</li>
+            <li>If multiple modules perform similar work, review them all for the same ordering rule; fixing only one caller may leave the deadlock pattern intact.</li>
+          </ul>
+          <p><strong>Preferred implementation pattern:</strong> a single stored procedure or application service method that always performs the two updates in one deterministic order.</p>
+          <p><strong>Confidence:</strong> 99%</p>
+        </div>
+
+        <div class="priority">
+          <h3>2) Eliminate long lock retention inside the WideWorldImporters transaction</h3>
+          <p><strong>Recommendation:</strong> Remove the in-transaction <code>WAITFOR DELAY '00:00:10'</code> and any equivalent non-essential pause, user interaction, network call, or application processing performed after the first write and before commit.</p>
+          <ul>
+            <li>The deadlock window is being deliberately widened by a 10-second hold on an exclusive key lock.</li>
+            <li>Even with consistent ordering, long transactions increase blocking and deadlock exposure.</li>
+            <li>If a pause is needed for testing only, keep it out of production code entirely.</li>
+            <li>If external work must occur, move it before <code>BEGIN TRAN</code> or after <code>COMMIT</code>.</li>
+          </ul>
+          <p><strong>Confidence:</strong> 99%</p>
+        </div>
+
+        <div class="priority">
+          <h3>3) Force the <code>tpch10</code> <code>orders</code> update to run serially</h3>
+          <p><strong>Recommendation:</strong> Add statement-level <code>OPTION (MAXDOP 1)</code> to the <code>UPDATE o ... FROM dbo.orders AS o JOIN ...</code> statement inside <code>dbo.usp_UpdateOrdersAndLineitem</code>, or otherwise force that specific update to use a single worker.</p>
+          <ul>
+            <li>The deadlock graphs repeatedly show <code>exchangeEvent</code> resources with <code>e_waitPortOpen</code>, which is a parallel plan signature.</li>
+            <li>They also show multiple ECIDs for the same SPID, confirming multiple workers participating in the same request.</li>
+            <li>Single-threading the update removes the exchange-port cycle and usually removes this class of parallel key-lock deadlock entirely.</li>
+            <li>Because this is SQL Server 2022 Enterprise/Developer, you have the platform capability to control this precisely at statement or Query Store hint level; no edition limitation blocks this fix.</li>
+          </ul>
+          <p><strong>Preferred scope:</strong> statement-level or query-level, not server-wide.</p>
+          <p><strong>Confidence:</strong> 95%</p>
+        </div>
+
+        <div class="priority">
+          <h3>4) Process <code>orders</code> in small, ordered batches by primary key</h3>
+          <p><strong>Recommendation:</strong> Rewrite <code>dbo.usp_UpdateOrdersAndLineitem</code> so it updates a predictable range or chunk of <code>o_orderkey</code> values per batch, in ascending key order, committing between batches.</p>
+          <ul>
+            <li>The captured deadlocks show <code>U</code> locks on different <code>orders_pk</code> keys, which means concurrent workers/executions are acquiring keys in non-harmonized sequences.</li>
+            <li>Stable ordering reduces the chance that session A holds K1 and waits for K2 while session B holds K2 and waits for K1.</li>
+            <li>Smaller batches reduce lock footprint, transaction duration, log pressure, and victim cost.</li>
+            <li>This is especially important if multiple SQLCMD sessions invoke overlapping date ranges concurrently, as seen in the captured executions.</li>
+          </ul>
+          <p><strong>Implementation direction:</strong> load candidate order keys into a temp structure, index it on <code>o_orderkey</code>, then update <code>TOP (N)</code> rows per loop ordered by key.</p>
+          <p><strong>Confidence:</strong> 92%</p>
+        </div>
+
+        <div class="priority">
+          <h3>5) Replace the table variable driving the <code>orders</code> update with a temp table and supporting index</h3>
+          <p><strong>Recommendation:</strong> If <code>@BatchOrders</code> is a table variable, replace it with <code>#BatchOrders</code> and add an index or primary key on <code>o_orderkey</code>.</p>
+          <ul>
+            <li>The statement text shows <code>JOIN @BatchOrders AS bo ON bo.o_orderkey = o.o_orderkey</code>.</li>
+            <li>Table variables often produce weaker cardinality estimates than temp tables, especially for larger sets, which can promote poor join choices and parallel plans.</li>
+            <li>Better row estimates improve plan stability and make it easier to get a serial, ordered key-update plan.</li>
+            <li>On SQL Server 2022, deferred compilation helps table variables more than in older versions, but it does not remove all risk for large update workloads.</li>
+          </ul>
+          <p><strong>Confidence:</strong> 84%</p>
+        </div>
+
+        <div class="priority">
+          <h3>6) Prevent overlapping executions of the same <code>tpch10</code> maintenance procedure when date ranges intersect</h3>
+          <p><strong>Recommendation:</strong> Serialize concurrent runs of <code>dbo.usp_UpdateOrdersAndLineitem</code> for overlapping business ranges, either in the job scheduler or inside the procedure using an application lock.</p>
+          <ul>
+            <li>The deadlocks show concurrent executions from SQLCMD using overlapping date windows, such as <code>1995-01-01 to 1995-03-31</code> and <code>1995-02-15 to 1995-05-15</code>.</li>
+            <li>Even after reducing parallelism, overlapping writers against the same key space can still deadlock if the update path remains broad.</li>
+            <li>An application lock is a strong deterministic guard when the operation is a batch maintenance task rather than latency-sensitive OLTP.</li>
+          </ul>
+          <p><strong>Confidence:</strong> 88%</p>
+        </div>
+
+        <div class="priority">
+          <h3>7) Do not use RCSI as the primary remediation for these captured deadlocks</h3>
+          <p><strong>Recommendation:</strong> Keep focus on write-ordering, serial execution of the problematic update, and batch design. Treat <code>READ_COMMITTED_SNAPSHOT</code> only as a secondary concurrency improvement for read/write blocking elsewhere.</p>
+          <ul>
+            <li>Deadlock #1 is update-versus-update on two keys.</li>
+            <li>Deadlocks #2–#5 are update key locks plus parallel exchange events.</li>
+            <li>RCSI reduces reader/writer blocking, but it does not prevent writer/writer deadlocks on the same rows or parallel exchange deadlocks.</li>
+          </ul>
+          <p><strong>Confidence:</strong> 96%</p>
+        </div>
+
+        <h3>Priority summary table</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Priority</th>
+              <th>Recommendation</th>
+              <th>Primary target</th>
+              <th>Expected impact</th>
+              <th>Confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Enforce one object update order</td>
+              <td>WideWorldImporters</td>
+              <td>Very High</td>
+              <td>99%</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Remove long in-transaction wait / non-SQL work</td>
+              <td>WideWorldImporters</td>
+              <td>Very High</td>
+              <td>99%</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Force serial execution for the orders update</td>
+              <td>tpch10</td>
+              <td>Very High</td>
+              <td>95%</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Batch and order updates by key</td>
+              <td>tpch10</td>
+              <td>High</td>
+              <td>92%</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Use temp table plus index instead of table variable</td>
+              <td>tpch10</td>
+              <td>High</td>
+              <td>84%</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Serialize overlapping procedure executions</td>
+              <td>tpch10</td>
+              <td>High</td>
+              <td>88%</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>Do not rely on RCSI as main fix</td>
+              <td>Both</td>
+              <td>Medium</td>
+              <td>96%</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="scripts">
+        <h2>Scripts</h2>
+        <p>No runnable T-SQL scripts are recommended for this run because the deadlock-prevention fixes supported by the evidence are code-path specific: consistent object access ordering, removal of in-transaction delay/processing, statement-level serial execution of the specific <code>UPDATE</code>, and procedural batching/order changes inside <code>tpch10.dbo.usp_UpdateOrdersAndLineitem</code>. The provided procedure text is truncated, so generating executable change scripts would not be safe or deterministic.</p>
+      </section>
+
+      
+    </main>
+  </div>
+<footer>
+        <p>Generated by AI SQL Tuner Studio v1.0.48.0 using model gpt-5.4 with reasoning effort low.</p>
+        <p><a href="https://aisqltuner.com">https://aisqltuner.com</a></p>
+        <p>Based on analysis as of 2026-05-31 16:47:24 UTC</p>
+      </footer>
+</body>
+</html>
