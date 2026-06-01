@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Locking and Blocking Analysis – WideWorldImporters on RockyPC – 2026-05-31</title>
+<style>
+  :root{
+    --bg:#FFFFFF; --code:#EFF7F7; --side:#F6F8F9;
+    --text:#111827; --muted:#6B7280; --accent:#0B6E6E; --border:#E2E8E8;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.55;}
+  .layout{display:flex;align-items:flex-start;}
+  nav.toc{position:sticky;top:0;align-self:flex-start;min-width:260px;max-width:260px;height:100vh;overflow:auto;background:var(--side);border-right:1px solid var(--border);padding:20px;}
+  nav.toc h2{font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);}
+  nav.toc ol{padding-left:1.1rem;margin:0;}
+  nav.toc a{color:var(--accent);text-decoration:none;font-size:.92rem;}
+  nav.toc a:hover{text-decoration:underline;}
+  nav.toc li{margin:.35rem 0;}
+  main{flex:1;padding:28px 40px;max-width:1000px;}
+  h1{color:var(--accent);font-size:1.7rem;margin-bottom:.2rem;}
+  h2{color:var(--accent);border-bottom:2px solid var(--border);padding-bottom:.25rem;margin-top:2.2rem;}
+  h3{color:var(--accent);margin-top:1.4rem;}
+  .sub{color:var(--muted);font-size:.95rem;margin:.15rem 0;}
+  code{background:var(--code);padding:.12rem .35rem;border-radius:4px;font-family:Consolas,Monaco,monospace;font-size:.86rem;}
+  pre{background:var(--code);padding:14px 16px;border-radius:8px;overflow:auto;border:1px solid var(--border);}
+  pre code{background:none;padding:0;}
+  table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.92rem;}
+  th,td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top;}
+  th{background:var(--side);color:var(--accent);}
+  .pill{display:inline-block;padding:.1rem .5rem;border-radius:999px;font-size:.78rem;font-weight:600;}
+  .hi{background:#FCE8E6;color:#B42318;}
+  .med{background:#FEF3C7;color:#92400E;}
+  .lo{background:#E0F2F1;color:#0B6E6E;}
+  footer{border-top:1px solid var(--border);padding:18px 40px;color:var(--muted);font-size:.85rem;}
+  a{color:var(--accent);}
+  .diagram-cap{color:var(--muted);font-size:.85rem;margin-top:.4rem;}
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0B1220; --code:#0F172A; --side:#162032;
+      --text:#F3F4F6; --muted:#9CA3AF; --accent:#2DD4BF; --border:#243044;
+    }
+    .hi{background:#3B1416;color:#FCA5A5;}
+    .med{background:#3A2E0E;color:#FCD34D;}
+    .lo{background:#0E2C2A;color:#5EEAD4;}
+    th{background:#1B2740;}
+  }
+</style>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"TechArticle",
+  "headline":"Locking and Blocking Analysis – WideWorldImporters on RockyPC – 2026-05-31",
+  "datePublished":"2026-05-31",
+  "about":"SQL Server Locking and Blocking Analysis",
+  "creator":{"@type":"Organization","name":"AI SQL Tuner Studio"}
+}
+</script>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#exec">Executive Summary</a></li>
+    <li><a href="#tree">Blocking Tree</a></li>
+    <li><a href="#rootcause">Root Cause Classification</a></li>
+    <li><a href="#evidence">Correlated Evidence</a></li>
+    <li><a href="#impact">Impact Metrics</a></li>
+    <li><a href="#recs">Detailed Recommendations</a></li>
+    <li><a href="#deadlocks">Deadlock History</a></li>
+    <li><a href="#code">Query / Code Changes</a></li>
+    <li><a href="#scripts">Scripts</a></li>
+  </ol>
+</nav>
+<main>
+  <h1>Locking and Blocking Analysis – WideWorldImporters on RockyPC – 2026-05-31</h1>
+  <p class="sub"><strong>Tuning goal:</strong> Locking and Blocking Analysis</p>
+  <p class="sub"><strong>Server:</strong> RockyPC &nbsp;|&nbsp; <strong>Version:</strong> SQL Server 2022 (16.0.1180.1) Developer Edition (Enterprise engine) &nbsp;|&nbsp; <strong>Database:</strong> WideWorldImporters</p>
+
+  <h2 id="exec">Executive Summary</h2>
+  <p>Active blocking is confirmed and severe. A chain of <strong>open <code>BEGIN TRAN</code> statements left uncommitted in SSML query windows</strong> has created a long-lived blocking pyramid that has persisted for over <strong>3 hours</strong> (longest wait ≈ 11,164,894&nbsp;ms / ~186 minutes). The root is <strong>not</strong> a missing index or query-shape problem in the traditional sense — it is an <strong>open transaction with no activity</strong> on session 62 combined with a classic <strong>circular update ordering deadlock pattern</strong> (Countries → StateProvinces vs StateProvinces → Countries) seen both live and in deadlock history.</p>
+
+  <p>Top priorities:</p>
+  <ol>
+    <li><strong>Immediately clear the orphaned transactions.</strong> Session 62 holds an exclusive KEY lock on <code>StateProvinces</code> with an open transaction (<code>WAITFOR DELAY '00:00:10'</code> long since elapsed) and a blank command — it is idle inside an open transaction. Killing/committing it releases the entire pyramid. <span class="pill hi">High impact</span></li>
+    <li><strong>Standardize lock acquisition order</strong> across the Countries/StateProvinces update procedures to eliminate the recurring deadlock pattern observed in DeadlockHistory and live in sessions 61/63. <span class="pill med">Medium impact</span></li>
+    <li><strong>Enable Read Committed Snapshot Isolation (RCSI)</strong> on WideWorldImporters so read-only SELECTs (session 66) stop being blocked by writers, removing the reader leg of the blocking tree. <span class="pill med">Medium impact</span></li>
+    <li><strong>Add the recommended covering index</strong> on <code>Application.Cities(StateProvinceID) INCLUDE (CityName)</code> (Impact 118.9 / 93.0 from plan) to reduce scan footprint of the join SELECT. <span class="pill lo">Low/secondary</span></li>
+  </ol>
+
+  <h2 id="tree">Blocking Tree</h2>
+  <p>The diagram shows the live blocking pyramid. Session 62 is the true lead blocker (idle/open transaction holding an X KEY lock on StateProvinces). Session 66 waits on it for an S lock, and itself blocks two writers (63, 61) that need U/X locks on the same StateProvinces key.</p>
+
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 360" role="img" aria-label="Blocking tree diagram: Session 62 blocks Session 66, which blocks Sessions 63 and 61">
+    <style>
+      .box{fill:#EFF7F7;stroke:#0B6E6E;stroke-width:2;}
+      .lead{fill:#FCE8E6;stroke:#B42318;stroke-width:2;}
+      .t{font-family:Consolas,monospace;font-size:12px;fill:#111827;}
+      .tw{font-family:Consolas,monospace;font-size:11px;fill:#6B7280;}
+      .ln{stroke:#0B6E6E;stroke-width:2;marker-end:url(#a);}
+    </style>
+    <defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#0B6E6E"/></marker></defs>
+    <rect class="lead" x="270" y="15" width="220" height="62" rx="8"/>
+    <text class="t" x="282" y="38">SPID 62 — LEAD BLOCKER</text>
+    <text class="tw" x="282" y="54">X KEY on StateProvinces (PK)</text>
+    <text class="tw" x="282" y="68">Open TRAN, idle, blank cmd</text>
+
+    <line class="ln" x1="380" y1="77" x2="380" y2="120"/>
+
+    <rect class="box" x="270" y="120" width="220" height="62" rx="8"/>
+    <text class="t" x="282" y="143">SPID 66 — SELECT (reader)</text>
+    <text class="tw" x="282" y="159">waits LCK_M_S 11,164,894 ms</text>
+    <text class="tw" x="282" y="173">also holds open TRAN</text>
+
+    <line class="ln" x1="340" y1="182" x2="180" y2="270"/>
+    <line class="ln" x1="420" y1="182" x2="580" y2="270"/>
+
+    <rect class="box" x="60" y="270" width="240" height="62" rx="8"/>
+    <text class="t" x="72" y="293">SPID 63 — UPDATE StateProvinces</text>
+    <text class="tw" x="72" y="309">waits LCK_M_U 11,160,603 ms</text>
+    <text class="tw" x="72" y="323">holds X on Countries (PK)</text>
+
+    <rect class="box" x="470" y="270" width="240" height="62" rx="8"/>
+    <text class="t" x="482" y="293">SPID 61 — UPDATE StateProvinces</text>
+    <text class="tw" x="482" y="309">waits LCK_M_U 166,220 ms</text>
+    <text class="tw" x="482" y="323">holds X on StateProvinces page</text>
+  </svg>
+  <p class="diagram-cap">Blocking tree: SPID 62 (idle open transaction) holds the exclusive KEY lock at the apex; SPID 66 (a SELECT in its own open transaction) waits for a shared lock and in turn blocks two writers (63, 61) all queued on the same <code>StateProvinces</code> primary key. Note the cross-dependency: SPID 63 already holds an X lock on <code>Countries</code> while waiting on <code>StateProvinces</code> — the inverse-order pattern that produces deadlocks.</p>
+
+  <h2 id="rootcause">Root Cause Classification</h2>
+  <table>
+    <tr><th>Category</th><th>Applies?</th><th>Evidence</th></tr>
+    <tr><td>Open transaction with no activity</td><td><strong>Primary</strong></td><td>ActiveTransactions: TxID 4672039 (SPID 62) Duration 11,167s, Status/Command blank, SQL blank. LockInventory: SPID 62 holds <code>X</code> on KEY PK_Application_StateProvinces (GRANT). The <code>WAITFOR DELAY '00:00:10'</code> finished hours ago — the session is idle inside an open TRAN.</td></tr>
+    <tr><td>Long-running transaction</td><td><strong>Yes</strong></td><td>Three transactions open >11,160s (SPIDs 62, 66, 63); OldestSnapshotAge 11,161s.</td></tr>
+    <tr><td>SERIALIZABLE / RR misuse</td><td>No</td><td>All sessions report <code>ReadCommitted</code>. Blocking is from uncommitted writes, not elevated isolation.</td></tr>
+    <tr><td>Lock escalation</td><td>Minor/contributing</td><td>DatabaseSettings: StateProvinces &amp; Countries LockEscalation=TABLE. SPID 63 holds 13 page X locks on Countries_Archive; escalation risk exists but counts are low here.</td></tr>
+    <tr><td>Missing index causing lock amplification</td><td>Secondary</td><td>MissingIndexes Impact 118.9; BlockerPlans (SPID 66) embeds MissingIndex Impact 93.0 on Cities(StateProvinceID) INCLUDE CityName. IndexUsage shows Cities PK Scans=2 (full scan for the join).</td></tr>
+    <tr><td>Implicit transactions / parameter sniffing / RBAR / TempDB</td><td>No</td><td>No implicit-transaction evidence; plans are trivial single-row updates; TempDB latch waits are background noise (no spills, VersionStore 0.0MB).</td></tr>
+  </table>
+
+  <h2 id="evidence">Correlated Evidence</h2>
+  <ul>
+    <li><strong>Lead blocker is idle, not working:</strong> ActiveTransactions SPID 62 has blank Status/Command and 0ms CPU/Elapsed in BlockingChains, yet LockInventory shows it GRANTed an <code>X</code> KEY lock on <code>PK_Application_StateProvinces</code>. This is the signature of an abandoned <code>BEGIN TRAN ... UPDATE ... WAITFOR</code> batch left uncommitted in SSMS.</li>
+    <li><strong>Reader is blocked by the writer:</strong> SPID 66 SELECT waits <code>LCK_M_S</code> on the StateProvinces KEY (LockInventory Mode=S, Status=WAIT) because RCSI is OFF (DatabaseSettings: RCSI OFF). Under RCSI this read would not block.</li>
+    <li><strong>Circular update ordering:</strong> SPID 63 batch updates <code>Countries</code> first (holds <code>X</code> on PK_Application_Countries) then <code>StateProvinces</code>; SPID 61 updates <code>StateProvinces</code> first then <code>Countries</code>. This inverse ordering matches the recurring <code>lockMode="U"</code> KEY-wait deadlocks in DeadlockHistory (e.g., 2026-05-31 15:37:34 victim SPID 61).</li>
+    <li><strong>Scan footprint of the join:</strong> BlockerPlans SPID 66 StatementEstRows 715.85, embedded MissingIndex Impact 93.0; IndexUsage Cities PK Scans=2 confirms the join reads Cities by scan rather than seek on StateProvinceID.</li>
+    <li><strong>TempDB is a red herring:</strong> TempDBContention shows only background PAGELATCH/LATCH waits with no spills and VersionStore 0.0MB — not the cause of blocking.</li>
+  </ul>
+
+  <h2 id="impact">Impact Metrics</h2>
+  <table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Blocking active</td><td>Yes — confirmed</td></tr>
+    <tr><td>Lead blocker</td><td>SPID 62 (idle, open transaction)</td></tr>
+    <tr><td>Total distinct sessions blocked</td><td>3 (SPIDs 66, 63, 61)</td></tr>
+    <tr><td>Longest wait</td><td>11,164,894 ms (~186 min, SPID 66)</td></tr>
+    <tr><td>Cumulative wait across waiters</td><td>≈ 22,491,717 ms (66: 11,164,894 + 63: 11,160,603 + 61: 166,220)</td></tr>
+    <tr><td>Oldest open transaction</td><td>11,167 s (SPID 62)</td></tr>
+    <tr><td>Estimated business impact</td><td>Complete serialization of all reads/writes against <code>Application.StateProvinces</code> and <code>Countries</code>; any new query touching these reference tables will block indefinitely. Reference-data lookups in dependent OLTP queries effectively hang.</td></tr>
+  </table>
+
+  <h2 id="recs">Detailed Prioritized Recommendations</h2>
+  <ol>
+    <li>
+      <h3>Clear the orphaned / idle open transactions immediately</h3>
+      <p><strong>Fix:</strong> Identify and commit or kill the idle lead blocker (SPID 62) and the stalled SELECT-holding transaction (SPID 66). All scripts are in the <a href="#scripts">Scripts</a> section.</p>
+      <ul>
+        <li><strong>Rationale:</strong> SPID 62 holds the apex <code>X</code> KEY lock with a blank command and an 11,167s open transaction — releasing it collapses the entire tree (evidence: ActiveTransactions, LockInventory).</li>
+        <li><strong>Risk/Rollback:</strong> Killing SPID 62 rolls back its single-row update (no committed data lost); rollback is automatic. Low risk because these are ad-hoc SSMS sessions on the same login.</li>
+        <li><strong>Confidence:</strong> High</li>
+        <li><strong>Estimated reduction in blocking:</strong> ~100% of the current incident</li>
+      </ul>
+    </li>
+    <li>
+      <h3>Enforce consistent lock-acquisition order on Countries/StateProvinces updates</h3>
+      <p><strong>Fix:</strong> Wrap multi-table reference updates in a stored procedure that always updates parent then child in a single fixed order (e.g., always <code>Countries</code> then <code>StateProvinces</code>), inside a tightly scoped transaction with <code>XACT_ABORT ON</code>. See rewrite in <a href="#code">Query/Code Changes</a>.</p>
+      <ul>
+        <li><strong>Rationale:</strong> DeadlockHistory and live SPIDs 61/63 show opposite update ordering producing <code>U</code>-lock KEY deadlocks. Single ordering removes the cycle.</li>
+        <li><strong>Risk/Rollback:</strong> Low; logic change only. Roll back by reverting the proc.</li>
+        <li><strong>Confidence:</strong> High</li>
+        <li><strong>Estimated reduction:</strong> ~80–90% of recurring deadlocks</li>
+      </ul>
+    </li>
+    <li>
+      <h3>Enable Read Committed Snapshot Isolation (RCSI)</h3>
+      <p><strong>Fix:</strong> Turn on <code>READ_COMMITTED_SNAPSHOT</code> for WideWorldImporters (script in Scripts).</p>
+      <ul>
+        <li><strong>Rationale:</strong> DatabaseSettings RCSI OFF; SPID 66 (a pure SELECT) is blocked by writers on <code>LCK_M_S</code>. RCSI lets readers use row versions, removing the reader leg of the tree.</li>
+        <li><strong>Risk/Rollback:</strong> Medium. RCSI adds version-store load to TempDB (currently idle, so headroom exists) and changes read semantics for in-flight readers. Requires a brief exclusive moment to enable. Roll back with <code>SET READ_COMMITTED_SNAPSHOT OFF</code>.</li>
+        <li><strong>Confidence:</strong> Medium-High</li>
+        <li><strong>Estimated reduction:</strong> ~30–40% of blocking (eliminates reader-vs-writer blocking)</li>
+      </ul>
+    </li>
+    <li>
+      <h3>Add covering index on Application.Cities</h3>
+      <p><strong>Fix:</strong> Create <code>IX_Cities_StateProvinceID_inc_CityName</code> (script in Scripts). Confirm with a dedicated Index Tuning run for <code>Application.Cities</code>.</p>
+      <ul>
+        <li><strong>Rationale:</strong> MissingIndexes Impact 118.9 and plan-embedded MissingIndex Impact 93.0; reduces scan-based locking footprint of the join SELECT (IndexUsage Cities PK Scans=2). Smaller lock footprint = shorter lock hold times.</li>
+        <li><strong>Risk/Rollback:</strong> Low; online build available (Enterprise engine). Drop index to roll back.</li>
+        <li><strong>Confidence:</strong> Medium</li>
+        <li><strong>Estimated reduction:</strong> ~5–10% (secondary; reduces contention amplification, not the root open-tran)</li>
+      </ul>
+    </li>
+    <li>
+      <h3>Add a sensible LOCK_TIMEOUT and avoid manual WAITFOR inside open transactions</h3>
+      <p><strong>Fix:</strong> Application/ad-hoc sessions should set <code>SET LOCK_TIMEOUT</code> (e.g., 5000ms) so stuck waiters fail fast rather than waiting infinitely (all sessions currently show <code>LockTimeout=Infinite</code>). Never leave <code>WAITFOR DELAY</code> inside an uncommitted transaction in production.</p>
+      <ul>
+        <li><strong>Rationale:</strong> BlockingChains shows infinite waits of 186 minutes; finite timeouts would have surfaced the problem immediately.</li>
+        <li><strong>Risk/Rollback:</strong> Low; session-scoped setting.</li>
+        <li><strong>Confidence:</strong> Medium</li>
+        <li><strong>Estimated reduction:</strong> Prevents future indefinite stalls (operational)</li>
+      </ul>
+    </li>
+  </ol>
+
+  <h2 id="deadlocks">Deadlock History Pattern</h2>
+  <p>The XE deadlock capture is functioning and shows a clear recurring pattern. Two distinct workloads appear:</p>
+  <ul>
+    <li><strong>WideWorldImporters (db 6):</strong> 2026-05-31 15:37:34 — victim SPID 61, waiting on a <code>U</code> lock on a KEY resource (<code>6:72057594041991168</code>), trancount=2. This is the same Countries↔StateProvinces inverse-order pattern visible live.</li>
+    <li><strong>tpch10 (db 11):</strong> a burst of ~9 deadlocks on 2026-05-04/05 all waiting on <code>U</code> locks against KEY <code>11:72057594047102976</code> from <code>SQLCMD</code> clients — a separate parallel-update workload worth its own review, but outside the WideWorldImporters scope.</li>
+  </ul>
+  <p>Long-term mitigation for the WideWorldImporters pattern is recommendation #2 (consistent lock ordering) plus #3 (RCSI for read paths). Query Store is enabled and capturing top consumers, so no enablement action is required there.</p>
+
+  <h2 id="code">Query / Code Changes</h2>
+  <p>The two writer batches acquire locks in opposite orders. Illustrative (non-executable) shapes:</p>
+  <p>SPID 63 order: <code>UPDATE Countries ... ; UPDATE StateProvinces ...</code></p>
+  <p>SPID 61 order: <code>UPDATE StateProvinces ... ; UPDATE Countries ...</code></p>
+  <p>Standardize on a single order and tighten transaction scope. The runnable rewrite (a stored procedure that enforces ordering) is in the <a href="#scripts">Scripts</a> section. The join SELECT (SPID 66) is well-formed and sargable (<code>WHERE sp.StateProvinceCode = N'VA'</code>); its only issue is the missing Cities index and the fact it is being held open in a transaction — it should not run inside <code>BEGIN TRAN</code> when no write follows.</p>
+
+  <section id="scripts">
+  <h2>Scripts</h2>
+
+  <h3>1. Diagnose the current blocking chain and idle open transactions (Recommendation #1)</h3>
+  <pre><code>USE [WideWorldImporters];
+GO
+-- Show waiting/blocking sessions and the lead blocker
+SELECT  r.session_id, r.blocking_session_id, r.wait_type,
+        r.wait_time AS wait_ms, r.command, s.status,
+        DB_NAME(r.database_id) AS db_name,
+        t.text AS sql_text
+FROM sys.dm_exec_requests r
+JOIN sys.dm_exec_sessions s ON s.session_id = r.session_id
+CROSS APPLY sys.dm_exec_sql_text(r.sql_handle) t
+WHERE r.blocking_session_id &lt;&gt; 0;
+GO
+-- Find idle sessions holding open transactions (no active request)
+SELECT  s.session_id, s.status, s.last_request_end_time,
+        at.transaction_begin_time,
+        DATEDIFF(SECOND, at.transaction_begin_time, SYSDATETIME()) AS open_secs
+FROM sys.dm_tran_session_transactions st
+JOIN sys.dm_tran_active_transactions at ON at.transaction_id = st.transaction_id
+JOIN sys.dm_exec_sessions s ON s.session_id = st.session_id
+LEFT JOIN sys.dm_exec_requests r ON r.session_id = s.session_id
+WHERE r.session_id IS NULL          -- no active request = idle in transaction
+ORDER BY at.transaction_begin_time;
+GO</code></pre>
+
+  <h3>2. Release the orphaned lead blocker (Recommendation #1)</h3>
+  <pre><code>USE [WideWorldImporters];
+GO
+-- REVIEW the diagnostic output above FIRST.
+-- SPID 62 is the idle lead blocker holding the X KEY lock on StateProvinces.
+-- Killing it rolls back its single-row update automatically (no committed data lost).
+KILL 62;
+GO
+-- If SPID 66 (the open SELECT transaction) remains and still blocks writers, release it too:
+KILL 66;
+GO</code></pre>
+
+  <h3>3. Stored procedure enforcing consistent lock-acquisition order (Recommendation #2)</h3>
+  <pre><code>USE [WideWorldImporters];
+GO
+CREATE OR ALTER PROCEDURE Application.usp_BumpPopulation
+    @CountryIso       SMALLINT,
+    @StateProvinceCode NVARCHAR(5)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;   -- ensure full rollback on error
+
+    BEGIN TRY
+        BEGIN TRAN;
+            -- FIXED ORDER: parent (Countries) first, then child (StateProvinces)
+            UPDATE Application.Countries
+                SET LatestRecordedPopulation = LatestRecordedPopulation + 1,
+                    ValidFrom = SYSUTCDATETIME()
+            WHERE IsoNumericCode = @CountryIso;
+
+            UPDATE Application.StateProvinces
+                SET LatestRecordedPopulation = LatestRecordedPopulation + 1,
+                    ValidFrom = SYSUTCDATETIME()
+            WHERE StateProvinceCode = @StateProvinceCode;
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() &lt;&gt; 0 ROLLBACK;
+        THROW;
+    END CATCH
+END;
+GO</code></pre>
+
+  <h3>4. Enable Read Committed Snapshot Isolation (Recommendation #3)</h3>
+  <pre><code>USE [master];
+GO
+-- Requires a brief exclusive lock on the database; run during a quiet window.
+ALTER DATABASE [WideWorldImporters]
+    SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK AFTER 5 SECONDS;
+GO
+-- Verify
+SELECT name, is_read_committed_snapshot_on
+FROM sys.databases
+WHERE name = N'WideWorldImporters';
+GO
+-- Rollback if needed:
+-- ALTER DATABASE [WideWorldImporters] SET READ_COMMITTED_SNAPSHOT OFF WITH ROLLBACK AFTER 5 SECONDS;</code></pre>
+
+  <h3>5. Create covering index on Application.Cities (Recommendation #4)</h3>
+  <pre><code>USE [WideWorldImporters];
+GO
+-- Online build available on this Enterprise engine.
+CREATE NONCLUSTERED INDEX IX_Cities_StateProvinceID_inc_CityName
+    ON Application.Cities (StateProvinceID)
+    INCLUDE (CityName)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+-- Rollback:
+-- DROP INDEX IX_Cities_StateProvinceID_inc_CityName ON Application.Cities;</code></pre>
+
+  <h3>6. Session-level safety setting for ad-hoc / app sessions (Recommendation #5)</h3>
+  <pre><code>-- Run at the start of ad-hoc batches so stuck waiters fail fast instead of blocking forever.
+SET LOCK_TIMEOUT 5000;  -- milliseconds
+GO</code></pre>
+  </section>
+
+</main>
+</div>
+<footer>
+  <p>Generated by AI SQL Tuner Studio v1.0.48.0 using model claude-opus-4-8 with reasoning effort low. Visit <a href="https://aisqltuner.com">https://aisqltuner.com</a>.</p>
+  <p>Based on analysis as of 2026-05-31 19:59:16 UTC.</p>
+</footer>
+</body>
+</html>

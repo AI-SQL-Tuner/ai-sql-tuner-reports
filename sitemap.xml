@@ -81,4 +81,39 @@
     <lastmod>2026-05-30</lastmod>
   </url>
 
+  <url>
+    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-05-31.html</loc>
+    <lastmod>2026-05-31</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/code-review-rockypc-sqlstorm-2026-05-31.html</loc>
+    <lastmod>2026-05-31</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/deadlock-analysis-rockypc-wideworldimporters-tpch10-2026-05-31.html</loc>
+    <lastmod>2026-05-31</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/locking-and-blocking-analysis-rockypc-wideworldimporters-2026-05-31-16-53-29-utc.html</loc>
+    <lastmod>2026-05-31</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/locking-and-blocking-analysis-wideworldimporters-opus-4-8-2026-05-31.html</loc>
+    <lastmod>2026-05-31</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/query-tuner-rockypc-sqlstorm-0x932168333a069240-2026-05-31.html</loc>
+    <lastmod>2026-05-31</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-05-31.html</loc>
+    <lastmod>2026-05-31</lastmod>
+  </url>
+
 </urlset>
