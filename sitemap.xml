@@ -3,12 +3,12 @@
 
   <url>
     <loc>https://reports.aisqltuner.com/</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-06-03</lastmod>
   </url>
 
   <url>
     <loc>https://reports.aisqltuner.com/index.html</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-06-03</lastmod>
   </url>
 
   <url>
@@ -114,6 +114,11 @@
   <url>
     <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-05-31.html</loc>
     <lastmod>2026-05-31</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-06-04.html</loc>
+    <lastmod>2026-06-04</lastmod>
   </url>
 
 </urlset>
