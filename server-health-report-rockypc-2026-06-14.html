@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Server Health Report – RockyPC – 2026-06-14</title>
+  <style>
+    :root{
+      --bg:#FFFFFF;
+      --text:#111827;
+      --muted:#6B7280;
+      --accent:#0B6E6E;
+      --accent-soft:#E6F3F3;
+      --nav:#F6F8F9;
+      --border:#D1D5DB;
+      --code:#EFF7F7;
+      --good:#0F9D58;
+      --warn:#B7791F;
+      --crit:#C81E1E;
+      --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.04);
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0B1220;
+        --text:#F3F4F6;
+        --muted:#9CA3AF;
+        --accent:#2DD4BF;
+        --accent-soft:#123033;
+        --nav:#162032;
+        --border:#334155;
+        --code:#0F172A;
+        --good:#34D399;
+        --warn:#FBBF24;
+        --crit:#F87171;
+        --shadow:none;
+      }
+    }
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      line-height:1.55;
+    }
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .layout{
+      display:grid;
+      grid-template-columns:290px minmax(0,1fr);
+      min-height:100vh;
+    }
+    .sidebar{
+      position:sticky;
+      top:0;
+      align-self:start;
+      height:100vh;
+      overflow:auto;
+      background:var(--nav);
+      border-right:1px solid var(--border);
+      padding:24px 20px 36px;
+      box-sizing:border-box;
+    }
+    .sidebar h2{
+      margin:0 0 14px;
+      font-size:1rem;
+      color:var(--accent);
+    }
+    .toc{
+      list-style:none;
+      padding:0;
+      margin:0;
+    }
+    .toc li{margin:8px 0}
+    .toc a{display:block;padding:6px 8px;border-radius:8px}
+    .toc a:hover{background:var(--accent-soft);text-decoration:none}
+    .content{
+      padding:32px 40px 48px;
+      max-width:1200px;
+    }
+    h1,h2,h3{
+      color:var(--accent);
+      line-height:1.2;
+    }
+    h1{
+      margin:0 0 8px;
+      font-size:2rem;
+    }
+    h2{
+      margin-top:34px;
+      border-bottom:2px solid var(--accent-soft);
+      padding-bottom:8px;
+      font-size:1.35rem;
+    }
+    h3{
+      margin-top:22px;
+      font-size:1.05rem;
+    }
+    p.meta, .secondary{color:var(--muted)}
+    .tuning-goal{
+      font-weight:700;
+      color:var(--accent);
+      margin:8px 0 18px;
+    }
+    .badge{
+      display:inline-block;
+      padding:5px 10px;
+      border-radius:999px;
+      font-size:.86rem;
+      font-weight:700;
+      margin:4px 6px 4px 0;
+      border:1px solid transparent;
+    }
+    .badge.good{background:rgba(15,157,88,.12); color:var(--good); border-color:rgba(15,157,88,.25)}
+    .badge.warn{background:rgba(183,121,31,.12); color:var(--warn); border-color:rgba(183,121,31,.25)}
+    .badge.crit{background:rgba(200,30,30,.12); color:var(--crit); border-color:rgba(200,30,30,.25)}
+    .card{
+      background:var(--bg);
+      border:1px solid var(--border);
+      border-radius:14px;
+      box-shadow:var(--shadow);
+      padding:18px 18px 16px;
+      margin:16px 0;
+    }
+    .summary-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:14px;
+      margin-top:16px;
+    }
+    .metric{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:14px;
+      background:linear-gradient(180deg,var(--bg),var(--accent-soft));
+    }
+    .metric .label{
+      color:var(--muted);
+      font-size:.88rem;
+    }
+    .metric .value{
+      font-size:1.35rem;
+      font-weight:700;
+      margin-top:6px;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin:14px 0 18px;
+      font-size:.95rem;
+    }
+    th,td{
+      border:1px solid var(--border);
+      padding:10px 12px;
+      vertical-align:top;
+      text-align:left;
+    }
+    th{
+      background:var(--nav);
+      color:var(--accent);
+    }
+    ul,ol{padding-left:22px}
+    li{margin:6px 0}
+    pre{
+      background:var(--code);
+      color:var(--text);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:14px;
+      overflow:auto;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    code{
+      font-family:Consolas,Menlo,Monaco,monospace;
+      font-size:.92em;
+    }
+    .priority{
+      font-weight:700;
+      color:var(--text);
+    }
+    .small{
+      font-size:.9rem;
+      color:var(--muted);
+    }
+    .footer{
+      margin-top:44px;
+      padding-top:20px;
+      border-top:1px solid var(--border);
+      color:var(--muted);
+      font-size:.95rem;
+    }
+    .callout{
+      border-left:4px solid var(--accent);
+      background:var(--accent-soft);
+      padding:12px 14px;
+      border-radius:8px;
+      margin:14px 0;
+    }
+    .svg-wrap{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px;
+      background:var(--bg);
+      margin:12px 0 8px;
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Report",
+    "headline":"Server Health Report – RockyPC – 2026-06-14",
+    "datePublished":"2026-06-14",
+    "about":{
+      "@type":"Thing",
+      "name":"SQL Server health assessment for RockyPC"
+    },
+    "author":{
+      "@type":"Organization",
+      "name":"AI SQL Tuner Studio"
+    }
+  }
+  </script>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Table of contents">
+      <h2>Contents</h2>
+      <ul class="toc">
+        <li><a href="#executive-summary">Executive Summary</a></li>
+        <li><a href="#top-priorities">Top Priorities</a></li>
+        <li><a href="#health-overview">Health Overview</a></li>
+        <li><a href="#performance">Performance & Capacity</a></li>
+        <li><a href="#configuration">Configuration</a></li>
+        <li><a href="#querystore">Query Store</a></li>
+        <li><a href="#integrity">Integrity, CHECKDB & Backups</a></li>
+        <li><a href="#security">Security</a></li>
+        <li><a href="#concurrency">Concurrency & Locking</a></li>
+        <li><a href="#storage">Storage, Files & Logs</a></li>
+        <li><a href="#detailed-recommendations">Detailed Prioritized Recommendations</a></li>
+        <li><a href="#scripts">Scripts</a></li>
+      </ul>
+    </aside>
+
+    <main class="content">
+      <header>
+        <h1>Server Health Report – RockyPC – 2026-06-14</h1>
+        <div class="tuning-goal">Tuning Goal: Server Health</div>
+        <p class="meta">
+          <strong>Server:</strong> RockyPC<br>
+          <strong>Server Version:</strong> SQL Server 2022 (16.0.1180.1), Developer Edition (64-bit), RTM-GDR KB5091158<br>
+          <strong>Database Context:</strong> master<br>
+          <strong>Edition Capabilities:</strong> Enterprise feature set available
+        </p>
+      </header>
+
+      <section id="executive-summary">
+        <h2>Executive Summary</h2>
+
+        <div class="card">
+          <h3>Lifecycle &amp; Patch Status</h3>
+          <p>
+            <span class="badge good">🟢 Lifecycle: Green</span>
+            <span class="badge crit">🔴 Patch Level: Red</span>
+          </p>
+          <ul>
+            <li><strong>Lifecycle:</strong> SQL Server 2022 is in mainstream support until 2028-01-12.</li>
+            <li><strong>Patch posture:</strong> Current build is more than 1 year behind the latest CU reference provided. This is the most important platform-level remediation item.</li>
+            <li><strong>Action:</strong> Patch to a current SQL Server 2022 CU after validation testing. This reduces exposure to known engine defects, Query Store issues, optimizer fixes, and operational bugs.</li>
+          </ul>
+        </div>
+
+        <div class="summary-grid">
+          <div class="metric">
+            <div class="label">Overall Risk Posture</div>
+            <div class="value">Moderate</div>
+            <div class="small">Driven mainly by patch lag, missing CHECKDB history, and missing backup discipline.</div>
+          </div>
+          <div class="metric">
+            <div class="label">Immediate Critical Items</div>
+            <div class="value">3</div>
+            <div class="small">Patching, integrity checks, backup/recovery alignment.</div>
+          </div>
+          <div class="metric">
+            <div class="label">Current Memory Pressure</div>
+            <div class="value">Low</div>
+            <div class="small">No RESOURCE_SEMAPHORE waiters; lock manager memory is tiny.</div>
+          </div>
+          <div class="metric">
+            <div class="label">Current I/O Risk</div>
+            <div class="value">Low</div>
+            <div class="small">Observed latencies are very good across data and log files.</div>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>Bottom line:</strong> The instance is not currently showing classic CPU, I/O, lock-memory, or memory-grant pressure. The dominant risks are operational: outdated patch level, absent or overdue <code>DBCC CHECKDB</code> execution for most user databases, and incomplete backup/recovery hygiene for several databases in FULL recovery.
+        </div>
+      </section>
+
+      <section id="top-priorities">
+        <h2>Top Priorities</h2>
+        <ol>
+          <li>
+            <span class="priority">Patch SQL Server 2022 to a current CU.</span>
+            <div class="small">Confidence: High</div>
+            <ul>
+              <li>Patch status is explicitly <strong>🔴 Red</strong>.</li>
+              <li>Current build is 395 days old relative to the supplied reference.</li>
+              <li>On SQL Server 2022, cumulative updates can materially improve optimizer, Query Store, and engine stability.</li>
+            </ul>
+          </li>
+          <li>
+            <span class="priority">Establish immediate and recurring DBCC CHECKDB coverage for all user databases.</span>
+            <div class="small">Confidence: High</div>
+            <ul>
+              <li>Most databases show the default <code>1900-01-01</code> pattern, effectively meaning no recorded CHECKDB.</li>
+              <li><code>DigitsSolver</code> is also overdue at 63 days.</li>
+              <li>This is a material integrity risk.</li>
+            </ul>
+          </li>
+          <li>
+            <span class="priority">Fix backup and recovery strategy mismatches.</span>
+            <div class="small">Confidence: High</div>
+            <ul>
+              <li>Several databases in FULL recovery have no log backups recorded.</li>
+              <li>Some databases have no full backups recorded at all.</li>
+              <li><code>tpch</code> shows log truncation hold-up <code>LOG_BACKUP</code>, confirming missing log backup activity is operationally relevant.</li>
+            </ul>
+          </li>
+          <li>
+            <span class="priority">Reduce plan cache pollution and compilation churn.</span>
+            <div class="small">Confidence: High</div>
+            <ul>
+              <li>Single-use plans are 51.4% of plan count and ~97 MB of cache.</li>
+              <li>Compilations/sec (9,521) are unusually close to batch requests/sec (11,367).</li>
+              <li><code>optimize for ad hoc workloads</code> is disabled and should be enabled.</li>
+            </ul>
+          </li>
+          <li>
+            <span class="priority">Review WideWorldImporters compatibility level and In-Memory file autogrowth risk.</span>
+            <div class="small">Confidence: Medium</div>
+            <ul>
+              <li><code>WideWorldImporters</code> remains at compatibility level 130 on a SQL Server 2022 instance.</li>
+              <li>The FILESTREAM/In-Memory file <code>WWI_InMemory_Data_1</code> has autogrowth disabled, which can cause an outage if capacity is exhausted.</li>
+            </ul>
+          </li>
+        </ol>
+      </section>
+
+      <section id="health-overview">
+        <h2>Health Overview</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Area</th>
+              <th>Status</th>
+              <th>Assessment</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Lifecycle support</td>
+              <td><span class="badge good">🟢 Good</span></td>
+              <td>Mainstream support through 2028-01-12.</td>
+            </tr>
+            <tr>
+              <td>Patch currency</td>
+              <td><span class="badge crit">🔴 Critical</span></td>
+              <td>Patch level is outdated by more than 1 year per supplied reference.</td>
+            </tr>
+            <tr>
+              <td>CPU / waits</td>
+              <td><span class="badge good">🟢 Good</span></td>
+              <td>Top waits are background Query Store / log-consumer sleeps, not active bottleneck waits.</td>
+            </tr>
+            <tr>
+              <td>I/O latency</td>
+              <td><span class="badge good">🟢 Good</span></td>
+              <td>Observed read/write latencies are low across all listed files.</td>
+            </tr>
+            <tr>
+              <td>Memory pressure</td>
+              <td><span class="badge good">🟢 Good</span></td>
+              <td>No RESOURCE_SEMAPHORE waiters; lock manager only 1.47 MB.</td>
+            </tr>
+            <tr>
+              <td>Plan cache efficiency</td>
+              <td><span class="badge warn">🟡 Warning</span></td>
+              <td>High single-use plan ratio and elevated compile rate.</td>
+            </tr>
+            <tr>
+              <td>Query Store</td>
+              <td><span class="badge good">🟢 Good</span></td>
+              <td>Enabled and writable across all listed user databases.</td>
+            </tr>
+            <tr>
+              <td>CHECKDB coverage</td>
+              <td><span class="badge crit">🔴 Critical</span></td>
+              <td>Most databases have no meaningful CHECKDB history.</td>
+            </tr>
+            <tr>
+              <td>Backups / log chain alignment</td>
+              <td><span class="badge crit">🔴 Critical</span></td>
+              <td>Missing full backups and FULL recovery databases without log backups.</td>
+            </tr>
+            <tr>
+              <td>Connection encryption</td>
+              <td><span class="badge good">🟢 Good</span></td>
+              <td>Only unencrypted session shown is local shared-memory SQL telemetry; minimal risk.</td>
+            </tr>
+            <tr>
+              <td>Sysadmin membership</td>
+              <td><span class="badge good">🟢 Good</span></td>
+              <td>Only 1 sysadmin account present.</td>
+            </tr>
+            <tr>
+              <td>Deadlocks</td>
+              <td><span class="badge good">🟢 Good</span></td>
+              <td>No deadlocks detected in the last 7 days.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="svg-wrap">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 180" width="100%" role="img" aria-labelledby="healthsvgtitle">
+            <title id="healthsvgtitle">High-level server health summary</title>
+            <rect x="10" y="20" width="140" height="110" rx="12" fill="none" stroke="currentColor"/>
+            <text x="80" y="52" text-anchor="middle" font-size="16" fill="currentColor">Waits</text>
+            <text x="80" y="82" text-anchor="middle" font-size="14" fill="currentColor">Background-dominant</text>
+            <text x="80" y="108" text-anchor="middle" font-size="14" fill="currentColor">Low active pressure</text>
+
+            <rect x="190" y="20" width="140" height="110" rx="12" fill="none" stroke="currentColor"/>
+            <text x="260" y="52" text-anchor="middle" font-size="16" fill="currentColor">I/O</text>
+            <text x="260" y="82" text-anchor="middle" font-size="14" fill="currentColor">1-4 ms typical</text>
+            <text x="260" y="108" text-anchor="middle" font-size="14" fill="currentColor">Healthy</text>
+
+            <rect x="370" y="20" width="140" height="110" rx="12" fill="none" stroke="currentColor"/>
+            <text x="440" y="52" text-anchor="middle" font-size="16" fill="currentColor">Memory</text>
+            <text x="440" y="82" text-anchor="middle" font-size="14" fill="currentColor">No grant waits</text>
+            <text x="440" y="108" text-anchor="middle" font-size="14" fill="currentColor">Lock cache low</text>
+
+            <rect x="550" y="20" width="140" height="110" rx="12" fill="none" stroke="currentColor"/>
+            <text x="620" y="52" text-anchor="middle" font-size="16" fill="currentColor">Integrity</text>
+            <text x="620" y="82" text-anchor="middle" font-size="14" fill="currentColor">CHECKDB overdue</text>
+            <text x="620" y="108" text-anchor="middle" font-size="14" fill="currentColor">High risk</text>
+
+            <rect x="730" y="20" width="140" height="110" rx="12" fill="none" stroke="currentColor"/>
+            <text x="800" y="52" text-anchor="middle" font-size="16" fill="currentColor">Operations</text>
+            <text x="800" y="82" text-anchor="middle" font-size="14" fill="currentColor">Patch lag</text>
+            <text x="800" y="108" text-anchor="middle" font-size="14" fill="currentColor">Backup gaps</text>
+          </svg>
+          <p class="small">Diagram: At-a-glance health posture. Runtime performance is currently stable; operational resilience is where the main risks sit.</p>
+        </div>
+      </section>
+
+      <section id="performance">
+        <h2>Performance &amp; Capacity</h2>
+
+        <h3>Observed bottlenecks</h3>
+        <ul>
+          <li><strong>No major active bottleneck</strong> is visible in waits, I/O, or memory grants.</li>
+          <li>Top waits are <code>QDS_PERSIST_TASK_MAIN_LOOP_SLEEP</code>, <code>PWAIT_DIRECTLOGCONSUMER_GETNEXT</code>, and <code>QDS_ASYNC_QUEUE</code>. These are background/idle-style waits and do not indicate a production pressure point by themselves.</li>
+          <li>I/O latency is excellent, generally 0-4 ms.</li>
+          <li>Committed memory is only ~1 GB versus target ~7 GB, indicating the engine is not under memory stress.</li>
+        </ul>
+
+        <h3>Plan cache and compilation efficiency</h3>
+        <ul>
+          <li><strong>Plan cache pollution is notable:</strong> 722 of 1,404 plans are single-use (51.4%).</li>
+          <li><strong>SQL Compilations/sec</strong> at 9,521 versus <strong>Batch Requests/sec</strong> at 11,367 suggests frequent compilation overhead.</li>
+          <li><code>optimize for ad hoc workloads</code> is disabled and is recommended here.</li>
+          <li>Top plan-cache queries appear dominated by metadata/telemetry style queries rather than user workload memory-grant or spill problems.</li>
+        </ul>
+
+        <h3>Memory posture</h3>
+        <ul>
+          <li><strong>RESOURCE_SEMAPHORE:</strong> none.</li>
+          <li><strong>Top memory grant:</strong> only 1,024 KB.</li>
+          <li><strong>Lock manager cache:</strong> 1.47 MB, far below the 20-25% critical threshold.</li>
+          <li><strong>Buffer pool:</strong> ~179 MB, consistent with low current working-set demand, not with memory pressure.</li>
+          <li>No red flag combination of high lock-manager memory plus shrinking buffer pool is present.</li>
+        </ul>
+
+        <h3>I/O findings</h3>
+        <ul>
+          <li>All listed files show healthy latency characteristics.</li>
+          <li>No storage subsystem problem is indicated from the provided file statistics.</li>
+          <li>Because I/O is already strong, priority should stay with patching, integrity, and operational maintenance rather than storage tuning.</li>
+        </ul>
+      </section>
+
+      <section id="configuration">
+        <h2>Configuration</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Current</th>
+              <th>Recommendation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Max server memory</td>
+              <td>23,168 MB on 32,527 MB host RAM</td>
+              <td>Reasonable for this host. No immediate change needed.</td>
+            </tr>
+            <tr>
+              <td>MAXDOP</td>
+              <td>8</td>
+              <td>Reasonable for 16 logical CPUs.</td>
+            </tr>
+            <tr>
+              <td>Cost threshold for parallelism</td>
+              <td>30</td>
+              <td>Good modern baseline; keep unless workload evidence suggests otherwise.</td>
+            </tr>
+            <tr>
+              <td>optimize for ad hoc workloads</td>
+              <td>0</td>
+              <td><strong>Enable</strong> due to high single-use plan ratio and compilation churn.</td>
+            </tr>
+            <tr>
+              <td>backup checksum default</td>
+              <td>0</td>
+              <td><strong>Enable</strong> so future backups validate pages by default.</td>
+            </tr>
+            <tr>
+              <td>remote admin connections</td>
+              <td>0</td>
+              <td>Optional: enable for emergency DAC access on remote administration scenarios.</td>
+            </tr>
+            <tr>
+              <td>tempdb metadata memory-optimized</td>
+              <td>0</td>
+              <td>No action required from current evidence.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p><strong>Confidence:</strong> High for <code>optimize for ad hoc workloads</code> and backup checksum recommendation; Medium for remote DAC as an operational preference.</p>
+      </section>
+
+      <section id="querystore">
+        <h2>Query Store</h2>
+
+        <ul>
+          <li>Query Store is <strong>enabled and writable</strong> on all listed user databases.</li>
+          <li>Current settings are generally healthy: AUTO capture, AUTO cleanup, sufficient max size, and compatibility level 160 on most databases.</li>
+          <li><strong>WideWorldImporters</strong> is an exception: compatibility level 130, Query Store READ_WRITE, flush interval 50 minutes, stats interval 15 minutes, max plans per query 1000.</li>
+        </ul>
+
+        <h3>Recommendations</h3>
+        <ul>
+          <li>Keep Query Store enabled everywhere.</li>
+          <li>After regression testing, consider moving <code>WideWorldImporters</code> to compatibility level 160 to use SQL Server 2022 features such as Parameter Sensitive Plan optimization, IQP enhancements, and DOP feedback.</li>
+          <li>Reduce <code>WideWorldImporters</code> Query Store <code>MAX_PLANS_PER_QUERY</code> from 1000 to a lower operationally safer value such as 200 unless there is a specific reason to retain many plan variants.</li>
+          <li>On low-volume databases with only 1 MB used, no storage pressure is present.</li>
+        </ul>
+
+        <p><strong>Confidence:</strong> Medium. Compatibility changes should always be tested for plan regressions.</p>
+      </section>
+
+      <section id="integrity">
+        <h2>Integrity, CHECKDB &amp; Backups</h2>
+
+        <h3>Integrity risk</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Database</th>
+              <th>Last CHECKDB</th>
+              <th>Assessment</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>WideWorldImporters</td><td>1900-01-01</td><td><span class="badge crit">🔴 Critical</span> No meaningful recorded CHECKDB history</td></tr>
+            <tr><td>SQLStorm</td><td>1900-01-01</td><td><span class="badge crit">🔴 Critical</span> No meaningful recorded CHECKDB history</td></tr>
+            <tr><td>tpcc</td><td>1900-01-01</td><td><span class="badge crit">🔴 Critical</span> No meaningful recorded CHECKDB history</td></tr>
+            <tr><td>tpch</td><td>1900-01-01</td><td><span class="badge crit">🔴 Critical</span> No meaningful recorded CHECKDB history</td></tr>
+            <tr><td>CRM</td><td>1900-01-01</td><td><span class="badge crit">🔴 Critical</span> No meaningful recorded CHECKDB history</td></tr>
+            <tr><td>tpch10</td><td>1900-01-01</td><td><span class="badge crit">🔴 Critical</span> No meaningful recorded CHECKDB history</td></tr>
+            <tr><td>DigitsSolver</td><td>2026-04-12</td><td><span class="badge crit">🔴 Critical</span> Overdue at 63 days</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Backup and recovery findings</h3>
+        <ul>
+          <li><strong>No full backup recorded:</strong> master, model, msdb, DigitsSolver, tpcc, CRM, tpch10.</li>
+          <li><strong>FULL recovery but no log backups recorded:</strong> model, DigitsSolver, tpcc, tpch, CRM, tpch10.</li>
+          <li><strong>tpch</strong> has <code>LOG_BACKUP</code> as truncation holdup and 9,164 MB active log out of 10,504 MB, which is expected when log backups are not occurring.</li>
+          <li><strong>WideWorldImporters</strong> last full backup is extremely old (2022-10-07).</li>
+          <li>Backup chain quality is insufficient for reliable restore assurance across much of the instance.</li>
+        </ul>
+
+        <h3>Recommended maintenance policy</h3>
+        <ul>
+          <li>Run <code>DBCC CHECKDB</code> for all user databases immediately.</li>
+          <li>Then establish a recurring schedule:
+            <ul>
+              <li><strong>Critical OLTP / important user DBs:</strong> weekly</li>
+              <li><strong>Lower-tier dev/test:</strong> weekly or at minimum monthly</li>
+            </ul>
+          </li>
+          <li>Align recovery model with business need:
+            <ul>
+              <li>If point-in-time recovery is required, keep FULL and start regular log backups.</li>
+              <li>If not required, change those databases to SIMPLE after confirming requirements.</li>
+            </ul>
+          </li>
+        </ul>
+
+        <p><strong>Confidence:</strong> High.</p>
+      </section>
+
+      <section id="security">
+        <h2>Security</h2>
+
+        <h3>Connection encryption</h3>
+        <ul>
+          <li>2 total user connections were observed.</li>
+          <li>1 encrypted, 1 unencrypted.</li>
+          <li>The unencrypted session is <strong>SQLServerCEIP</strong> over <strong>shared memory</strong> using <strong>NT SERVICE\SQLTELEMETRY</strong>.</li>
+          <li>Per risk context, this is <strong>minimal risk</strong>: shared memory is local-only and telemetry does not expose user data.</li>
+        </ul>
+
+        <h3>Recommendations</h3>
+        <ul>
+          <li>No urgent remediation is required for the current sampled unencrypted shared-memory telemetry connection.</li>
+          <li>For any non-shared-memory client connectivity, standardize on encrypted connections using <code>Encrypt=True</code>.</li>
+          <li>Consider Force Encryption with a proper server certificate if this instance will be accessed remotely over TCP.</li>
+        </ul>
+
+        <h3>Privileged access</h3>
+        <ul>
+          <li>Only one sysadmin member exists: <code>RockyPC\k_a_f</code>.</li>
+          <li>This is a reasonable and low-risk posture.</li>
+          <li>Continue least-privilege practice and periodic review of local administrator and SQL sysadmin overlap.</li>
+        </ul>
+
+        <p><strong>Confidence:</strong> High.</p>
+      </section>
+
+      <section id="concurrency">
+        <h2>Concurrency &amp; Locking</h2>
+
+        <ul>
+          <li><strong>No deadlocks</strong> detected in the last 7 days.</li>
+          <li><strong>No active locks</strong> were present at collection time.</li>
+          <li><strong>Lock manager memory</strong> is very low at 1.47 MB.</li>
+          <li>No blocking tree or lock-memory emergency exists from the supplied evidence.</li>
+        </ul>
+
+        <h3>Assessment</h3>
+        <ul>
+          <li>No indication of runaway plans causing excessive locks or memory grants.</li>
+          <li>No need for emergency remediation such as <code>DBCC FREESYSTEMCACHE ('Lock Manager : Node 0')</code> based on current data.</li>
+          <li>If future blocking arises, prioritize finding long transactions, large scans, and explicit locking hints before considering cache flush actions.</li>
+        </ul>
+
+        <p><strong>Confidence:</strong> High.</p>
+      </section>
+
+      <section id="storage">
+        <h2>Storage, Files &amp; Logs</h2>
+
+        <h3>tempdb</h3>
+        <ul>
+          <li>16 logical CPUs with 8 tempdb data files is an appropriate starting configuration.</li>
+          <li>All 8 data files are equally sized at 8 MB with identical fixed growth of 64 MB.</li>
+          <li>This is good from a proportional-fill standpoint.</li>
+          <li>No uneven file size or mixed autogrowth problem is present.</li>
+        </ul>
+
+        <h3>Database file autogrowth</h3>
+        <ul>
+          <li>Only one explicit file-level risk is reported:
+            <ul>
+              <li><strong>WideWorldImporters - WWI_InMemory_Data_1 (FILESTREAM):</strong> autogrowth disabled.</li>
+            </ul>
+          </li>
+          <li>If this filegroup is actively used by memory-optimized objects, exhaustion can produce hard failures.</li>
+        </ul>
+
+        <h3>Transaction log health</h3>
+        <ul>
+          <li>No database exceeds the rough 1,000 VLF risk threshold.</li>
+          <li><strong>tpcc</strong> has 233 VLFs and <strong>tpch10</strong> has 170; not critical, but these logs are large relative to active usage.</li>
+          <li><strong>tpch</strong> has 168 VLFs and most of the log is active due to <code>LOG_BACKUP</code>.</li>
+          <li><strong>WideWorldImporters</strong> truncation holdup is <code>ACTIVE_TRANSACTION</code>; investigate long-running work if it persists.</li>
+        </ul>
+
+        <h3>Instant File Initialization</h3>
+        <ul>
+          <li>IFI is enabled for <code>NT Service\MSSQLSERVER</code>.</li>
+          <li>This is good and requires no change.</li>
+        </ul>
+
+        <p><strong>Confidence:</strong> High.</p>
+      </section>
+
+      <section id="detailed-recommendations">
+        <h2>Detailed Prioritized Recommendations</h2>
+        <ol>
+          <li>
+            <strong>Patch SQL Server to a current SQL Server 2022 CU.</strong>
+            <ul>
+              <li>Priority: Critical</li>
+              <li>Reason: Patch posture is explicitly red and older than 1 year.</li>
+              <li>Benefit: Stability, security hardening, optimizer fixes, Query Store reliability, and supportability.</li>
+              <li>Confidence: High</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Run DBCC CHECKDB for every user database immediately and schedule it weekly.</strong>
+            <ul>
+              <li>Priority: Critical</li>
+              <li>Reason: Most databases show no valid CHECKDB history.</li>
+              <li>Benefit: Integrity assurance and earlier corruption detection.</li>
+              <li>Confidence: High</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Implement a real backup strategy and align recovery models with restore requirements.</strong>
+            <ul>
+              <li>Priority: Critical</li>
+              <li>Reason: Missing full backups and FULL recovery without log backups create restore risk and log growth issues.</li>
+              <li>Benefit: Recoverability, controlled log reuse, and operational resilience.</li>
+              <li>Confidence: High</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Enable optimize for ad hoc workloads.</strong>
+            <ul>
+              <li>Priority: High</li>
+              <li>Reason: 51.4% single-use plan ratio and very high compilation rate.</li>
+              <li>Benefit: Reduced plan-cache waste and lower compile overhead.</li>
+              <li>Confidence: High</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Enable backup checksum by default.</strong>
+            <ul>
+              <li>Priority: High</li>
+              <li>Reason: Improves backup validation safety with minimal downside.</li>
+              <li>Benefit: Better corruption detection during backup operations.</li>
+              <li>Confidence: High</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Test and raise WideWorldImporters compatibility level from 130 to 160.</strong>
+            <ul>
+              <li>Priority: Medium</li>
+              <li>Reason: Current server is SQL Server 2022, but this database is not using the newest optimizer behaviors.</li>
+              <li>Benefit: Access to SQL Server 2022 intelligent query processing features.</li>
+              <li>Confidence: Medium</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Reduce WideWorldImporters Query Store max plans per query unless there is a known need for 1000.</strong>
+            <ul>
+              <li>Priority: Medium</li>
+              <li>Reason: Helps limit unnecessary Query Store growth and plan clutter.</li>
+              <li>Benefit: Cleaner plan history and lower metadata overhead.</li>
+              <li>Confidence: Medium</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Review the autogrowth-disabled In-Memory FILESTREAM container.</strong>
+            <ul>
+              <li>Priority: Medium</li>
+              <li>Reason: Growth disabled can become an outage condition if capacity is reached.</li>
+              <li>Benefit: Prevents hard space exhaustion for memory-optimized checkpoint files.</li>
+              <li>Confidence: Medium</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Investigate persistent ACTIVE_TRANSACTION in WideWorldImporters log truncation if it recurs.</strong>
+            <ul>
+              <li>Priority: Medium</li>
+              <li>Reason: If sustained, it prevents log reuse.</li>
+              <li>Benefit: Avoids unnecessary log growth and recovery delays.</li>
+              <li>Confidence: Medium</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Keep current MAXDOP, cost threshold, tempdb layout, sysadmin count, IFI, and Query Store enablement.</strong>
+            <ul>
+              <li>Priority: Informational</li>
+              <li>Reason: These areas are currently healthy.</li>
+              <li>Benefit: Prevents unnecessary change risk.</li>
+              <li>Confidence: High</li>
+            </ul>
+          </li>
+        </ol>
+      </section>
+
+      <section id="scripts">
+        <h2>Scripts</h2>
+
+        <h3>Enable optimize for ad hoc workloads to reduce single-use plan cache waste</h3>
+        <pre><code>USE [master];
+GO
+EXEC sys.sp_configure N'show advanced options', 1;
+RECONFIGURE;
+GO
+EXEC sys.sp_configure N'optimize for ad hoc workloads', 1;
+RECONFIGURE;
+GO</code></pre>
+
+        <h3>Enable backup checksum by default for safer backup operations</h3>
+        <pre><code>USE [master];
+GO
+EXEC sys.sp_configure N'show advanced options', 1;
+RECONFIGURE;
+GO
+EXEC sys.sp_configure N'backup checksum default', 1;
+RECONFIGURE;
+GO</code></pre>
+
+        <h3>Run DBCC CHECKDB for all user databases that are overdue or missing history</h3>
+        <pre><code>USE [master];
+GO
+DBCC CHECKDB (N'WideWorldImporters') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'SQLStorm') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'tpcc') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'tpch') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'CRM') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'tpch10') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO
+DBCC CHECKDB (N'DigitsSolver') WITH NO_INFOMSGS, ALL_ERRORMSGS;
+GO</code></pre>
+
+        <h3>Raise WideWorldImporters compatibility level to 160 and normalize Query Store settings after testing</h3>
+        <pre><code>USE [master];
+GO
+ALTER DATABASE [WideWorldImporters] SET COMPATIBILITY_LEVEL = 160;
+GO
+ALTER DATABASE [WideWorldImporters] SET QUERY_STORE = ON;
+GO
+ALTER DATABASE [WideWorldImporters] 
+SET QUERY_STORE (
+    OPERATION_MODE = READ_WRITE,
+    QUERY_CAPTURE_MODE = AUTO,
+    CLEANUP_POLICY = (STALE_QUERY_THRESHOLD_DAYS = 30),
+    DATA_FLUSH_INTERVAL_SECONDS = 900,
+    INTERVAL_LENGTH_MINUTES = 60,
+    MAX_STORAGE_SIZE_MB = 1000,
+    MAX_PLANS_PER_QUERY = 200
+);
+GO</code></pre>
+
+        <h3>Investigate log truncation blockers and active transactions in WideWorldImporters</h3>
+        <pre><code>USE [WideWorldImporters];
+GO
+DBCC OPENTRAN;
+GO
+SELECT
+    dt.database_transaction_begin_time,
+    at.transaction_id,
+    at.name AS transaction_name,
+    at.transaction_begin_time,
+    st.session_id,
+    es.login_name,
+    es.host_name,
+    es.program_name,
+    er.status,
+    er.command,
+    er.wait_type,
+    er.blocking_session_id,
+    SUBSTRING(txt.text,
+        (er.statement_start_offset / 2) + 1,
+        ((CASE er.statement_end_offset
+            WHEN -1 THEN DATALENGTH(txt.text)
+            ELSE er.statement_end_offset
+          END - er.statement_start_offset) / 2) + 1) AS running_statement
+FROM sys.dm_tran_active_transactions at
+JOIN sys.dm_tran_database_transactions dt
+    ON at.transaction_id = dt.transaction_id
+LEFT JOIN sys.dm_tran_session_transactions st
+    ON at.transaction_id = st.transaction_id
+LEFT JOIN sys.dm_exec_sessions es
+    ON st.session_id = es.session_id
+LEFT JOIN sys.dm_exec_requests er
+    ON st.session_id = er.session_id
+OUTER APPLY sys.dm_exec_sql_text(er.sql_handle) txt
+WHERE dt.database_id = DB_ID();
+GO</code></pre>
+      </section>
+
+      
+    </main>
+  </div>
+<footer class="footer">
+        <p>Generated by AI SQL Tuner Studio v2.1.0.0 using model gpt-5.4 with reasoning effort low.</p>
+        <p><a href="https://aisqltuner.com">https://aisqltuner.com</a></p>
+        <p>Based on analysis as of 2026-06-14 21:23:15 UTC</p>
+      </footer>
+</body>
+</html>

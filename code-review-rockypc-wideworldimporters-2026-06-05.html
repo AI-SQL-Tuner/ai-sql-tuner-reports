@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Review – RockyPC / WideWorldImporters – 2026-06-05</title>
+<meta name="description" content="SQL Server code review recommendations for WideWorldImporters on RockyPC, based on the most recent stored procedures and triggers provided.">
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --text:#111827;
+    --muted:#6B7280;
+    --accent:#0B6E6E;
+    --accent-soft:#D9F0F0;
+    --nav:#F6F8F9;
+    --border:#D1D5DB;
+    --code-bg:#EFF7F7;
+    --card:#FFFFFF;
+    --shadow:0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.04);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font:15px/1.6 Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .layout{
+    display:grid;
+    grid-template-columns: 300px 1fr;
+    min-height:100vh;
+  }
+  aside{
+    background:var(--nav);
+    border-right:1px solid var(--border);
+    padding:24px 20px;
+    position:sticky;
+    top:0;
+    height:100vh;
+    overflow:auto;
+  }
+  aside h2{
+    font-size:1rem;
+    margin:0 0 12px 0;
+    color:var(--accent);
+  }
+  aside ul{
+    list-style:none;
+    margin:0;
+    padding:0;
+  }
+  aside li{
+    margin:8px 0;
+  }
+  aside .toc-sub{
+    margin-left:14px;
+    padding-left:10px;
+    border-left:2px solid var(--accent-soft);
+  }
+  main{
+    padding:32px 40px 24px;
+    max-width:1200px;
+  }
+  h1,h2,h3{
+    color:var(--accent);
+    line-height:1.25;
+  }
+  h1{
+    font-size:2rem;
+    margin:.2rem 0 .5rem 0;
+  }
+  h2{
+    font-size:1.35rem;
+    margin:2rem 0 .9rem 0;
+    padding-bottom:.3rem;
+    border-bottom:2px solid var(--accent-soft);
+  }
+  h3{
+    font-size:1.05rem;
+    margin:1.4rem 0 .5rem 0;
+  }
+  p{margin:.6rem 0}
+  .subtitle,.meta,.secondary{color:var(--muted)}
+  .hero{
+    background:linear-gradient(180deg, rgba(11,110,110,.06), rgba(11,110,110,0));
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:22px 24px;
+    box-shadow:var(--shadow);
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:14px;
+    margin-top:16px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px 16px;
+    box-shadow:var(--shadow);
+  }
+  .kpi{
+    font-size:1.4rem;
+    font-weight:700;
+    color:var(--accent);
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:12px 0 18px;
+  }
+  th,td{
+    text-align:left;
+    padding:10px 12px;
+    border:1px solid var(--border);
+    vertical-align:top;
+  }
+  th{
+    background:var(--nav);
+    color:var(--accent);
+  }
+  pre{
+    background:var(--code-bg);
+    border:1px solid #C7E7E7;
+    border-radius:10px;
+    padding:14px;
+    overflow:auto;
+    font:13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  code{
+    font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  .badge{
+    display:inline-block;
+    padding:4px 10px;
+    border-radius:999px;
+    background:var(--accent-soft);
+    color:var(--accent);
+    font-size:.85rem;
+    font-weight:600;
+    margin-right:8px;
+  }
+  .priority{
+    font-weight:700;
+    color:var(--accent);
+  }
+  .small{font-size:.92rem}
+  .caption{
+    color:var(--muted);
+    font-size:.92rem;
+    margin-top:6px;
+  }
+  .footer{
+    border-top:1px solid var(--border);
+    margin-top:28px;
+    padding:18px 40px 28px;
+    color:var(--muted);
+    background:var(--bg);
+  }
+  .callout{
+    border-left:4px solid var(--accent);
+    background:#F7FBFB;
+    padding:12px 14px;
+    margin:12px 0;
+  }
+  ol > li{margin:0 0 14px}
+  .confidence{color:var(--muted); font-size:.92rem}
+  svg{
+    max-width:100%;
+    height:auto;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:#fff;
+  }
+  @media (max-width: 980px){
+    .layout{grid-template-columns:1fr}
+    aside{
+      position:relative;
+      height:auto;
+      border-right:none;
+      border-bottom:1px solid var(--border);
+    }
+    main{padding:24px 18px}
+    .footer{padding:18px}
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0B1220;
+      --text:#F3F4F6;
+      --muted:#9CA3AF;
+      --accent:#2DD4BF;
+      --accent-soft:#153B42;
+      --nav:#162032;
+      --border:#2A3548;
+      --code-bg:#0F172A;
+      --card:#0E1726;
+      --shadow:none;
+    }
+    body{background:var(--bg); color:var(--text)}
+    .hero{background:linear-gradient(180deg, rgba(45,212,191,.08), rgba(45,212,191,0))}
+    .callout{background:#0E1827}
+    svg{background:#0B1220}
+  }
+</style>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"Report",
+  "headline":"Code Review – RockyPC / WideWorldImporters – 2026-06-05",
+  "description":"Prioritized SQL Server code review recommendations for the most recent stored procedures and triggers provided for WideWorldImporters.",
+  "datePublished":"2026-06-05",
+  "author":{
+    "@type":"Organization",
+    "name":"AI SQL Tuner Studio"
+  }
+}
+</script>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+  <aside>
+    <h2>Table of Contents</h2>
+    <ul>
+      <li><a href="#summary">Executive summary</a></li>
+      <li><a href="#scope">Review scope</a></li>
+      <li><a href="#recommendations">Detailed prioritized recommendations</a>
+        <ul class="toc-sub">
+          <li><a href="#rec1">1. Fix incorrect stock update scope</a></li>
+          <li><a href="#rec2">2. Replace row-by-row picking logic</a></li>
+          <li><a href="#rec3">3. Remove cursor-based invoice delivery updates</a></li>
+          <li><a href="#rec4">4. Add targeted indexes for reviewed code paths</a></li>
+          <li><a href="#rec5">5. Reduce trigger overhead and transaction risk</a></li>
+          <li><a href="#rec6">6. Add consistent TRY/CATCH transaction handling</a></li>
+          <li><a href="#rec7">7. Eliminate repeated lookup subqueries and ORDER BY NEWID()</a></li>
+          <li><a href="#rec8">8. Rewrite custom field mass updates to reduce write amplification</a></li>
+          <li><a href="#rec9">9. Review zero-usage indexes before keeping or dropping</a></li>
+          <li><a href="#rec10">10. Use SQL Server 2022 features deliberately</a></li>
+        </ul>
+      </li>
+      <li><a href="#visuals">Visual aids</a></li>
+      <li><a href="#scripts">Scripts</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <header class="hero">
+      <div class="badge">Code Review</div>
+      <div class="badge">SQL Server 2022</div>
+      <div class="badge">Enterprise capabilities available</div>
+      <h1>Code Review – RockyPC / WideWorldImporters – 2026-06-05</h1>
+      <p class="subtitle">Tuning goal: <strong>Code Review</strong></p>
+      <p class="meta">
+        Server: <strong>RockyPC</strong><br>
+        Database: <strong>WideWorldImporters</strong><br>
+        Version: <strong>Microsoft SQL Server 2022 (RTM-GDR) 16.0.1180.1</strong><br>
+        Edition: <strong>Developer Edition (64-bit)</strong> / Engine Edition: <strong>Enterprise</strong>
+      </p>
+    </header>
+
+    <section id="summary">
+      <h2>Executive summary</h2>
+      <ol>
+        <li>
+          <span class="priority">Highest priority: correct the data modification scope in <code>DataLoadSimulation.ReceivePurchaseOrders</code>.</span>
+          The current <code>UPDATE Warehouse.StockItemHoldings</code> joins to <code>Purchasing.PurchaseOrderLines</code> without restricting to the current <code>@PurchaseOrderID</code>. That can update far more rows than intended, inflate stock balances, and create unnecessary locking on a central inventory table.
+          <div class="confidence">Confidence: 0.99</div>
+        </li>
+        <li>
+          <span class="priority">Second priority: remove row-by-row cursor logic from high-write procedures.</span>
+          <code>DataLoadSimulation.PickStockForCustomerOrders</code>, <code>DataLoadSimulation.RecordInvoiceDeliveries</code>, <code>DataLoadSimulation.ReceivePurchaseOrders</code>, and <code>DataLoadSimulation.UpdateCustomFields</code> all exhibit RBAR patterns that increase elapsed time, lock duration, and log volume.
+          <div class="confidence">Confidence: 0.96</div>
+        </li>
+        <li>
+          <span class="priority">Third priority: add a small set of focused rowstore indexes that match the reviewed predicates.</span>
+          The code filters heavily on <code>PickingCompletedWhen IS NULL</code>, <code>ConfirmedDeliveryTime IS NULL</code>, <code>IsFinalized = 0</code>, and <code>PurchaseOrderID</code>; the usage summary shows many large indexes with zero activity, but not the exact narrow supporting indexes this code needs.
+          <div class="confidence">Confidence: 0.93</div>
+        </li>
+        <li>
+          The 16 reviewed archive triggers are set-based, but they extend the caller transaction, lack <code>TRY/CATCH</code>, and enforce a business rule through <code>UPDATE(ValidFrom)</code> on every change. On frequently updated entities such as <code>Warehouse.StockItems</code> and <code>Application.People</code>, that adds write amplification.
+          <div class="confidence">Confidence: 0.88</div>
+        </li>
+        <li>
+          Several procedures use <code>ORDER BY NEWID()</code> and repeated scalar subqueries for lookup IDs. These are avoidable plan and CPU costs.
+          <div class="confidence">Confidence: 0.90</div>
+        </li>
+      </ol>
+
+      <div class="grid">
+        <div class="card">
+          <div class="kpi">25</div>
+          <div>Objects reviewed</div>
+        </div>
+        <div class="card">
+          <div class="kpi">16</div>
+          <div>Triggers reviewed</div>
+        </div>
+        <div class="card">
+          <div class="kpi">9</div>
+          <div>Stored procedures reviewed</div>
+        </div>
+        <div class="card">
+          <div class="kpi">0</div>
+          <div>Functions reviewed</div>
+        </div>
+        <div class="card">
+          <div class="kpi">0</div>
+          <div>Views reviewed</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        Only the most recent objects provided in the input were reviewed. Recommendations are therefore scoped to those procedures and triggers, informed by the supplied table row counts and index usage/size summary.
+      </div>
+    </section>
+
+    <section id="scope">
+      <h2>Review scope</h2>
+      <ul>
+        <li>Reviewed procedures focus on data-load simulation, order picking, payment processing, purchase receipt processing, delivery recording, telemetry insertion, and JSON/custom-field updates.</li>
+        <li>Reviewed triggers implement archive/history capture for multiple dimension/reference tables using <code>AFTER INSERT, UPDATE</code> logic.</li>
+        <li>Large tables affecting recommendations include <code>Warehouse.ColdRoomTemperatures_Archive</code> (3.65M rows), <code>Warehouse.StockItemTransactions</code> (236K), <code>Sales.OrderLines</code> (231K), <code>Sales.InvoiceLines</code> (228K), <code>Sales.CustomerTransactions</code> (97K), <code>Sales.Orders</code> (73K), and <code>Sales.Invoices</code> (70K).</li>
+        <li>The index usage summary shows many large indexes with zero observed usage. That can indicate restart/reset timing, low recent workload, or mismatched physical design; it should not be treated as a drop list by itself.</li>
+      </ul>
+    </section>
+
+    <section id="recommendations">
+      <h2>Detailed prioritized recommendations</h2>
+      <ol>
+        <li id="rec1">
+          <h3>Fix incorrect stock update scope in <code>DataLoadSimulation.ReceivePurchaseOrders</code></h3>
+          <p>
+            This is the most important correctness and concurrency issue in the review. The statement updating <code>Warehouse.StockItemHoldings</code> joins to all rows in <code>Purchasing.PurchaseOrderLines</code> and does not filter on <code>pol.PurchaseOrderID = @PurchaseOrderID</code>. That means each cursor iteration can update inventory for unrelated purchase orders.
+          </p>
+          <ul>
+            <li>Risk: incorrect stock balances.</li>
+            <li>Performance impact: unnecessarily broad updates against a central table.</li>
+            <li>Locking impact: longer transactions and larger lock footprints on <code>Warehouse.StockItemHoldings</code>.</li>
+            <li>Object affected: <code>DataLoadSimulation.ReceivePurchaseOrders</code>.</li>
+          </ul>
+          <p>
+            Also cache lookup IDs such as transaction type and payment method once per execution instead of re-running scalar subqueries inside DML.
+          </p>
+          <p class="confidence">Confidence: 0.99</p>
+        </li>
+
+        <li id="rec2">
+          <h3>Replace row-by-row picking logic in <code>DataLoadSimulation.PickStockForCustomerOrders</code></h3>
+          <p>
+            This procedure scans candidate order lines, computes available stock per row, uses a cursor, and performs a transaction per order line. On <code>Sales.OrderLines</code> at 231K rows, this pattern is expensive and holds locks longer than needed.
+          </p>
+          <ul>
+            <li>Cursor + per-row transaction = high log overhead and poor scaling.</li>
+            <li><code>MERGE</code> against a table variable is unnecessary and adds complexity. For SQL Server, <code>MERGE</code> remains a construct to use sparingly in write-heavy code.</li>
+            <li>The procedure repeatedly queries <code>Warehouse.StockItemHoldings</code> and the allocation table variable one row at a time.</li>
+          </ul>
+          <p>
+            Prefer a set-based approach:
+            use a temp table for candidate lines, calculate available stock by stock item once, allocate only lines that fit, then update <code>Sales.OrderLines</code> and <code>Sales.Orders</code> in batches.
+          </p>
+          <p>
+            The existing indexes <code>IX_Sales_OrderLines_Perf_20160301_01</code> and <code>IX_Sales_OrderLines_Perf_20160301_02</code> are close, but not ideal for the exact access pattern. A filtered index on rows where <code>PickingCompletedWhen IS NULL</code> will usually outperform wider general-purpose indexes for this procedure.
+          </p>
+          <p class="confidence">Confidence: 0.95</p>
+        </li>
+
+        <li id="rec3">
+          <h3>Remove cursor-based invoice delivery updates in <code>DataLoadSimulation.RecordInvoiceDeliveries</code></h3>
+          <p>
+            The procedure iterates invoice by invoice, builds JSON repeatedly, and updates one row at a time in <code>Sales.Invoices</code>. With <code>Sales.Invoices</code> at 70K rows, a set-based preselection strategy is preferable.
+          </p>
+          <ul>
+            <li>The filter <code>ConfirmedDeliveryTime IS NULL AND InvoiceDate &lt; CAST(@StartingWhen AS date)</code> should be supported by a targeted filtered index.</li>
+            <li><code>ORDER BY NEWID()</code> for driver selection is expensive even though <code>Application.People</code> is modest today; it is still a poor pattern and non-scalable.</li>
+            <li>Repeated JSON modifications in a loop create extra CPU and log pressure.</li>
+          </ul>
+          <p>
+            At minimum, materialize candidate invoices into a temp table, choose a driver once, and batch updates. If exact per-row randomization is required for test data, do it on a preselected small working set rather than on the base tables directly.
+          </p>
+          <p class="confidence">Confidence: 0.90</p>
+        </li>
+
+        <li id="rec4">
+          <h3>Add targeted indexes for the reviewed code paths</h3>
+          <p>
+            The supplied usage data shows many indexes with zero observed usage, but several reviewed procedures still lack narrow indexes aligned to their predicates. Prioritize additive indexes that reduce scans and shorten update transactions.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Object / Query Pattern</th>
+                <th>Recommended Index Shape</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>Sales.OrderLines</code> where <code>PickingCompletedWhen IS NULL</code></td>
+                <td>Filtered NCI on <code>(OrderID, OrderLineID)</code> include <code>(StockItemID, Quantity, PickedQuantity)</code></td>
+                <td>Supports picking candidate search and order completion checks.</td>
+              </tr>
+              <tr>
+                <td><code>Sales.Invoices</code> where <code>ConfirmedDeliveryTime IS NULL</code> and <code>InvoiceDate</code></td>
+                <td>Filtered NCI on <code>(InvoiceDate, InvoiceID)</code> include <code>(CustomerID, ReturnedDeliveryData)</code></td>
+                <td>Supports delivery recording candidate scan.</td>
+              </tr>
+              <tr>
+                <td><code>Sales.CustomerTransactions</code> where <code>IsFinalized = 0</code></td>
+                <td>Filtered NCI on <code>(CustomerID, CustomerTransactionID)</code> include <code>(InvoiceID, OutstandingBalance)</code></td>
+                <td>Supports <code>ProcessCustomerPayments</code>.</td>
+              </tr>
+              <tr>
+                <td><code>Purchasing.PurchaseOrderLines</code> by <code>PurchaseOrderID</code></td>
+                <td>NCI on <code>(PurchaseOrderID, StockItemID)</code> include <code>(OrderedOuters, ReceivedOuters, ExpectedUnitPricePerOuter)</code></td>
+                <td>Supports purchase receipt processing and totals aggregation.</td>
+              </tr>
+              <tr>
+                <td><code>Purchasing.PurchaseOrders</code> where <code>IsOrderFinalized = 0</code> and <code>ExpectedDeliveryDate</code></td>
+                <td>Filtered NCI on <code>(ExpectedDeliveryDate, PurchaseOrderID)</code> include <code>(SupplierID)</code></td>
+                <td>Supports receipt cursor elimination or faster candidate selection.</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            Because this is SQL Server 2022 Enterprise-capable, use <code>ONLINE = ON</code> for eligible rowstore index operations in production-style environments.
+          </p>
+          <p class="confidence">Confidence: 0.93</p>
+        </li>
+
+        <li id="rec5">
+          <h3>Reduce trigger overhead and transaction risk in the archive triggers</h3>
+          <p>
+            All 16 reviewed triggers run in the caller transaction and insert full-row copies into archive tables on every update. The pattern is set-based, which is good, but it still increases write cost and lock duration.
+          </p>
+          <ul>
+            <li>Objects affected include <code>Application.TR_Application_StateProvinces_DataLoad_Modify</code>, <code>Warehouse.TR_Warehouse_StockItems_DataLoad_Modify</code>, <code>Sales.TR_Sales_Customers_DataLoad_Modify</code>, <code>Purchasing.TR_Purchasing_Suppliers_DataLoad_Modify</code>, and the related archive triggers listed in the input.</li>
+            <li><code>IF NOT UPDATE([ValidFrom])</code> is a brittle gate for business rules. It confirms the column appeared in the <code>SET</code> list, not that the value changed meaningfully.</li>
+            <li><code>THROW</code> followed by <code>ROLLBACK TRAN</code> is redundant and unreachable in practical terms; <code>THROW</code> transfers control immediately.</li>
+            <li>Some triggers have zero Query Store executions in the last 30 days, indicating they may not be active in recent workload, but they still add maintenance surface.</li>
+          </ul>
+          <p>
+            Recommended direction:
+            keep the set-based archive pattern if required for the simulation, but standardize error handling, remove dead code after <code>THROW</code>, and consider disabling or removing unused simulation-only triggers outside data-load scenarios. Where the base table is already temporal-capable by design, prefer one history mechanism, not multiple overlapping patterns.
+          </p>
+          <p class="confidence">Confidence: 0.88</p>
+        </li>
+
+        <li id="rec6">
+          <h3>Add consistent <code>TRY/CATCH</code> transaction handling to write procedures</h3>
+          <p>
+            Multiple procedures open explicit transactions with <code>XACT_ABORT ON</code> but without <code>TRY/CATCH</code>. <code>XACT_ABORT</code> helps, but predictable rollback and rethrow logic is still preferable for maintainability and error diagnostics.
+          </p>
+          <ul>
+            <li>Objects affected: <code>DataLoadSimulation.ProcessCustomerPayments</code>, <code>DataLoadSimulation.ReceivePurchaseOrders</code>, <code>DataLoadSimulation.PlaceSupplierOrders</code>, <code>DataLoadSimulation.PickStockForCustomerOrders</code>.</li>
+            <li>Without <code>TRY/CATCH</code>, troubleshooting failed batches is harder and partial statement sequencing is less explicit to future maintainers.</li>
+          </ul>
+          <p>
+            Standardize on a template:
+            <code>SET XACT_ABORT ON</code>, <code>BEGIN TRY</code>, <code>BEGIN TRAN</code>, work, <code>COMMIT</code>, then in <code>CATCH</code> perform <code>IF XACT_STATE() &lt;&gt; 0 ROLLBACK</code> and <code>THROW</code>.
+          </p>
+          <p class="confidence">Confidence: 0.91</p>
+        </li>
+
+        <li id="rec7">
+          <h3>Eliminate repeated lookup subqueries and <code>ORDER BY NEWID()</code></h3>
+          <p>
+            Several procedures fetch constant lookup IDs via repeated scalar subqueries inside DML and pick random staff records using <code>ORDER BY NEWID()</code>.
+          </p>
+          <ul>
+            <li><code>DataLoadSimulation.ProcessCustomerPayments</code> repeatedly looks up transaction type and payment method IDs.</li>
+            <li><code>DataLoadSimulation.ReceivePurchaseOrders</code> does the same for stock receipt and supplier invoice types.</li>
+            <li><code>DataLoadSimulation.RecordInvoiceDeliveries</code>, <code>ReceivePurchaseOrders</code>, <code>PlaceSupplierOrders</code>, and <code>PickStockForCustomerOrders</code> use <code>SELECT TOP(1) ... ORDER BY NEWID()</code> against <code>Application.People</code>.</li>
+          </ul>
+          <p>
+            Cache lookup IDs in variables once per execution. For pseudo-random person selection, prefer a two-step method such as selecting by a random offset against a pre-materialized employee list, or simply choose a deterministic staff member for simulation workloads when randomness is not analytically important.
+          </p>
+          <p class="confidence">Confidence: 0.90</p>
+        </li>
+
+        <li id="rec8">
+          <h3>Rewrite <code>DataLoadSimulation.UpdateCustomFields</code> to reduce write amplification</h3>
+          <p>
+            This procedure performs many full-table or pattern-based updates against <code>Warehouse.StockItems</code>, incrementing <code>ValidFrom</code> between passes. Because <code>Warehouse.TR_Warehouse_StockItems_DataLoad_Modify</code> archives every qualifying update, this multiplies writes into both the base and archive tables.
+          </p>
+          <ul>
+            <li>Many passes update the same rows repeatedly.</li>
+            <li>Repeated <code>LIKE '%...%'</code> predicates are non-sargable.</li>
+            <li>Each pass extends log volume and trigger activity.</li>
+          </ul>
+          <p>
+            Consolidate updates into a staged approach:
+            populate a temp table of target stock items once, derive final JSON payloads once per row, then perform a single update per target row. This is especially important because <code>Warehouse.StockItems</code> also contains larger columns such as <code>Photo</code>, <code>CustomFields</code>, and comments fields.
+          </p>
+          <p class="confidence">Confidence: 0.92</p>
+        </li>
+
+        <li id="rec9">
+          <h3>Review zero-usage indexes before keeping or dropping</h3>
+          <p>
+            The index summary shows many large indexes with zero seeks, scans, lookups, and updates during the observed period, including large structures on <code>Sales.Invoices</code>, <code>Sales.OrderLines</code>, <code>Sales.InvoiceLines</code>, and <code>Warehouse.StockItemTransactions</code>.
+          </p>
+          <ul>
+            <li>Do not drop solely from this snapshot; DMVs reset on restart and may reflect a limited sample.</li>
+            <li>However, several existing indexes appear mismatched to the reviewed code paths, especially where filtered indexes would be more selective.</li>
+            <li>Candidate review areas: overlapping <code>Sales.OrderLines</code> indexes and rarely-touched foreign-key indexes on wide transactional tables.</li>
+          </ul>
+          <p>
+            Keep the review evidence-based:
+            capture a longer usage window, compare against Query Store runtime stats, then consolidate overlapping rowstore indexes where safe.
+          </p>
+          <p class="confidence">Confidence: 0.78</p>
+        </li>
+
+        <li id="rec10">
+          <h3>Use SQL Server 2022 and Enterprise capabilities deliberately, but do not expect them to fix RBAR code</h3>
+          <p>
+            The platform supports Parameter Sensitive Plan optimization, DOP feedback, online index operations, partition switching, and columnstore. These are helpful, but the biggest issues here are procedural design and write patterns.
+          </p>
+          <ul>
+            <li>PSP may help parameterized predicate variation, but it will not repair cursor-heavy or overly chatty transaction patterns.</li>
+            <li>DOP feedback is largely irrelevant for the reviewed row-by-row procedures.</li>
+            <li>Online index create/rebuild is useful for implementing the targeted indexes safely.</li>
+            <li>For very large history growth such as <code>Warehouse.ColdRoomTemperatures_Archive</code>, page compression or partitioning can be considered after code-path fixes; this is a secondary physical-design improvement.</li>
+          </ul>
+          <p class="confidence">Confidence: 0.84</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="visuals">
+      <h2>Visual aids</h2>
+      <h3>Write-path contention map for the reviewed code</h3>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 360" role="img" aria-labelledby="diagramTitle diagramDesc">
+        <title id="diagramTitle">Simplified write-path contention map</title>
+        <desc id="diagramDesc">A diagram showing how reviewed procedures and triggers write to central transactional and archive tables, illustrating hotspots for locking and write amplification.</desc>
+        <rect x="20" y="30" width="210" height="70" rx="10" fill="none" stroke="#0B6E6E" stroke-width="2"/>
+        <text x="125" y="58" text-anchor="middle" fill="#0B6E6E" font-size="16" font-family="Segoe UI, Arial">ReceivePurchaseOrders</text>
+        <text x="125" y="80" text-anchor="middle" fill="#6B7280" font-size="13" font-family="Segoe UI, Arial">updates holdings + lines + transactions</text>
+
+        <rect x="20" y="140" width="210" height="70" rx="10" fill="none" stroke="#0B6E6E" stroke-width="2"/>
+        <text x="125" y="168" text-anchor="middle" fill="#0B6E6E" font-size="16" font-family="Segoe UI, Arial">PickStockForCustomerOrders</text>
+        <text x="125" y="190" text-anchor="middle" fill="#6B7280" font-size="13" font-family="Segoe UI, Arial">cursor + per-row transactions</text>
+
+        <rect x="20" y="250" width="210" height="70" rx="10" fill="none" stroke="#0B6E6E" stroke-width="2"/>
+        <text x="125" y="278" text-anchor="middle" fill="#0B6E6E" font-size="16" font-family="Segoe UI, Arial">UpdateCustomFields</text>
+        <text x="125" y="300" text-anchor="middle" fill="#6B7280" font-size="13" font-family="Segoe UI, Arial">many passes over StockItems</text>
+
+        <rect x="380" y="50" width="220" height="80" rx="10" fill="none" stroke="#0B6E6E" stroke-width="2"/>
+        <text x="490" y="80" text-anchor="middle" fill="#0B6E6E" font-size="16" font-family="Segoe UI, Arial">Warehouse.StockItemHoldings</text>
+        <text x="490" y="102" text-anchor="middle" fill="#6B7280" font-size="13" font-family="Segoe UI, Arial">central inventory rowset</text>
+
+        <rect x="380" y="155" width="220" height="80" rx="10" fill="none" stroke="#0B6E6E" stroke-width="2"/>
+        <text x="490" y="185" text-anchor="middle" fill="#0B6E6E" font-size="16" font-family="Segoe UI, Arial">Sales.OrderLines / Orders</text>
+        <text x="490" y="207" text-anchor="middle" fill="#6B7280" font-size="13" font-family="Segoe UI, Arial">pending picks and completion state</text>
+
+        <rect x="380" y="260" width="220" height="80" rx="10" fill="none" stroke="#0B6E6E" stroke-width="2"/>
+        <text x="490" y="290" text-anchor="middle" fill="#0B6E6E" font-size="16" font-family="Segoe UI, Arial">Warehouse.StockItems</text>
+        <text x="490" y="312" text-anchor="middle" fill="#6B7280" font-size="13" font-family="Segoe UI, Arial">JSON updates trigger archive writes</text>
+
+        <rect x="730" y="260" width="220" height="80" rx="10" fill="none" stroke="#0B6E6E" stroke-width="2"/>
+        <text x="840" y="290" text-anchor="middle" fill="#0B6E6E" font-size="16" font-family="Segoe UI, Arial">Warehouse.StockItems_Archive</text>
+        <text x="840" y="312" text-anchor="middle" fill="#6B7280" font-size="13" font-family="Segoe UI, Arial">extra writes per update via trigger</text>
+
+        <line x1="230" y1="65" x2="380" y2="90" stroke="#0B6E6E" stroke-width="2"/>
+        <line x1="230" y1="175" x2="380" y2="195" stroke="#0B6E6E" stroke-width="2"/>
+        <line x1="230" y1="285" x2="380" y2="300" stroke="#0B6E6E" stroke-width="2"/>
+        <line x1="600" y1="300" x2="730" y2="300" stroke="#0B6E6E" stroke-width="2"/>
+
+        <text x="655" y="288" text-anchor="middle" fill="#6B7280" font-size="12" font-family="Segoe UI, Arial">triggered archive insert</text>
+      </svg>
+      <p class="caption">
+        The diagram highlights why the primary recommendations focus on narrowing update scope, replacing RBAR logic, and reducing repeated writes to <code>Warehouse.StockItems</code> and related history tables.
+      </p>
+    </section>
+
+    <section id="scripts">
+      <h2>Scripts</h2>
+
+      <h3>Script 1: Create focused filtered and covering indexes for the reviewed procedures (implements Recommendation 4)</h3>
+      <pre><code>USE [WideWorldImporters];
+GO
+
+CREATE INDEX IX_Sales_OrderLines_PendingPick_Order
+ON [Sales].[OrderLines] (OrderID, OrderLineID)
+INCLUDE (StockItemID, Quantity, PickedQuantity)
+WHERE PickingCompletedWhen IS NULL
+WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+CREATE INDEX IX_Sales_Invoices_PendingDelivery_Date
+ON [Sales].[Invoices] (InvoiceDate, InvoiceID)
+INCLUDE (CustomerID, ReturnedDeliveryData)
+WHERE ConfirmedDeliveryTime IS NULL
+WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+CREATE INDEX IX_Sales_CustomerTransactions_Unfinalized_Customer
+ON [Sales].[CustomerTransactions] (CustomerID, CustomerTransactionID)
+INCLUDE (InvoiceID, OutstandingBalance)
+WHERE IsFinalized = 0
+WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+CREATE INDEX IX_Purchasing_PurchaseOrders_Open_ExpectedDeliveryDate
+ON [Purchasing].[PurchaseOrders] (ExpectedDeliveryDate, PurchaseOrderID)
+INCLUDE (SupplierID)
+WHERE IsOrderFinalized = 0
+WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO
+
+CREATE INDEX IX_Purchasing_PurchaseOrderLines_PurchaseOrderID_StockItemID
+ON [Purchasing].[PurchaseOrderLines] (PurchaseOrderID, StockItemID)
+INCLUDE (OrderedOuters, ReceivedOuters, ExpectedUnitPricePerOuter)
+WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+GO</code></pre>
+
+      <h3>Script 2: Correct update scope and reduce repeated lookups in <code>DataLoadSimulation.ReceivePurchaseOrders</code> (implements Recommendations 1, 6, and 7)</h3>
+      <pre><code>USE [WideWorldImporters];
+GO
+
+CREATE OR ALTER PROCEDURE [DataLoadSimulation].[ReceivePurchaseOrders]
+    @CurrentDateTime datetime2(7),
+    @StartingWhen datetime,
+    @EndOfTime datetime2(7),
+    @IsSilentMode bit
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    IF @IsSilentMode = 0
+    BEGIN
+        PRINT N'Receiving stock from purchase orders';
+    END;
+
+    DECLARE @StaffMemberPersonID int =
+    (
+        SELECT MIN(PersonID)
+        FROM [Application].[People]
+        WHERE IsEmployee &lt;&gt; 0
+    );
+
+    DECLARE @StockReceiptTransactionTypeID int =
+    (
+        SELECT TransactionTypeID
+        FROM [Application].[TransactionTypes]
+        WHERE TransactionTypeName = N'Stock Receipt'
+    );
+
+    DECLARE @SupplierInvoiceTransactionTypeID int =
+    (
+        SELECT TransactionTypeID
+        FROM [Application].[TransactionTypes]
+        WHERE TransactionTypeName = N'Supplier Invoice'
+    );
+
+    DECLARE @EFTPaymentMethodID int =
+    (
+        SELECT PaymentMethodID
+        FROM [Application].[PaymentMethods]
+        WHERE PaymentMethodName = N'EFT'
+    );
+
+    DECLARE @PurchaseOrderID int;
+    DECLARE @SupplierID int;
+    DECLARE @TotalExcludingTax decimal(18,2);
+    DECLARE @TotalIncludingTax decimal(18,2);
+
+    DECLARE PurchaseOrderList CURSOR FAST_FORWARD READ_ONLY FOR
+        SELECT po.PurchaseOrderID, po.SupplierID
+        FROM [Purchasing].[PurchaseOrders] AS po
+        WHERE po.IsOrderFinalized = 0
+          AND po.ExpectedDeliveryDate &gt;= @StartingWhen;
+
+    OPEN PurchaseOrderList;
+
+    FETCH NEXT FROM PurchaseOrderList INTO @PurchaseOrderID, @SupplierID;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        BEGIN TRY
+            BEGIN TRAN;
+
+            UPDATE pol
+            SET
+                pol.ReceivedOuters = pol.OrderedOuters,
+                pol.IsOrderLineFinalized = 1,
+                pol.LastReceiptDate = CAST(@StartingWhen AS date),
+                pol.LastEditedBy = @StaffMemberPersonID,
+                pol.LastEditedWhen = @StartingWhen
+            FROM [Purchasing].[PurchaseOrderLines] AS pol
+            WHERE pol.PurchaseOrderID = @PurchaseOrderID;
+
+            UPDATE sih
+            SET
+                sih.QuantityOnHand = sih.QuantityOnHand + (pol.ReceivedOuters * si.QuantityPerOuter),
+                sih.LastEditedBy = @StaffMemberPersonID,
+                sih.LastEditedWhen = @StartingWhen
+            FROM [Warehouse].[StockItemHoldings] AS sih
+            INNER JOIN [Purchasing].[PurchaseOrderLines] AS pol
+                ON sih.StockItemID = pol.StockItemID
+            INNER JOIN [Warehouse].[StockItems] AS si
+                ON sih.StockItemID = si.StockItemID
+            WHERE pol.PurchaseOrderID = @PurchaseOrderID;  -- critical fix
+
+            INSERT [Warehouse].[StockItemTransactions]
+            (
+                StockItemID, TransactionTypeID, CustomerID, InvoiceID, SupplierID,
+                PurchaseOrderID, TransactionOccurredWhen, Quantity, LastEditedBy, LastEditedWhen
+            )
+            SELECT
+                pol.StockItemID,
+                @StockReceiptTransactionTypeID,
+                NULL,
+                NULL,
+                @SupplierID,
+                pol.PurchaseOrderID,
+                @StartingWhen,
+                pol.ReceivedOuters * si.QuantityPerOuter,
+                @StaffMemberPersonID,
+                @StartingWhen
+            FROM [Purchasing].[PurchaseOrderLines] AS pol
+            INNER JOIN [Warehouse].[StockItems] AS si
+                ON pol.StockItemID = si.StockItemID
+            WHERE pol.PurchaseOrderID = @PurchaseOrderID;
+
+            UPDATE [Purchasing].[PurchaseOrders]
+            SET
+                IsOrderFinalized = 1,
+                LastEditedBy = @StaffMemberPersonID,
+                LastEditedWhen = @StartingWhen
+            WHERE PurchaseOrderID = @PurchaseOrderID;
+
+            SELECT
+                @TotalExcludingTax = SUM(ROUND(pol.OrderedOuters * pol.ExpectedUnitPricePerOuter, 2)),
+                @TotalIncludingTax = SUM(ROUND(pol.OrderedOuters * pol.ExpectedUnitPricePerOuter, 2))
+                                     + SUM(ROUND(pol.OrderedOuters * pol.ExpectedUnitPricePerOuter * si.TaxRate / 100.0, 2))
+            FROM [Purchasing].[PurchaseOrderLines] AS pol
+            INNER JOIN [Warehouse].[StockItems] AS si
+                ON pol.StockItemID = si.StockItemID
+            WHERE pol.PurchaseOrderID = @PurchaseOrderID;
+
+            INSERT [Purchasing].[SupplierTransactions]
+            (
+                SupplierID, TransactionTypeID, PurchaseOrderID, PaymentMethodID,
+                SupplierInvoiceNumber, TransactionDate, AmountExcludingTax, TaxAmount,
+                TransactionAmount, OutstandingBalance, FinalizationDate, LastEditedBy, LastEditedWhen
+            )
+            VALUES
+            (
+                @SupplierID,
+                @SupplierInvoiceTransactionTypeID,
+                @PurchaseOrderID,
+                @EFTPaymentMethodID,
+                CAST(ABS(CHECKSUM(NEWID())) % 10000 + 1 AS nvarchar(20)),
+                CAST(@StartingWhen AS date),
+                @TotalExcludingTax,
+                @TotalIncludingTax - @TotalExcludingTax,
+                @TotalIncludingTax,
+                @TotalIncludingTax,
+                NULL,
+                @StaffMemberPersonID,
+                @StartingWhen
+            );
+
+            COMMIT;
+        END TRY
+        BEGIN CATCH
+            IF XACT_STATE() &lt;&gt; 0
+                ROLLBACK;
+            THROW;
+        END CATCH;
+
+        FETCH NEXT FROM PurchaseOrderList INTO @PurchaseOrderID, @SupplierID;
+    END
+
+    CLOSE PurchaseOrderList;
+    DEALLOCATE PurchaseOrderList;
+END;
+GO</code></pre>
+
+      <h3>Script 3: Add safer transaction handling and lookup caching to <code>DataLoadSimulation.ProcessCustomerPayments</code> (implements Recommendations 6 and 7)</h3>
+      <pre><code>USE [WideWorldImporters];
+GO
+
+CREATE OR ALTER PROCEDURE [DataLoadSimulation].[ProcessCustomerPayments]
+    @CurrentDateTime datetime2(7),
+    @StartingWhen datetime,
+    @EndOfTime datetime2(7),
+    @IsSilentMode bit
+WITH EXECUTE AS OWNER
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    IF @IsSilentMode = 0
+    BEGIN
+        PRINT N'Processing customer payments';
+    END;
+
+    DECLARE @StaffMemberPersonID int =
+    (
+        SELECT MIN(PersonID)
+        FROM [Application].[People]
+        WHERE IsEmployee &lt;&gt; 0
+    );
+
+    DECLARE @CustomerPaymentReceivedTypeID int =
+    (
+        SELECT TransactionTypeID
+        FROM [Application].[TransactionTypes]
+        WHERE TransactionTypeName = N'Customer Payment Received'
+    );
+
+    DECLARE @EFTPaymentMethodID int =
+    (
+        SELECT PaymentMethodID
+        FROM [Application].[PaymentMethods]
+        WHERE PaymentMethodName = N'EFT'
+    );
+
+    DECLARE @TransactionsToReceive TABLE
+    (
+        CustomerTransactionID int PRIMARY KEY,
+        CustomerID int,
+        InvoiceID int NULL,
+        OutstandingBalance decimal(18,2)
+    );
+
+    INSERT @TransactionsToReceive (CustomerTransactionID, CustomerID, InvoiceID, OutstandingBalance)
+    SELECT CustomerTransactionID, CustomerID, InvoiceID, OutstandingBalance
+    FROM [Sales].[CustomerTransactions]
+    WHERE IsFinalized = 0;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        UPDATE ct
+        SET
+            ct.OutstandingBalance = 0,
+            ct.FinalizationDate = @StartingWhen,
+            ct.LastEditedBy = @StaffMemberPersonID,
+            ct.LastEditedWhen = @StartingWhen
+        FROM [Sales].[CustomerTransactions] AS ct
+        INNER JOIN @TransactionsToReceive AS ttr
+            ON ct.CustomerTransactionID = ttr.CustomerTransactionID;
+
+        INSERT [Sales].[CustomerTransactions]
+        (
+            CustomerID, TransactionTypeID, InvoiceID, PaymentMethodID, TransactionDate,
+            AmountExcludingTax, TaxAmount, TransactionAmount, OutstandingBalance,
+            FinalizationDate, LastEditedBy, LastEditedWhen
+        )
+        SELECT
+            ttr.CustomerID,
+            @CustomerPaymentReceivedTypeID,
+            NULL,
+            @EFTPaymentMethodID,
+            CAST(@StartingWhen AS date),
+            0,
+            0,
+            -SUM(ttr.OutstandingBalance),
+            0,
+            CAST(@StartingWhen AS date),
+            @StaffMemberPersonID,
+            @StartingWhen
+        FROM @TransactionsToReceive AS ttr
+        GROUP BY ttr.CustomerID;
+
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() &lt;&gt; 0
+            ROLLBACK;
+        THROW;
+    END CATCH;
+END;
+GO</code></pre>
+
+      <h3>Script 4: Simplify trigger error path and remove unreachable rollback code pattern (implements Recommendation 5)</h3>
+      <pre><code>USE [WideWorldImporters];
+GO
+
+CREATE OR ALTER TRIGGER [Application].[TR_Application_Countries_DataLoad_Modify]
+ON [Application].[Countries]
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF NOT UPDATE([ValidFrom])
+    BEGIN
+        THROW 51000, '[ValidFrom] must be updated when simulating data loads', 1;
+    END;
+
+    INSERT [Application].[Countries_Archive]
+    (
+        [CountryID], [CountryName], [FormalName], [IsoAlpha3Code], [IsoNumericCode],
+        [CountryType], [LatestRecordedPopulation], [Continent], [Region], [Subregion],
+        [Border], [LastEditedBy], [ValidFrom], [ValidTo]
+    )
+    SELECT
+        d.[CountryID], d.[CountryName], d.[FormalName], d.[IsoAlpha3Code], d.[IsoNumericCode],
+        d.[CountryType], d.[LatestRecordedPopulation], d.[Continent], d.[Region], d.[Subregion],
+        d.[Border], d.[LastEditedBy], d.[ValidFrom], i.[ValidFrom]
+    FROM inserted AS i
+    INNER JOIN deleted AS d
+        ON i.[CountryID] = d.[CountryID];
+END;
+GO</code></pre>
+
+      <h3>Script 5: Capture longer-horizon evidence for zero-usage indexes before making drop decisions (implements Recommendation 9)</h3>
+      <pre><code>USE [WideWorldImporters];
+GO
+
+SELECT
+    DB_NAME() AS DatabaseName,
+    OBJECT_SCHEMA_NAME(i.object_id) AS SchemaName,
+    OBJECT_NAME(i.object_id) AS ObjectName,
+    i.name AS IndexName,
+    i.type_desc,
+    us.user_seeks,
+    us.user_scans,
+    us.user_lookups,
+    us.user_updates,
+    p.rows AS ApproxRows,
+    CAST(SUM(a.total_pages) * 8.0 / 1024 AS decimal(18,2)) AS SizeMB
+FROM sys.indexes AS i
+INNER JOIN sys.partitions AS p
+    ON i.object_id = p.object_id
+   AND i.index_id = p.index_id
+INNER JOIN sys.allocation_units AS a
+    ON p.partition_id = a.container_id
+LEFT JOIN sys.dm_db_index_usage_stats AS us
+    ON us.database_id = DB_ID()
+   AND us.object_id = i.object_id
+   AND us.index_id = i.index_id
+WHERE i.object_id &gt; 100
+  AND i.is_hypothetical = 0
+  AND i.index_id &gt; 0
+GROUP BY
+    i.object_id, i.name, i.type_desc,
+    us.user_seeks, us.user_scans, us.user_lookups, us.user_updates,
+    p.rows
+ORDER BY SizeMB DESC, SchemaName, ObjectName, IndexName;
+GO</code></pre>
+    </section>
+  </main>
+</div>
+
+<footer class="footer">
+  <p>Generated by AI SQL Tuner Studio v2.0.2.0 using model gpt-5.4 with reasoning effort low. <a href="https://aisqltuner.com">https://aisqltuner.com</a></p>
+  <p>Based on analysis as of 2026-06-05 23:35:33 UTC</p>
+</footer>
+</body>
+</html>

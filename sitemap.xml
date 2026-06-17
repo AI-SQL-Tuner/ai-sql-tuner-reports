@@ -37,21 +37,6 @@
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/index-tuning-report-sqlstorm-rockypc-2026-05-13.html</loc>
-    <lastmod>2026-05-13</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/code-review-rockypc-sqlstorm-2026-05-11.html</loc>
-    <lastmod>2026-05-11</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-05-16.html</loc>
-    <lastmod>2026-05-16</lastmod>
-  </url>
-
-  <url>
     <loc>https://reports.aisqltuner.com/sql-code-review-rockypc-sqlstorm-2026-05-16.html</loc>
     <lastmod>2026-05-16</lastmod>
   </url>
@@ -74,11 +59,6 @@
   <url>
     <loc>https://reports.aisqltuner.com/index-tuning-rockypc-sqlstorm-dbo-votes-2026-05-25.html</loc>
     <lastmod>2026-05-25</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-05-30.html</loc>
-    <lastmod>2026-05-30</lastmod>
   </url>
 
   <url>
@@ -119,6 +99,46 @@
   <url>
     <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-06-04.html</loc>
     <lastmod>2026-06-04</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/code-review-rockypc-wideworldimporters-2026-06-05.html</loc>
+    <lastmod>2026-06-05</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-06-14.html</loc>
+    <lastmod>2026-06-14</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-06-14.html</loc>
+    <lastmod>2026-06-14</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-06-16.html</loc>
+    <lastmod>2026-06-16</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-06-16.html</loc>
+    <lastmod>2026-06-16</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/query-tuning-report-rockypc-sqlstorm-opus-4-7.html</loc>
+    <lastmod>2026-06-16</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/query-tuning-report-rockypc-sqlstorm-opus-4-8.html</loc>
+    <lastmod>2026-06-16</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/query-tuning-report-rockypc-sqlstorm-queryhash-0x932168333a069240.html</loc>
+    <lastmod>2026-06-16</lastmod>
   </url>
 
 </urlset>

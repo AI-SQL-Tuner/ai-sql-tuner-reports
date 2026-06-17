@@ -35,14 +35,15 @@ Curated sample reports currently available on the main site:
 
 - Home: https://reports.aisqltuner.com/
 - Report index: https://reports.aisqltuner.com/index.html
-- SQL Server Health Check Report - RockyPC - 2026-05-16: https://reports.aisqltuner.com/server-health-report-rockypc-2026-05-16.html
 - SQL Server Health Check Report - RockyPC - 2026-05-21 (Dark Mode): https://reports.aisqltuner.com/server-health-report-rockypc-dark-mode-2026-05-21.html
-- SQL Server Health Check Report - RockyPC - 2026-05-30: https://reports.aisqltuner.com/server-health-report-rockypc-2026-05-30.html
 - SQL Server Health Check Report - RockyPC - 2026-05-31: https://reports.aisqltuner.com/server-health-report-rockypc-2026-05-31.html
+- SQL Server Health Check Report - RockyPC - 2026-06-04: https://reports.aisqltuner.com/server-health-report-rockypc-2026-06-04.html
+- SQL Server Health Check Report - RockyPC - 2026-06-14: https://reports.aisqltuner.com/server-health-report-rockypc-2026-06-14.html
+- SQL Server Health Check Report - RockyPC - 2026-06-16: https://reports.aisqltuner.com/server-health-report-rockypc-2026-06-16.html
 - SQL Server Code Review - RockyPC.SQLStorm - 2026-05-10: https://reports.aisqltuner.com/aisqltuner-code-review-20260510.html
-- SQL Server Code Review - RockyPC / SQLStorm - 2026-05-11: https://reports.aisqltuner.com/code-review-rockypc-sqlstorm-2026-05-11.html
 - SQL Server Code Review - RockyPC / SQLStorm - 2026-05-16: https://reports.aisqltuner.com/sql-code-review-rockypc-sqlstorm-2026-05-16.html
 - SQL Server Code Review - RockyPC / SQLStorm - 2026-05-31: https://reports.aisqltuner.com/code-review-rockypc-sqlstorm-2026-05-31.html
+- SQL Server Code Review - RockyPC / WideWorldImporters - 2026-06-05: https://reports.aisqltuner.com/code-review-rockypc-wideworldimporters-2026-06-05.html
 - SQL Server Deadlock Analysis - RockyPC / tpch10.dbo.orders - 2026-05-05: https://reports.aisqltuner.com/sql-server-deadlock-analysis-rockypc-tpch10-dbo-orders-2026-05-05.html
 - SQL Server Deadlock Analysis - RockyPC / WideWorldImporters / tpch10 - 2026-05-31: https://reports.aisqltuner.com/deadlock-analysis-rockypc-wideworldimporters-tpch10-2026-05-31.html
 - Locking and Blocking Analysis Report - tpch10 Database - 2026-05-04: https://reports.aisqltuner.com/aisqltuner-locking-and-blocking-analysis-tpch10-20260504.html
@@ -50,12 +51,16 @@ Curated sample reports currently available on the main site:
 - Locking and Blocking Analysis Report - WideWorldImporters (Opus 4.8) - 2026-05-31: https://reports.aisqltuner.com/locking-and-blocking-analysis-wideworldimporters-opus-4-8-2026-05-31.html
 - Query Tuning Report - SQLStorm / RankedPosts / QueryHash 0xcb06a3190dea642c - 2026-05-17: https://reports.aisqltuner.com/query-tuning-report-sqlstorm-rankedposts-queryhash-0xcb06a3190dea642c-2026-05-17.html
 - Query Tuner Report - RockyPC / SQLStorm / QueryHash 0x932168333a069240 - 2026-05-31: https://reports.aisqltuner.com/query-tuner-rockypc-sqlstorm-0x932168333a069240-2026-05-31.html
+- Query Tuning Report - RockyPC / SQLStorm (Opus 4.7): https://reports.aisqltuner.com/query-tuning-report-rockypc-sqlstorm-opus-4-7.html
+- Query Tuning Report - RockyPC / SQLStorm (Opus 4.8): https://reports.aisqltuner.com/query-tuning-report-rockypc-sqlstorm-opus-4-8.html
+- Query Tuning Report - RockyPC / SQLStorm / QueryHash 0x932168333a069240: https://reports.aisqltuner.com/query-tuning-report-rockypc-sqlstorm-queryhash-0x932168333a069240.html
 - Index Tuning Report - RockyPC / SQLStorm / dbo.Votes - 2026-05-12 03:04:35 UTC: https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-dbo-votes-2026-05-12-03-04-35-utc.html
 - Index Tuning Report - RockyPC / SQLStorm - 2026-05-13: https://reports.aisqltuner.com/index-tuning-report-gpt-5-4-rockypc-sqlstorm-2026-05-13.html
-- Index Tuning Report - SQLStorm (RockyPC) - 2026-05-13: https://reports.aisqltuner.com/index-tuning-report-sqlstorm-rockypc-2026-05-13.html
 - Index Tuning Report - RockyPC / SQLStorm - 2026-05-25: https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-05-25.html
 - Index Tuning Report - RockyPC / SQLStorm / dbo.Votes - 2026-05-25: https://reports.aisqltuner.com/index-tuning-rockypc-sqlstorm-dbo-votes-2026-05-25.html
 - Index Tuning Report - RockyPC / SQLStorm - 2026-05-31: https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-05-31.html
+- Index Tuning Report - RockyPC / SQLStorm - 2026-06-14: https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-06-14.html
+- Index Tuning Report - RockyPC / SQLStorm - 2026-06-16: https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-06-16.html
 
 ## Archived Reports
 
