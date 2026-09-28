@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL Server Code Review – RockyPC / SQLStorm – 2026-09-20</title>
+<meta name="description" content="Prioritized SQL Server code, locking, query, and index review for RockyPC and SQLStorm.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "SQL Server Code Review – RockyPC / SQLStorm – 2026-09-20",
+  "about": "SQL Server T-SQL performance and locking code review",
+  "dateModified": "2026-09-20",
+  "author": {
+    "@type": "Organization",
+    "name": "AI SQL Tuner Studio"
+  },
+  "softwareVersion": "SQL Server 2022 16.0.1200.5",
+  "isPartOf": {
+    "@type": "SoftwareApplication",
+    "name": "SQLStorm",
+    "applicationCategory": "Database"
+  }
+}
+</script>
+<style>
+:root {
+  --paper: #FFFFFF;
+  --sidebar: #F6F8F9;
+  --ink: #111827;
+  --muted: #6B7280;
+  --teal: #0B6E6E;
+  --teal-soft: #EFF7F7;
+  --border: #D9E2E5;
+  --warning: #8A5A00;
+  --critical: #A12622;
+  --success: #176B45;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.6;
+}
+.layout { display: flex; min-height: 100vh; }
+aside {
+  width: 270px;
+  flex: 0 0 270px;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  padding: 28px 20px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+aside h2 { font-size: 1rem; margin-top: 0; color: var(--teal); }
+aside ul { list-style: none; padding: 0; margin: 0; }
+aside li { margin: 8px 0; }
+aside a, a { color: var(--teal); text-decoration: none; }
+aside a:hover, a:hover { text-decoration: underline; }
+main { max-width: 1180px; width: 100%; padding: 42px 56px 24px; }
+h1, h2, h3 { color: var(--teal); line-height: 1.25; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.7rem); margin: 0 0 8px; }
+h2 { border-bottom: 2px solid var(--teal); padding-bottom: 8px; margin-top: 42px; }
+h3 { margin-top: 26px; font-size: 1.15rem; }
+.subtitle { color: var(--muted); font-size: 1.05rem; margin-top: 0; }
+.meta, .callout, .risk {
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--teal);
+  background: var(--teal-soft);
+  padding: 16px 18px;
+  margin: 20px 0;
+  border-radius: 5px;
+}
+.risk { border-left-color: var(--critical); }
+.warning { border-left-color: var(--warning); }
+.success { border-left-color: var(--success); }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 18px 0 24px;
+  font-size: .94rem;
+}
+th, td {
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: var(--sidebar); color: var(--teal); }
+pre {
+  background: var(--teal-soft);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  overflow-x: auto;
+  white-space: pre;
+  color: var(--ink);
+  font: .86rem/1.5 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+.badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 700;
+  margin-right: 7px;
+}
+.p1 { background: #FCE8E6; color: var(--critical); }
+.p2 { background: #FFF3D6; color: var(--warning); }
+.p3 { background: #E4F4EC; color: var(--success); }
+ol { padding-left: 24px; }
+li { margin-bottom: 10px; }
+.small { color: var(--muted); font-size: .9rem; }
+footer {
+  margin-top: 52px;
+  padding: 22px 0 8px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: .9rem;
+}
+@media (max-width: 850px) {
+  .layout { display: block; }
+  aside {
+    width: auto;
+    height: auto;
+    position: relative;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  main { padding: 30px 20px; }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0B1220;
+    --sidebar: #162032;
+    --ink: #F3F4F6;
+    --muted: #9CA3AF;
+    --teal: #2DD4BF;
+    --teal-soft: #0F172A;
+    --border: #334155;
+    --warning: #FBBF24;
+    --critical: #F87171;
+    --success: #6EE7B7;
+  }
+  body { background: #0B1220; color: #F3F4F6; }
+  aside { background: #162032; border-color: #334155; }
+  h1, h2, h3, th, a, aside a { color: #2DD4BF; }
+  .meta, .callout, .risk, .warning, .success, pre { background: #0F172A; border-color: #334155; }
+  th { background: #162032; }
+  td { border-color: #334155; }
+  .p1 { background: #451A1A; color: #FCA5A5; }
+  .p2 { background: #45320B; color: #FDE68A; }
+  .p3 { background: #123524; color: #A7F3D0; }
+}
+</style>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<aside aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ul>
+    <li><a href="#summary">Executive summary</a></li>
+    <li><a href="#scope">Review scope and confidence</a></li>
+    <li><a href="#recommendations">Prioritized recommendations</a></li>
+    <li><a href="#locking">Locking and blocking</a></li>
+    <li><a href="#query-patterns">Query and T-SQL patterns</a></li>
+    <li><a href="#indexes">Index recommendations</a></li>
+    <li><a href="#object-findings">Object-specific findings</a></li>
+    <li><a href="#scripts">Scripts</a></li>
+    <li><a href="#supporting-scripts">Supporting scripts (not part of the change)</a></li>
+  </ul>
+</aside>
+
+<main>
+<header>
+  <h1>SQL Server Code Review – RockyPC / SQLStorm – 2026-09-20</h1>
+  <p class="subtitle">Tuning goal: Code Review</p>
+  <div class="meta">
+    <strong>Server:</strong> RockyPC<br>
+    <strong>Database:</strong> SQLStorm<br>
+    <strong>Engine:</strong> SQL Server 2022, version 16.0.1200.5, RTM-GDR<br>
+    <strong>Edition:</strong> Developer Edition (64-bit); Engine Edition: Enterprise<br>
+    <strong>Assessment timestamp:</strong> 2026-09-20 15:47:25 UTC
+  </div>
+</header>
+
+<section id="summary">
+<h2>Executive summary</h2>
+<p>The highest-confidence risks are avoidable locking and transaction duration in <code>dbo.usp_UpdateTablesWithDelay</code>, incorrect or explosive join logic in many reporting procedures, and missing supporting indexes on foreign-key and ranking columns. The supplied workload is small in execution count for most objects, so recommendations are based primarily on deterministic code defects, table size, and the reported scan-heavy index usage rather than measured duration or execution-plan evidence.</p>
+
+<table>
+<thead><tr><th>Priority</th><th>Finding</th><th>Impact</th><th>Confidence</th></tr></thead>
+<tbody>
+<tr><td><span class="badge p1">P1</span></td><td><code>dbo.usp_UpdateTablesWithDelay</code> holds a transaction open during a five-second <code>WAITFOR</code>.</td><td>Unnecessary locks, blocking, longer log exposure, and possible deadlock participation.</td><td>99%</td></tr>
+<tr><td><span class="badge p1">P1</span></td><td><code>dbo.sp00060</code> joins users to posts using <code>tp.UserId = rp.PostId</code>.</td><td>Incorrect results; the procedure also performs a leading-wildcard tag search.</td><td>99%</td></tr>
+<tr><td><span class="badge p1">P1</span></td><td>Several reports aggregate multiple one-to-many tables in one SELECT.</td><td>Fan-out multiplication causes incorrect counts and excessive scans/sorts.</td><td>98%</td></tr>
+<tr><td><span class="badge p2">P2</span></td><td>Large tables are scanned through clustered primary keys; no useful nonclustered indexes were reported.</td><td>Repeated scans of <code>Posts</code>, <code>Votes</code>, <code>Comments</code>, <code>Badges</code>, and <code>PostHistory</code>.</td><td>94%</td></tr>
+<tr><td><span class="badge p2">P2</span></td><td>Most supplied procedures have zero Query Store executions in the last 30 days.</td><td>Maintenance and tuning effort may be spent on unused code.</td><td>99%</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+<strong>Recommended implementation order:</strong> deploy the five supporting indexes, replace <code>dbo.sp00060</code>, and replace <code>dbo.usp_UpdateTablesWithDelay</code>. Then review or retire unused procedures before adding further indexes.
+</div>
+</section>
+
+<section id="scope">
+<h2>Review scope and confidence</h2>
+<ul>
+  <li><strong>100 stored procedures</strong> reviewed.</li>
+  <li><strong>0 functions, 0 triggers, and 0 views</strong> were provided.</li>
+  <li><strong>8 tables over 1,000 rows</strong> were reported: <code>Votes</code>, <code>PostHistory</code>, <code>Badges</code>, <code>Comments</code>, <code>Users</code>, <code>Posts</code>, <code>PostLinks</code>, and <code>Tags</code>.</li>
+  <li><strong>12 reported clustered indexes</strong> were reviewed from the index usage and size summary.</li>
+  <li>Only the most recent objects and summaries provided in the input were reviewed; this is not a complete database inventory.</li>
+  <li>No actual execution plans, wait statistics, deadlock graphs, blocking-chain samples, missing-index DMV candidates, or Query Store duration/CPU/IO metrics were supplied.</li>
+</ul>
+
+<table>
+<thead><tr><th>Confidence scale</th><th>Meaning for this review</th></tr></thead>
+<tbody>
+<tr><td>High, 90–99%</td><td>Directly evident from supplied T-SQL or reported usage data.</td></tr>
+<tr><td>Medium, 70–89%</td><td>Strong pattern-based recommendation, but plan or workload confirmation is absent.</td></tr>
+<tr><td>Range estimates</td><td>Storage estimates use reported row counts and explicit width assumptions because column widths and existing nonclustered-index metadata were not provided.</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="recommendations">
+<h2>Detailed prioritized recommendations</h2>
+<ol>
+<li>
+  <strong>Remove the five-second wait from the open transaction.</strong>
+  <span class="badge p1">P1</span>
+  <span class="small">Confidence: 99%</span>
+  <p><code>dbo.usp_UpdateTablesWithDelay</code> starts a transaction, updates <code>dbo.Users</code>, waits five seconds, and only then updates <code>dbo.Posts</code>. Locks acquired by the first update can remain held for the entire delay. The revised definition in the Scripts section preserves the parameters and successful result columns while eliminating the deliberate lock hold.</p>
+</li>
+<li>
+  <strong>Correct the active ranking procedure and remove its invalid join.</strong>
+  <span class="badge p1">P1</span>
+  <span class="small">Confidence: 99%</span>
+  <p><code>dbo.sp00060</code> joins <code>TopUsers.UserId</code> to <code>RankedPosts.PostId</code>, which is a key-domain error. Its tag predicate <code>p.Tags LIKE '%' + t.TagName + '%'</code> is non-sargable and can match partial tag names. The revised procedure keeps the same output columns and order, returns the latest question for each ranked contributor, and removes the invalid tag join.</p>
+</li>
+<li>
+  <strong>Pre-aggregate each one-to-many relationship before joining.</strong>
+  <span class="badge p1">P1</span>
+  <span class="small">Confidence: 98%</span>
+  <p>Procedures including <code>dbo.sp09991</code>, <code>dbo.sp09950</code>, <code>dbo.sp09941</code>, <code>dbo.sp09908</code>, <code>dbo.sp09814</code>, and many related reports join posts, comments, votes, badges, or history in the same aggregation. A post with 10 comments and 20 votes can produce 200 intermediate rows before aggregation. The safer pattern is separate aggregates by key, followed by one-to-one joins. This is a code-review standard recommendation across the supplied reporting set.</p>
+</li>
+<li>
+  <strong>Eliminate accidental Cartesian joins and joins by display name.</strong>
+  <span class="badge p1">P1</span>
+  <span class="small">Confidence: 99%</span>
+  <p>Examples include <code>dbo.sp09990</code>, <code>dbo.sp09952</code>, <code>dbo.sp09895</code>, <code>dbo.sp09881</code>, <code>dbo.sp09878</code>, <code>dbo.sp09860</code>, and <code>dbo.sp09855</code>. Predicates such as <code>ON UA.PostsChanged &gt; 0</code>, <code>ON 1=1</code>, and joins from <code>DisplayName</code> to <code>DisplayName</code> can multiply rows or associate unrelated people. Use stable key joins such as <code>UserId</code>, <code>OwnerUserId</code>, and <code>PostId</code>.</p>
+</li>
+<li>
+  <strong>Add targeted nonclustered indexes for the dominant access paths.</strong>
+  <span class="badge p2">P2</span>
+  <span class="small">Confidence: 94%</span>
+  <p>The supplied usage summary shows substantial scans on clustered primary keys, including 3,220 scans on <code>dbo.Posts</code>, 1,606 on <code>dbo.Votes</code>, 1,102 on <code>dbo.Comments</code>, 904 on <code>dbo.Badges</code>, and 672 on <code>dbo.PostHistory</code>. The scripts add indexes for owner-based post lookups, vote aggregation, comment aggregation, badge aggregation, and history lookups.</p>
+</li>
+<li>
+  <strong>Use deterministic date boundaries and avoid hard-coded historical timestamps.</strong>
+  <span class="badge p2">P2</span>
+  <span class="small">Confidence: 97%</span>
+  <p>Many procedures use constants such as <code>'2024-10-01 12:34:56'</code> for “recent” reporting. This makes results stale and may prevent a report from representing its stated period. Prefer a parameter, a clearly documented fixed reporting date, or a single statement-start value such as <code>DATEADD(DAY, -30, CONVERT(datetime2, SYSUTCDATETIME()))</code>. Use half-open ranges where possible: <code>CreationDate &gt;= @StartDate AND CreationDate &lt; @EndDate</code>.</p>
+</li>
+<li>
+  <strong>Replace non-sargable tag searches with normalized tag relationships.</strong>
+  <span class="badge p2">P2</span>
+  <span class="small">Confidence: 96%</span>
+  <p>Expressions such as <code>Tags LIKE '%' + TagName + '%'</code>, <code>Tags LIKE '%&lt;' + TagName + '&gt;%'</code>, and repeated <code>STRING_SPLIT</code> calls cannot use an ordinary B-tree index efficiently. The durable design is a junction table such as <code>PostTags(PostId, TagId)</code> maintained at write time. No helper table is scripted because that table and its columns were not present in the supplied input, and executable recommendations are restricted to supplied objects.</p>
+</li>
+<li>
+  <strong>Prioritize active objects and retire unused test procedures.</strong>
+  <span class="badge p2">P2</span>
+  <span class="small">Confidence: 99%</span>
+  <p>Only <code>dbo.sp00060</code>, <code>dbo.sp00060Fixed</code>, and <code>dbo.sp00996</code>, <code>dbo.sp00992</code>, <code>dbo.sp00990</code>, <code>dbo.sp00987</code>, and <code>dbo.sp00099</code> show six executions in the supplied 30-day Query Store summary. Most other procedures show zero executions. Do not add indexes solely for an unexecuted report; first classify those procedures as retained, deprecated, or test-only.</p>
+</li>
+</ol>
+</section>
+
+<section id="locking">
+<h2>Locking and blocking analysis</h2>
+<div class="risk">
+<strong>Direct locking defect:</strong> <code>dbo.usp_UpdateTablesWithDelay</code> holds update locks and potentially broader transaction locks while executing <code>WAITFOR DELAY '00:00:05'</code>. The procedure is called repeatedly by <code>dbo.usp_UpdateTablesInLoop</code>, which can amplify concurrency pressure.
+</div>
+<ul>
+  <li><code>SET XACT_ABORT ON</code> is appropriate, but it does not make a five-second wait safe inside the transaction.</li>
+  <li>The procedure updates by primary key, so the individual row access is selective; the problem is transaction duration, not the key lookup itself.</li>
+  <li>Long reporting scans can acquire and retain shared locks long enough to interfere with these updates under the default read-committed isolation level.</li>
+  <li>No blocking-chain data or deadlock graph was provided; therefore no specific session-to-session blocking diagram can be inferred safely.</li>
+</ul>
+<p>Indexing the foreign-key lookup columns should reduce scan duration and the time reporting statements hold shared locks. Indexing will not compensate for an intentional wait inside a transaction.</p>
+</section>
+
+<section id="query-patterns">
+<h2>Query and T-SQL patterns</h2>
+<table>
+<thead><tr><th>Pattern</th><th>Representative objects</th><th>Risk</th><th>Preferred approach</th></tr></thead>
+<tbody>
+<tr><td>Multiple one-to-many joins before aggregation</td><td><code>sp09991</code>, <code>sp09941</code>, <code>sp09814</code></td><td>Counts and sums multiply.</td><td>Aggregate votes, comments, badges, and history independently by key.</td></tr>
+<tr><td>Correlated count per output row</td><td><code>sp09946</code>, <code>sp09974</code>, <code>sp09940</code></td><td>Repeated probes or scans.</td><td>Pre-aggregate once and join by <code>PostId</code> or <code>UserId</code>.</td></tr>
+<tr><td>Leading-wildcard search</td><td><code>sp00060</code>, <code>sp09990</code>, <code>sp09982</code></td><td>Cannot seek a normal index.</td><td>Normalize tags or use a fit-for-purpose full-text design where semantics permit.</td></tr>
+<tr><td>Join by non-key text</td><td><code>sp09909</code>, <code>sp09867</code>, <code>sp09828</code></td><td>Duplicate or incorrect matches.</td><td>Carry and join on integer identifiers.</td></tr>
+<tr><td>OR predicates on ranked result</td><td><code>sp09900</code>, <code>sp09876</code></td><td>May force broad scans and ranking work.</td><td>Use separate branches with <code>UNION ALL</code> only when duplicate semantics are defined.</td></tr>
+<tr><td>Non-deterministic ranking ties</td><td>Many procedures using <code>ROW_NUMBER()</code> or <code>RANK()</code></td><td>Output changes between executions for ties.</td><td>Add a stable tie breaker such as <code>Id</code> after the business sort columns.</td></tr>
+<tr><td>Presentation output via <code>PRINT</code></td><td><code>usp_UpdateTablesInLoop</code>, <code>usp_UpdateTablesWithDelay</code></td><td>Chatty client output and poor application contract.</td><td>Return structured result sets and use an application logger for diagnostics.</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="indexes">
+<h2>Index recommendations</h2>
+<p>All new indexes below use <code>DATA_COMPRESSION = PAGE</code>, available on the reported Enterprise engine edition. The estimates are ranges because the input does not provide column data types, nullability, average variable-length widths, page density, or existing nonclustered indexes.</p>
+
+<table>
+<thead><tr><th>Index</th><th>Purpose</th><th>Rows</th><th>Estimated size and assumptions</th></tr></thead>
+<tbody>
+<tr>
+<td><code>IX_Posts_OwnerUserId_PostTypeId_CreationDate</code></td>
+<td>Owner lookups and latest question retrieval in <code>sp00060</code> and related reports.</td>
+<td>246,672</td>
+<td><strong>15–35 MB new.</strong> Assumes 12–24 bytes of key data, 4–8 bytes of included clustering key overhead, row/page overhead, and PAGE compression.</td>
+</tr>
+<tr>
+<td><code>IX_Votes_PostId_VoteTypeId</code></td>
+<td>Vote aggregation by post and vote type.</td>
+<td>926,084</td>
+<td><strong>10–25 MB new.</strong> Assumes 8–16 bytes of key data plus row/page overhead and PAGE compression.</td>
+</tr>
+<tr>
+<td><code>IX_Comments_PostId</code></td>
+<td>Comment counts and post-to-comment joins.</td>
+<td>351,440</td>
+<td><strong>8–18 MB new.</strong> Assumes an 8-byte key plus row/page overhead and PAGE compression.</td>
+</tr>
+<tr>
+<td><code>IX_Badges_UserId</code></td>
+<td>Badge counts and user-to-badge joins.</td>
+<td>439,352</td>
+<td><strong>4–10 MB new.</strong> Assumes an 8-byte key plus row/page overhead and PAGE compression.</td>
+</tr>
+<tr>
+<td><code>IX_PostHistory_PostId_CreationDate</code></td>
+<td>History counts and latest-history lookups.</td>
+<td>847,593</td>
+<td><strong>20–60 MB new.</strong> Assumes 12–24 bytes of key data plus row/page overhead and PAGE compression.</td>
+</tr>
+</tbody>
+</table>
+
+<h3>Existing index observations</h3>
+<ul>
+  <li><code>dbo.PostHistory</code> clustered primary key: 820.3 MB, 672 scans, no seeks. The size is not itself evidence that it should be dropped; the index is the table’s clustered storage and supports the primary key.</li>
+  <li><code>dbo.Posts</code> clustered primary key: 400.3 MB, 3,220 scans and 288 seeks. This is the strongest signal for a covering/access-path index rather than a clustered-key change.</li>
+  <li><code>dbo.Comments</code>, <code>dbo.Votes</code>, and <code>dbo.Badges</code> clustered primary keys have scans but no reported seeks. The proposed foreign-key indexes target the access predicates causing those scans.</li>
+  <li>No index is recommended for dropping or modifying. Therefore, dropped-index reclamation is <strong>0 MB</strong>, and modified-index before/after/net estimates are not applicable.</li>
+</ul>
+
+<div class="callout">
+<strong>Estimated net storage impact:</strong> adding the five indexes is expected to consume approximately <strong>57–148 MB</strong> after PAGE compression. Dropped-index reclamation is <strong>0 MB</strong>. Estimated net change is therefore <strong>+57 to +148 MB</strong>.
+</div>
+</section>
+
+<section id="object-findings">
+<h2>Object-specific findings</h2>
+<ul>
+  <li><strong><code>dbo.sp00060Fixed</code>:</strong> substantially safer than <code>dbo.sp00060</code> because it separates post, vote, and badge aggregates and uses <code>OUTER APPLY</code>. It should still be reviewed for its business definition: it returns one latest question per user, not one latest post per tag.</li>
+  <li><strong><code>dbo.usp_UpdateTablesInLoop</code>:</strong> uses <code>ORDER BY NEWID()</code> against <code>Users</code> and <code>Posts</code>, requiring broad randomization and sorting. It is unused in the last 30 days and appears test-oriented. Avoid scheduling it in production.</li>
+  <li><strong><code>dbo.sp09995</code>:</strong> uses a fixed historical date and aggregates votes after ranking recent posts. Its “recent” result will become stale as time advances.</li>
+  <li><strong><code>dbo.sp09990</code> and <code>dbo.sp09982</code>:</strong> contain joins whose predicates do not relate the intended entities, creating likely Cartesian multiplication.</li>
+  <li><strong><code>dbo.sp09978</code>:</strong> the expression <code>DATEADD(YEAR, 1, 0)</code> is subtracted from a date to represent a year; use an explicit date boundary to make intent and datatype behavior clear.</li>
+  <li><strong><code>dbo.sp00990</code>:</strong> joins <code>RankedPosts.PostId</code> to <code>UserReputation.UserId</code>, another key-domain mismatch analogous to <code>sp00060</code>.</li>
+  <li><strong><code>dbo.sp00099</code>:</strong> selects the badge row at the maximum date but can return multiple rows when dates tie. Add a deterministic <code>TOP (1)</code> ordering if this object is retained.</li>
+  <li><strong>Unused procedures:</strong> the zero-execution status is not proof that an object is safe to delete, but it is strong evidence to avoid tuning it before confirming ownership and retention requirements.</li>
+</ul>
+</section>
+
+<section id="scripts">
+<h2>Scripts</h2>
+
+<h3>Add compressed supporting indexes for the recommended access paths</h3>
+<pre><code>USE [SQLStorm];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Posts')
+      AND name = N'IX_Posts_OwnerUserId_PostTypeId_CreationDate'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Posts_OwnerUserId_PostTypeId_CreationDate
+    ON dbo.Posts (OwnerUserId, PostTypeId, CreationDate DESC, Id DESC)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Votes')
+      AND name = N'IX_Votes_PostId_VoteTypeId'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Votes_PostId_VoteTypeId
+    ON dbo.Votes (PostId, VoteTypeId)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Comments')
+      AND name = N'IX_Comments_PostId'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Comments_PostId
+    ON dbo.Comments (PostId)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Badges')
+      AND name = N'IX_Badges_UserId'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Badges_UserId
+    ON dbo.Badges (UserId)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.PostHistory')
+      AND name = N'IX_PostHistory_PostId_CreationDate'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_PostHistory_PostId_CreationDate
+    ON dbo.PostHistory (PostId, CreationDate DESC, Id DESC)
+    WITH (ONLINE = ON, DATA_COMPRESSION = PAGE);
+END;
+GO</code></pre>
+
+<h3>Replace dbo.sp00060 with a correct, deterministic contributor report</h3>
+<pre><code>USE [SQLStorm];
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[sp00060]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH PostCounts AS
+    (
+        SELECT
+            p.OwnerUserId AS UserId,
+            COUNT_BIG(*) AS TotalPosts
+        FROM dbo.Posts AS p
+        WHERE p.OwnerUserId IS NOT NULL
+        GROUP BY p.OwnerUserId
+    ),
+    VoteCounts AS
+    (
+        SELECT
+            p.OwnerUserId AS UserId,
+            SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpVotes,
+            SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownVotes
+        FROM dbo.Posts AS p
+        LEFT JOIN dbo.Votes AS v
+            ON v.PostId = p.Id
+           AND v.VoteTypeId IN (2, 3)
+        WHERE p.OwnerUserId IS NOT NULL
+        GROUP BY p.OwnerUserId
+    ),
+    BadgeCounts AS
+    (
+        SELECT
+            b.UserId,
+            COUNT_BIG(*) AS BadgeCount
+        FROM dbo.Badges AS b
+        GROUP BY b.UserId
+    ),
+    TopUsers AS
+    (
+        SELECT
+            u.Id AS UserId,
+            u.DisplayName,
+            CONVERT(int, ISNULL(pc.TotalPosts, 0)) AS TotalPosts,
+            CONVERT(int, ISNULL(vc.UpVotes, 0)) AS UpVotes,
+            CONVERT(int, ISNULL(vc.DownVotes, 0)) AS DownVotes,
+            CONVERT(int, ISNULL(bc.BadgeCount, 0)) AS BadgeCount,
+            DENSE_RANK() OVER
+            (
+                ORDER BY
+                    ISNULL(pc.TotalPosts, 0) DESC,
+                    ISNULL(vc.UpVotes, 0) - ISNULL(vc.DownVotes, 0) DESC
+            ) AS UserRank
+        FROM dbo.Users AS u
+        LEFT JOIN PostCounts AS pc
+            ON pc.UserId = u.Id
+        LEFT JOIN VoteCounts AS vc
+            ON vc.UserId = u.Id
+        LEFT JOIN BadgeCounts AS bc
+            ON bc.UserId = u.Id
+        WHERE ISNULL(pc.TotalPosts, 0) &gt; 10
+    )
+    SELECT
+        tu.UserRank,
+        tu.DisplayName,
+        tu.TotalPosts,
+        tu.UpVotes,
+        tu.DownVotes,
+        tu.BadgeCount,
+        lp.Title AS LatestPostTitle,
+        lp.CreationDate AS LatestPostDate,
+        CASE
+            WHEN lp.PostId IS NULL THEN NULL
+            ELSE 'Latest'
+        END AS PostStatus
+    FROM TopUsers AS tu
+    OUTER APPLY
+    (
+        SELECT TOP (1)
+            p.Id AS PostId,
+            p.Title,
+            p.CreationDate
+        FROM dbo.Posts AS p
+        WHERE p.OwnerUserId = tu.UserId
+          AND p.PostTypeId = 1
+        ORDER BY p.CreationDate DESC, p.Id DESC
+    ) AS lp
+    ORDER BY tu.UserRank, lp.CreationDate DESC;
+END;
+GO</code></pre>
+
+<h3>Replace dbo.usp_UpdateTablesWithDelay without waiting inside the transaction</h3>
+<pre><code>USE [SQLStorm];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_UpdateTablesWithDelay
+    @UserId INT,
+    @NewReputation INT,
+    @PostId INT,
+    @NewScore INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        UPDATE dbo.Users
+        SET Reputation = @NewReputation,
+            LastAccessDate = GETDATE()
+        WHERE Id = @UserId;
+
+        DECLARE @RowsAffected1 INT = @@ROWCOUNT;
+
+        UPDATE dbo.Posts
+        SET Score = @NewScore,
+            LastActivityDate = GETDATE()
+        WHERE Id = @PostId;
+
+        DECLARE @RowsAffected2 INT = @@ROWCOUNT;
+
+        COMMIT TRANSACTION;
+
+        SELECT
+            'Success' AS Status,
+            'Both tables updated successfully' AS Message,
+            @RowsAffected1 AS UsersRowsAffected,
+            @RowsAffected2 AS PostsRowsAffected;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT &gt; 0
+            ROLLBACK TRANSACTION;
+
+        SELECT
+            'Error' AS Status,
+            ERROR_NUMBER() AS ErrorNumber,
+            ERROR_MESSAGE() AS ErrorMessage,
+            ERROR_LINE() AS ErrorLine,
+            ERROR_PROCEDURE() AS ErrorProcedure;
+
+        THROW;
+    END CATCH;
+END;
+GO</code></pre>
+</section>
+
+<section id="supporting-scripts">
+<h2>Supporting scripts (not part of the change)</h2>
+<p>No executable diagnostic, validation, rollback, or measurement scripts are included. The supplied input did not contain execution plans, wait samples, blocking chains, deadlock graphs, or complete nonclustered-index metadata, and the requested Scripts section is reserved for implementation scripts.</p>
+</section>
+
+
+</main>
+</div>
+<footer>
+  Generated by AI SQL Tuner Studio v3.0.0.0 using model gpt-5.6-luna with reasoning effort low.
+  <br>
+  Based on analysis as of 2026-09-20 15:47:25 UTC.
+  <br>
+  <a href="https://aisqltuner.com">aisqltuner.com</a>
+</footer>
+</body>
+</html>

@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Locking and Blocking Analysis – RockyPC/WideWorldImporters – 2026-09-27T17:10:29Z</title>
+<meta name="description" content="SQL Server locking and blocking analysis for RockyPC and WideWorldImporters.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Locking and Blocking Analysis – RockyPC/WideWorldImporters – 2026-09-27T17:10:29Z",
+  "about": "SQL Server locking and blocking analysis",
+  "dateModified": "2026-09-27T17:10:29Z",
+  "author": {
+    "@type": "Organization",
+    "name": "AI SQL Tuner Studio"
+  }
+}
+</script>
+<style>
+:root {
+  --paper: #FFFFFF;
+  --sidebar: #F6F8F9;
+  --text: #111827;
+  --muted: #6B7280;
+  --teal: #0B6E6E;
+  --teal-soft: #EFF7F7;
+  --border: #D9E2E5;
+  --warn: #8A5A00;
+  --danger: #A12A2A;
+  --good: #176B45;
+  --shadow: 0 2px 10px rgba(17,24,39,.06);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.6;
+}
+.layout { display: flex; min-height: 100vh; }
+aside {
+  width: 270px;
+  flex: 0 0 270px;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  padding: 28px 20px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+aside h2 { font-size: 1rem; margin-top: 0; color: var(--teal); }
+aside ol { padding-left: 20px; margin: 0; }
+aside li { margin: 7px 0; }
+a { color: var(--teal); text-decoration: none; }
+a:hover, a:focus { text-decoration: underline; }
+main {
+  width: min(1160px, 100%);
+  padding: 42px 48px 30px;
+}
+h1, h2, h3 { color: var(--teal); line-height: 1.25; }
+h1 { font-size: clamp(1.8rem, 3vw, 2.7rem); margin: 0 0 8px; }
+h2 { border-bottom: 2px solid var(--teal); padding-bottom: 7px; margin-top: 42px; }
+h3 { margin-top: 26px; }
+.subtitle { color: var(--muted); font-size: 1.05rem; margin-bottom: 24px; }
+.meta, .card, .callout {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  margin: 16px 0;
+}
+.meta { background: var(--teal-soft); }
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.metric { font-size: 1.6rem; font-weight: 700; color: var(--teal); }
+.metric-label { color: var(--muted); font-size: .9rem; }
+.callout { border-left: 5px solid var(--teal); background: var(--teal-soft); }
+.callout.warning { border-left-color: var(--warn); }
+.callout.danger { border-left-color: var(--danger); }
+.callout.good { border-left-color: var(--good); }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0 22px;
+  font-size: .94rem;
+}
+th, td { border: 1px solid var(--border); padding: 10px 12px; vertical-align: top; text-align: left; }
+th { background: var(--teal-soft); color: var(--teal); }
+code, pre {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+code { background: var(--teal-soft); padding: 2px 5px; border-radius: 4px; }
+pre {
+  background: var(--teal-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+pre code { background: transparent; padding: 0; }
+.small, .evidence { color: var(--muted); font-size: .92rem; }
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: .78rem;
+  font-weight: 700;
+  background: var(--teal-soft);
+  color: var(--teal);
+  border: 1px solid var(--border);
+}
+.badge.danger { color: var(--danger); }
+.badge.warning { color: var(--warn); }
+svg { max-width: 100%; height: auto; }
+figure { margin: 22px 0; }
+figcaption { color: var(--muted); font-size: .9rem; margin-top: 8px; }
+footer {
+  border-top: 1px solid var(--border);
+  margin-top: 48px;
+  padding-top: 20px;
+  color: var(--muted);
+  font-size: .9rem;
+}
+@media (max-width: 850px) {
+  .layout { display: block; }
+  aside { width: 100%; height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--border); }
+  main { padding: 28px 20px; }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0B1220;
+    --sidebar: #162032;
+    --text: #F3F4F6;
+    --muted: #9CA3AF;
+    --teal: #2DD4BF;
+    --teal-soft: #0F172A;
+    --border: #334155;
+    --warn: #FBBF24;
+    --danger: #F87171;
+    --good: #4ADE80;
+    --shadow: 0 2px 10px rgba(0,0,0,.25);
+  }
+  body { background: #0B1220; color: #F3F4F6; }
+  aside { background: #162032; }
+  pre, code { background: #0F172A; }
+  .meta, .callout { background: #0F172A; }
+  th { background: #0F172A; }
+  a, h1, h2, h3, th, .metric { color: #2DD4BF; }
+}
+</style>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<aside aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#executive-summary">Executive summary</a></li>
+    <li><a href="#scope">Scope and platform</a></li>
+    <li><a href="#impact">Blocking confirmation and impact</a></li>
+    <li><a href="#tree">Blocking tree</a></li>
+    <li><a href="#root-cause">Root-cause classification</a></li>
+    <li><a href="#recommendations">Detailed prioritized recommendations</a></li>
+    <li><a href="#historical">Historical deadlocks and Query Store</a></li>
+    <li><a href="#scripts">Scripts</a></li>
+    <li><a href="#supporting-scripts">Supporting scripts</a></li>
+  </ol>
+</aside>
+
+<main>
+<header>
+  <h1>Locking and Blocking Analysis – RockyPC/WideWorldImporters – 2026-09-27T17:10:29Z</h1>
+  <div class="subtitle">Tuning goal: <strong>Locking and Blocking Analysis</strong></div>
+</header>
+
+<section id="scope">
+  <h2>Scope and platform</h2>
+  <div class="meta">
+    <strong>Server:</strong> RockyPC<br>
+    <strong>Database:</strong> WideWorldImporters<br>
+    <strong>Version:</strong> SQL Server 2022 (16.x), RTM-GDR, 16.0.1200.5<br>
+    <strong>Edition:</strong> Developer Edition (64-bit); engine edition Enterprise<br>
+    <strong>Snapshot basis:</strong> SQL Server start time 2026-09-25 23:38:04 local time; uptime 37.5 hours. Usage, missing-index, operational-statistics, and plan-cache figures cover only this post-startup period.
+  </div>
+  <p class="small">The snapshot also contains blocking activity in SQLStorm and deadlock history from DeadlockDemo. Those entries are reported separately and are not treated as WideWorldImporters evidence unless explicitly stated.</p>
+</section>
+
+<section id="executive-summary">
+  <h2>Executive summary</h2>
+  <div class="callout danger">
+    <strong>Blocking is active.</strong> The most consequential current chain is session 64 holding an exclusive key lock on <code>Application.StateProvinces</code> while session 65 waits on that key for 114,572,961 ms. Session 64 has an open user transaction with no active statement shown.
+  </div>
+  <div class="card-grid">
+    <div class="card"><div class="metric">3</div><div class="metric-label">unique session IDs shown as waiters: 52, 53, and 65</div></div>
+    <div class="card"><div class="metric">1</div><div class="metric-label">clear current lock waiter: session 65</div></div>
+    <div class="card"><div class="metric">114,572,961 ms</div><div class="metric-label">longest reported wait, session 65</div></div>
+    <div class="card"><div class="metric">0.4 MB</div><div class="metric-label">StateProvinces clustered index size</div></div>
+  </div>
+  <h3>Top priorities</h3>
+  <ol>
+    <li><strong>Resolve session 64's open transaction.</strong> It began at 2026-09-26 05:20:45 and has duration 114,583 seconds. It holds an X key lock on <code>Application.StateProvinces.PK_Application_StateProvinces</code>. Confidence: High.</li>
+    <li><strong>Remove the deliberate transaction delay and enforce consistent table access order.</strong> The captured SQL contains <code>WAITFOR DELAY '00:00:10'</code> between updates and the deadlock history shows repeated opposite-order updates of <code>StateProvinces</code> and <code>Countries</code>. Confidence: High.</li>
+    <li><strong>Add the missing supporting index on <code>Application.Cities(StateProvinceID)</code> including <code>CityName</code>, subject to index-tuning confirmation.</strong> The waiter plan scans all estimated 37,940 Cities rows and assigns 64% of statement cost to that scan. Confidence: Medium.</li>
+    <li><strong>Consider RCSI only after workload validation.</strong> RCSI is OFF, so ordinary readers can wait behind writers; however, RCSI will not solve the open transaction or writer-writer deadlocks. Confidence: Medium.</li>
+  </ol>
+</section>
+
+<section id="impact">
+  <h2>Blocking confirmation and impact</h2>
+  <table>
+    <thead><tr><th>Metric</th><th>Result</th><th>Evidence and interpretation</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Blocking active</td>
+        <td><span class="badge danger">Yes</span></td>
+        <td>BlockingChains shows session 65 waiting with <code>LCK_M_S</code>; LockInventory shows session 65 waiting for an S key lock while session 64 owns an X key lock on the same StateProvinces index.</td>
+      </tr>
+      <tr>
+        <td>Total unique session IDs listed as waiters</td>
+        <td>3: 52, 53, 65</td>
+        <td>Sessions 52 and 53 are repeatedly listed as both blocker and waiter with parallel waits such as <code>CXSYNC_PORT</code>, <code>CXCONSUMER</code>, <code>CXPACKET</code>, and <code>HTMEMO</code>. They do not form a valid lock-blocking chain in the supplied relationships. Session 65 is the clear lock waiter.</td>
+      </tr>
+      <tr>
+        <td>Longest reported wait</td>
+        <td>114,572,961 ms</td>
+        <td>BlockingChains: session 65, <code>LCK_M_S</code>, wait_duration=114572961ms.</td>
+      </tr>
+      <tr>
+        <td>Cumulative wait</td>
+        <td>At least 114,572,961 ms; exact total unavailable</td>
+        <td>The snapshot repeats self-labelled parallel-wait rows for sessions 52 and 53 and does not provide a deduplicated wait-total field. Summing those duplicate rows would overstate impact.</td>
+      </tr>
+      <tr>
+        <td>Supported business impact</td>
+        <td>One identified WideWorldImporters reader has waited for approximately 31.8 hours</td>
+        <td>114,572,961 ms converted to approximately 31.8 hours. The input does not provide throughput, request-failure, or user-impact metrics beyond the observed wait.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="evidence"><strong>Explicit evidence:</strong> LockInventory reports session 64 with an X key lock on StateProvinces and session 65 with an S key lock request in WAIT status on the same index. ActiveTransactions reports session 64 as an open user transaction with 114,583 seconds duration.</p>
+</section>
+
+<section id="tree">
+  <h2>Blocking tree</h2>
+  <figure>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 270" role="img" aria-labelledby="tree-title tree-desc">
+      <title id="tree-title">WideWorldImporters blocking tree</title>
+      <desc id="tree-desc">Session 64 holds an exclusive key lock on StateProvinces and blocks session 65, which waits for a shared key lock for 114572961 milliseconds.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+          <path d="M0,0 L10,3 L0,6 Z" fill="#0B6E6E"/>
+        </marker>
+      </defs>
+      <rect x="35" y="70" width="350" height="120" rx="12" fill="#EFF7F7" stroke="#0B6E6E" stroke-width="2"/>
+      <rect x="515" y="70" width="350" height="120" rx="12" fill="#FFF7ED" stroke="#A12A2A" stroke-width="2"/>
+      <line x1="390" y1="130" x2="510" y2="130" stroke="#0B6E6E" stroke-width="3" marker-end="url(#arrow)"/>
+      <text x="210" y="98" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#0B6E6E">Session 64</text>
+      <text x="210" y="125" text-anchor="middle" font-family="Arial" font-size="15" fill="#111827">Open transaction, no active SQL</text>
+      <text x="210" y="150" text-anchor="middle" font-family="Arial" font-size="15" fill="#111827">X key: StateProvinces</text>
+      <text x="210" y="175" text-anchor="middle" font-family="Arial" font-size="15" fill="#111827">Transaction age: 114,583 s</text>
+      <text x="690" y="98" text-anchor="middle" font-family="Arial" font-size="20" font-weight="700" fill="#A12A2A">Session 65</text>
+      <text x="690" y="125" text-anchor="middle" font-family="Arial" font-size="15" fill="#111827">SELECT ... WHERE StateProvinceCode = N'VA'</text>
+      <text x="690" y="150" text-anchor="middle" font-family="Arial" font-size="15" fill="#111827">Waiting for S key</text>
+      <text x="690" y="175" text-anchor="middle" font-family="Arial" font-size="15" fill="#111827">Wait: 114,572,961 ms</text>
+      <text x="450" y="45" text-anchor="middle" font-family="Arial" font-size="16" font-weight="700" fill="#0B6E6E">blocks</text>
+    </svg>
+    <figcaption>Figure 1. The clear WideWorldImporters lock chain. Sessions 52 and 53 are parallel execution/wait observations in SQLStorm and are not included in this lock tree.</figcaption>
+  </figure>
+  <p>The most important waiter statement is the complete session 65 query: <code>SELECT CityName, StateProvinceName, sp.LatestRecordedPopulation, CountryName FROM Application.Cities AS city JOIN Application.StateProvinces AS sp ON city.StateProvinceID = sp.StateProvinceID JOIN Application.Countries AS ctry ON sp.CountryID = ctry.CountryID WHERE sp.StateProvinceCode = N'VA'</code>. Its batch context begins with <code>BEGIN TRAN;</code>, so the read transaction remains open while it waits.</p>
+  <p>The lead blocker is session 64, not session 65. Its current statement is empty, its transaction is open, and LockInventory shows the held X key on StateProvinces. The supplied blocker SQL includes <code>BEGIN TRAN; UPDATE Application.StateProvinces ...; WAITFOR DELAY '00:00:10';</code>, but the transaction has remained open far longer than the ten-second delay.</p>
+</section>
+
+<section id="root-cause">
+  <h2>Root-cause classification</h2>
+  <table>
+    <thead><tr><th>Category</th><th>Assessment</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr><td>Open transaction with no activity</td><td><span class="badge danger">Primary</span></td><td>ActiveTransactions: session 64 has an empty SQL/status field and an open transaction lasting 114,583 seconds. LockInventory: session 64 owns the X key.</td></tr>
+      <tr><td>Long-running transaction</td><td><span class="badge danger">Primary</span></td><td>ActiveTransactions: session 64 and session 65 transactions have durations of 114,583 and 114,575 seconds. Session 64's transaction is the blocking holder.</td></tr>
+      <tr><td>Hotspot table or index</td><td><span class="badge warning">Contributing</span></td><td>StateProvinces is the immediate contested resource. Its clustered index has 53 rows, 5 scans, 4 updates, and size 0.4 MB. The issue is transaction duration and ordering, not table size.</td></tr>
+      <tr><td>Lock escalation</td><td>Not supported</td><td>StateProvinces allows TABLE escalation, but the inventory shows a single X key and page/intent locks, not a table X lock. The table has approximately 53 rows.</td></tr>
+      <tr><td>SERIALIZABLE or REPEATABLE READ misuse</td><td>Not supported</td><td>BlockingChains and deadlock history identify ReadCommitted isolation. Snapshot isolation is OFF, but no SERIALIZABLE or REPEATABLE READ session is shown.</td></tr>
+      <tr><td>Implicit transactions</td><td>Not proven</td><td>The batch context explicitly contains <code>BEGIN TRAN;</code>; the input does not report the IMPLICIT_TRANSACTIONS setting.</td></tr>
+      <tr><td>Parameter sniffing causing large scans</td><td>Not supported for the current chain</td><td>The session 65 plan is a small statement with estimates and no parameterized predicate. SQLStorm procedures are truncated and lack sufficient plan detail for this classification.</td></tr>
+      <tr><td>Missing index causing lock amplification</td><td><span class="badge warning">Secondary</span></td><td>BlockerPlans: Cities clustered scan reads all estimated 37,940 rows and costs 0.411, or 64% of statement cost. MissingIndexes recommends equality StateProvinceID including CityName, impact 59.5; the plan reports 93.0% impact.</td></tr>
+      <tr><td>RBAR/cursor patterns</td><td>Not supported</td><td>No cursor or row-by-row construct appears in the supplied statements.</td></tr>
+      <tr><td>TempDB contention masquerading as blocking</td><td>Not the current lock cause</td><td>TempDB has LATCH_EX 118,694 ms and PAGEIOLATCH_SH 91,958 ms, but version store is 0.0 MB and the current WideWorldImporters wait is LCK_M_S on a user-table key. TempDB spilling is reported for SQLStorm analytical queries, not this chain.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="recommendations">
+  <h2>Detailed prioritized recommendations</h2>
+  <ol>
+    <li>
+      <h3>Terminate or complete session 64's abandoned transaction immediately</h3>
+      <p><strong>Fix:</strong> Have the owning application or SSMS session issue <code>COMMIT</code> if the update is valid, or <code>ROLLBACK</code> if it is a test/abandoned transaction. If ownership cannot be established, terminate session 64 under operational change control.</p>
+      <p><strong>Rationale:</strong> Session 64 has been open for 114,583 seconds with no active statement and holds the X key required by session 65. This directly removes the observed LCK_M_S wait.</p>
+      <p><strong>Risk and rollback:</strong> COMMIT makes the pending StateProvinces update durable. ROLLBACK or terminating the session discards uncommitted work and may cause application errors. A rollback itself can take time. There is no safe database-level rollback after a committed transaction; preserve the intended business choice before acting.</p>
+      <p><strong>Expected effect:</strong> Removes the session 64 to session 65 key conflict. Labelled estimate: approximately 100% reduction of this specific observed wait if no new holder immediately acquires the same key; basis: one identified holder and one identified waiter on the same key.</p>
+      <p><strong>Confidence:</strong> High.</p>
+    </li>
+    <li>
+      <h3>Remove WAITFOR from production transaction code and enforce one resource acquisition order</h3>
+      <p><strong>Fix:</strong> Both code paths that update <code>Application.StateProvinces</code> and <code>Application.Countries</code> must update the tables in the same order and commit immediately. The supplied deadlocks show one path taking StateProvinces then Countries and the other taking Countries then StateProvinces.</p>
+      <p><strong>Rationale:</strong> DeadlockHistory contains five repeated WideWorldImporters deadlocks on 2026-09-20 and 2026-09-26. The statements explicitly contain a ten-second <code>WAITFOR</code> while holding the first X lock. This is a deterministic circular-wait pattern.</p>
+      <p><strong>Risk and rollback:</strong> Changing order can expose application assumptions about intermediate state; test both updates atomically. Removing the delay changes timing but preserves the two increments and timestamp assignments. Rollback is a code deployment rollback to the prior module version; do not restore the deliberate delay.</p>
+      <p><strong>Expected effect:</strong> Prevents the specific StateProvinces/Countries circular waits shown in the five WideWorldImporters deadlock graphs and reduces lock hold time. Labelled estimate: up to 100% reduction for this exact two-table deadlock pattern; basis: all five reported WideWorldImporters graphs show the same inverse ordering.</p>
+      <p><strong>Confidence:</strong> High.</p>
+    </li>
+    <li>
+      <h3>Add the Cities lookup index after confirming with the Locking and Blocking index-tuning goal</h3>
+      <p><strong>Fix:</strong> Create a nonclustered index on <code>Application.Cities(StateProvinceID)</code> including <code>CityName</code>. Confirm the recommendation by running the Index Tuning goal for the specific schema and table for a comprehensive workload analysis.</p>
+      <p><strong>Rationale:</strong> BlockerPlans reports a clustered scan of all estimated 37,940 Cities rows, own cost 0.411, or 64% of statement cost. MissingIndexes reports equality column StateProvinceID, included CityName, impact 59.5; the plan's missing-index detail reports 93.0% impact.</p>
+      <p><strong>Estimated size:</strong> The input does not report candidate-index storage, column widths, or the existing Cities clustering-key width. Estimate: approximately 1.5–4.0 MB after build, based on 37,940 rows and an assumed combined stored width of approximately 24–64 bytes per row for the StateProvinceID key, CityName include, clustering key, row overhead, and page overhead, with no compression assumption. This is an estimate, not a reported size. Existing <code>PK_Application_Cities</code> is reported as 3.9 MB.</p>
+      <p><strong>Risk and rollback:</strong> Additional storage, write maintenance, statistics, and build I/O. Online creation is supported by the reported Enterprise engine capability, but the Developer Edition may still require appropriate maintenance-window testing. Rollback is dropping the new index after confirming no dependency; the estimated reclaimed storage is the same 1.5–4.0 MB range.</p>
+      <p><strong>Net storage effect:</strong> One new index: estimated +1.5–4.0 MB. No index is recommended for dropping or modifying.</p>
+      <p><strong>Expected effect:</strong> May replace the 37,940-row Cities scan with an index seek/lookup and reduce the reader's lock footprint and elapsed time. Labelled estimate: 50–90% reduction in the Cities component of this statement's logical work; basis: the current plan reads all estimated 37,940 rows and assigns 64% of statement cost to that scan. It is not expected to release session 64's held X lock.</p>
+      <p><strong>Confidence:</strong> Medium.</p>
+    </li>
+    <li>
+      <h3>Evaluate enabling Read Committed Snapshot Isolation for reader-versus-writer blocking</h3>
+      <p><strong>Fix:</strong> Test and, if compatible with application semantics, enable RCSI for WideWorldImporters. RCSI is currently OFF, snapshot isolation is OFF, and the version store is 0.0 MB.</p>
+      <p><strong>Rationale:</strong> The session 65 read requests an S key lock while session 64 owns an X key lock. RCSI can allow ordinary ReadCommitted readers to use row versions instead of waiting for many writer locks.</p>
+      <p><strong>Risk and rollback:</strong> RCSI changes read-consistency behavior and increases version-store and TempDB usage under write load. The input reports TempDB LATCH_EX and PAGEIOLATCH_SH waits, so capacity testing is required. Rollback is disabling RCSI after all connections are drained and after confirming application behavior; this does not undo transactions.</p>
+      <p><strong>Expected effect:</strong> Potentially removes reader-writer waits such as session 65's LCK_M_S, but does not remove writer-writer deadlocks or the need to close session 64. Labelled estimate: 0–100% reduction for compatible reader-writer waits; basis: RCSI addresses the S-versus-X pattern, but workload compatibility and version-store capacity are not established.</p>
+      <p><strong>Confidence:</strong> Medium.</p>
+    </li>
+  </ol>
+</section>
+
+<section id="historical">
+  <h2>Historical deadlocks and Query Store</h2>
+  <p><strong>Deadlock capture status:</strong> CAPTURED. The system_health session is running and reports 7 deadlocks. Capture is working, so enabling deadlock capture is not recommended.</p>
+  <p>Five deadlocks are recurring in WideWorldImporters on the same StateProvinces/Countries inverse-order pattern. Two additional deadlocks are in DeadlockDemo and one is in tempdb; those are separate workloads. The rolling system_health history is short, but the supplied seven events are sufficient to prioritize code ordering and removal of the deliberate delay. A dedicated longer-retention Extended Events session is not required by this snapshot because recurrence frequency sufficient to lose the current pattern is not established.</p>
+  <p>Query Store is enabled. Its top entries include deadlock-history-reading queries with TotalCPU of 18,832 ms, 14,472 ms, and 10,785 ms, plus metadata/index diagnostics. The supplied Query Store top list does not identify the sp00215 or sp00199 SQLStorm procedures as top resource consumers. Query Store therefore supports workload history but does not provide a stronger causal attribution for the current WideWorldImporters lock holder.</p>
+  <p>For SQLStorm, session 52 runs a truncated <code>WITH RankedPosts AS ... ROW_NUMBER() OVER (PARTITION BY p.OwnerUserId ORDER BY p.CreationDate DESC)</code> statement in <code>sp00215</code>, with parallel synchronization waits. Session 53 runs a truncated <code>WITH UserStatistics AS ... COUNT(DISTINCT p.Id) ...</code> statement in <code>sp00199</code>, with <code>HTMEMO</code> waits. TempDB reports 1,341 total spills for a UserBadgeCounts query and 105 total spills for a UserPostStats query. These are performance amplifiers in SQLStorm, but the supplied evidence does not establish them as blockers of WideWorldImporters session 65.</p>
+</section>
+
+<section id="scripts">
+<h2>Scripts</h2>
+
+<h3>Create the supporting Cities index — implements recommendation 3</h3>
+<pre><code>USE [WideWorldImporters];
+GO
+
+CREATE NONCLUSTERED INDEX [IX_Application_Cities_StateProvinceID]
+ON [Application].[Cities] ([StateProvinceID])
+INCLUDE ([CityName])
+WITH (ONLINE = ON, SORT_IN_TEMPDB = OFF);
+GO</code></pre>
+
+<h3>Apply both updates in a consistent order without an artificial delay — implements recommendation 2</h3>
+<pre><code>USE [WideWorldImporters];
+GO
+
+SET XACT_ABORT ON;
+GO
+
+BEGIN TRANSACTION;
+
+UPDATE [Application].[StateProvinces]
+SET [LatestRecordedPopulation] = [LatestRecordedPopulation] + 1,
+    [ValidFrom] = SYSUTCDATETIME()
+WHERE [StateProvinceCode] = N'VA';
+
+UPDATE [Application].[Countries]
+SET [LatestRecordedPopulation] = [LatestRecordedPopulation] + 1,
+    [ValidFrom] = SYSUTCDATETIME()
+WHERE [IsoNumericCode] = 840;
+
+COMMIT TRANSACTION;
+GO</code></pre>
+
+<p class="small">No RCSI enablement script is included because changing database isolation behavior is a deployment decision and the input lacks workload-compatibility evidence. The two scripts above are the recommended implementation changes and should be tested according to the stated risks.</p>
+</section>
+
+<section id="supporting-scripts">
+<h2>Supporting scripts (not part of the change)</h2>
+<p>No supporting scripts are included. The snapshot already provides the required blocking, lock, transaction, plan, deadlock, Query Store, and TempDB evidence for this report.</p>
+</section>
+
+
+</main>
+</div>
+<footer>
+  <p>Based on analysis as of 2026-09-27 17:10:29 UTC</p>
+  <p>Generated by AI SQL Tuner Studio v3.0.5.0 using model gpt-5.6-luna with reasoning effort medium.</p>
+  <p><a href="https://aisqltuner.com">aisqltuner.com</a></p>
+</footer>
+</body>
+</html>

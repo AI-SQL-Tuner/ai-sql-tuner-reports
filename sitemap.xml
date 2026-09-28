@@ -3,142 +3,77 @@
 
   <url>
     <loc>https://reports.aisqltuner.com/</loc>
-    <lastmod>2026-06-03</lastmod>
+    <lastmod>2026-09-27</lastmod>
   </url>
 
   <url>
     <loc>https://reports.aisqltuner.com/index.html</loc>
-    <lastmod>2026-06-03</lastmod>
+    <lastmod>2026-09-27</lastmod>
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/aisqltuner-locking-and-blocking-analysis-tpch10-20260504.html</loc>
-    <lastmod>2026-05-04</lastmod>
+    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-09-20-luna.html</loc>
+    <lastmod>2026-09-20</lastmod>
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/aisqltuner-code-review-20260510.html</loc>
-    <lastmod>2026-05-10</lastmod>
+    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-09-27.html</loc>
+    <lastmod>2026-09-27</lastmod>
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/sql-server-deadlock-analysis-rockypc-tpch10-dbo-orders-2026-05-05.html</loc>
-    <lastmod>2026-05-05</lastmod>
+    <loc>https://reports.aisqltuner.com/sql-server-code-review-rockypc-sqlstorm-2026-09-20-luna.html</loc>
+    <lastmod>2026-09-20</lastmod>
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-dbo-votes-2026-05-12-03-04-35-utc.html</loc>
-    <lastmod>2026-05-12</lastmod>
+    <loc>https://reports.aisqltuner.com/code-review-rockypc-sqlstorm-2026-09-27-17-05-17-utc.html</loc>
+    <lastmod>2026-09-27</lastmod>
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/index-tuning-report-gpt-5-4-rockypc-sqlstorm-2026-05-13.html</loc>
-    <lastmod>2026-05-13</lastmod>
+    <loc>https://reports.aisqltuner.com/deadlock-analysis-rockypc-2026-09-27.html</loc>
+    <lastmod>2026-09-27</lastmod>
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/sql-code-review-rockypc-sqlstorm-2026-05-16.html</loc>
-    <lastmod>2026-05-16</lastmod>
+    <loc>https://reports.aisqltuner.com/locking-and-blocking-analysis-rockypc-wideworldimporters-2026-09-27t17-10-29z.html</loc>
+    <lastmod>2026-09-27</lastmod>
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/query-tuning-report-sqlstorm-rankedposts-queryhash-0xcb06a3190dea642c-2026-05-17.html</loc>
-    <lastmod>2026-05-17</lastmod>
+    <loc>https://reports.aisqltuner.com/query-tuner-report-rockypc-sqlstorm-luna.html</loc>
+    <lastmod>2026-09-20</lastmod>
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-dark-mode-2026-05-21.html</loc>
-    <lastmod>2026-05-21</lastmod>
+    <loc>https://reports.aisqltuner.com/query-tuner-rockypc-sqlstorm-queryhash-0x872c7773968c6aaf.html</loc>
+    <lastmod>2026-09-27</lastmod>
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-05-25.html</loc>
-    <lastmod>2026-05-25</lastmod>
+    <loc>https://reports.aisqltuner.com/index-tuning-analysis-sqlstorm-rockypc-2026-09-09-haiku.html</loc>
+    <lastmod>2026-09-09</lastmod>
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/index-tuning-rockypc-sqlstorm-dbo-votes-2026-05-25.html</loc>
-    <lastmod>2026-05-25</lastmod>
+    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-09-08-gpt-5-6-sol.html</loc>
+    <lastmod>2026-09-08</lastmod>
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-05-31.html</loc>
-    <lastmod>2026-05-31</lastmod>
+    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-09-20-luna.html</loc>
+    <lastmod>2026-09-20</lastmod>
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/code-review-rockypc-sqlstorm-2026-05-31.html</loc>
-    <lastmod>2026-05-31</lastmod>
+    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-photocleanup-2026-07-30.html</loc>
+    <lastmod>2026-07-30</lastmod>
   </url>
 
   <url>
-    <loc>https://reports.aisqltuner.com/deadlock-analysis-rockypc-wideworldimporters-tpch10-2026-05-31.html</loc>
-    <lastmod>2026-05-31</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/locking-and-blocking-analysis-rockypc-wideworldimporters-2026-05-31-16-53-29-utc.html</loc>
-    <lastmod>2026-05-31</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/locking-and-blocking-analysis-wideworldimporters-opus-4-8-2026-05-31.html</loc>
-    <lastmod>2026-05-31</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/query-tuner-rockypc-sqlstorm-0x932168333a069240-2026-05-31.html</loc>
-    <lastmod>2026-05-31</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-05-31.html</loc>
-    <lastmod>2026-05-31</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-06-04.html</loc>
-    <lastmod>2026-06-04</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/code-review-rockypc-wideworldimporters-2026-06-05.html</loc>
-    <lastmod>2026-06-05</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-06-14.html</loc>
-    <lastmod>2026-06-14</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-06-14.html</loc>
-    <lastmod>2026-06-14</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/server-health-report-rockypc-2026-06-16.html</loc>
-    <lastmod>2026-06-16</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-06-16.html</loc>
-    <lastmod>2026-06-16</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/query-tuning-report-rockypc-sqlstorm-opus-4-7.html</loc>
-    <lastmod>2026-06-16</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/query-tuning-report-rockypc-sqlstorm-opus-4-8.html</loc>
-    <lastmod>2026-06-16</lastmod>
-  </url>
-
-  <url>
-    <loc>https://reports.aisqltuner.com/query-tuning-report-rockypc-sqlstorm-queryhash-0x932168333a069240.html</loc>
-    <lastmod>2026-06-16</lastmod>
+    <loc>https://reports.aisqltuner.com/index-tuning-report-rockypc-photo-cleanup-2026-09-22-09-24-55-utc.html</loc>
+    <lastmod>2026-09-22</lastmod>
   </url>
 
 </urlset>

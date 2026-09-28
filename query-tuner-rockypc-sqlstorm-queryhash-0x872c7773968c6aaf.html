@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Query Tuner – RockyPC/SQLStorm – QueryHash 0x872C7773968C6AAF</title>
+<meta name="description" content="SQL Server query-level performance tuning report for SQLStorm query hash 0x872C7773968C6AAF.">
+<style>
+:root {
+  --bg: #FFFFFF;
+  --sidebar: #F6F8F9;
+  --text: #111827;
+  --muted: #6B7280;
+  --teal: #0B6E6E;
+  --teal-soft: #EFF7F7;
+  --border: #D9E2E5;
+  --warning: #92400E;
+  --warning-bg: #FFF7ED;
+  --critical: #991B1B;
+  --critical-bg: #FEF2F2;
+  --good: #166534;
+  --good-bg: #F0FDF4;
+  --code: #EFF7F7;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.6;
+}
+a { color: var(--teal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 275px;
+  flex: 0 0 275px;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  padding: 28px 22px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.sidebar h2 { font-size: 1rem; margin-top: 0; color: var(--teal); }
+.sidebar ul { padding-left: 20px; margin-top: 10px; }
+.sidebar li { margin: 7px 0; font-size: .93rem; }
+.content { max-width: 1260px; width: 100%; padding: 42px 54px 28px; }
+h1, h2, h3 { color: var(--teal); line-height: 1.25; }
+h1 { font-size: 2rem; margin: 0 0 8px; }
+h2 { font-size: 1.45rem; margin-top: 42px; border-bottom: 2px solid var(--teal); padding-bottom: 7px; }
+h3 { font-size: 1.08rem; margin-top: 26px; }
+.subtitle { color: var(--muted); font-size: 1.05rem; margin: 0 0 24px; }
+.meta, .callout, .finding, .recommendation {
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--teal);
+  border-radius: 6px;
+  padding: 15px 18px;
+  margin: 15px 0;
+}
+.callout { background: var(--teal-soft); }
+.warning { border-left-color: #D97706; background: var(--warning-bg); }
+.critical { border-left-color: #DC2626; background: var(--critical-bg); }
+.good { border-left-color: #16A34A; background: var(--good-bg); }
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  margin-right: 7px;
+}
+.badge-critical { background: #FEE2E2; color: var(--critical); }
+.badge-high { background: #FFEDD5; color: var(--warning); }
+.badge-medium { background: #FEF3C7; color: #854D0E; }
+.badge-low { background: #DCFCE7; color: var(--good); }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0 24px;
+  font-size: .92rem;
+}
+th, td { border: 1px solid var(--border); padding: 9px 10px; vertical-align: top; text-align: left; }
+th { background: var(--teal-soft); color: var(--teal); }
+pre {
+  background: var(--code);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  font: .88rem/1.5 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+p code, li code { background: var(--teal-soft); padding: 2px 4px; border-radius: 3px; }
+.evidence { color: var(--muted); font-size: .91rem; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 18px 0; }
+.kpi { border: 1px solid var(--border); border-top: 4px solid var(--teal); padding: 14px; border-radius: 5px; }
+.kpi strong { display: block; font-size: 1.35rem; color: var(--teal); }
+footer { border-top: 1px solid var(--border); margin-top: 48px; padding-top: 20px; color: var(--muted); font-size: .88rem; }
+@media (max-width: 850px) {
+  .layout { display: block; }
+  .sidebar { width: auto; height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--border); }
+  .content { padding: 28px 20px; }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0B1220;
+    --sidebar: #162032;
+    --text: #F3F4F6;
+    --muted: #9CA3AF;
+    --teal: #2DD4BF;
+    --teal-soft: #0F172A;
+    --border: #334155;
+    --warning: #FDBA74;
+    --warning-bg: #2A1B0E;
+    --critical: #FCA5A5;
+    --critical-bg: #2A1115;
+    --good: #86EFAC;
+    --good-bg: #10251A;
+    --code: #0F172A;
+  }
+  .badge-critical { background: #451A1A; color: #FCA5A5; }
+  .badge-high { background: #422006; color: #FDBA74; }
+  .badge-medium { background: #422006; color: #FDE68A; }
+  .badge-low { background: #14301F; color: #86EFAC; }
+  th { background: #0F172A; }
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Query Tuner – RockyPC/SQLStorm – QueryHash 0x872C7773968C6AAF",
+  "about": "SQL Server query-level performance tuning",
+  "identifier": "0x872C7773968C6AAF",
+  "dateModified": "2026-09-27T17:14:00Z",
+  "author": { "@type": "Organization", "name": "AI SQL Tuner Studio" }
+}
+</script>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<aside class="sidebar" aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ul>
+    <li><a href="#summary">Executive summary</a></li>
+    <li><a href="#environment">Environment and scope</a></li>
+    <li><a href="#plan">Plan diagnosis</a></li>
+    <li><a href="#recommendations">Prioritized recommendations</a></li>
+    <li><a href="#indexes">Index assessment</a></li>
+    <li><a href="#statistics">Statistics</a></li>
+    <li><a href="#storage">Storage impact</a></li>
+    <li><a href="#comparison">Plan comparison</a></li>
+    <li><a href="#scripts">Scripts</a></li>
+    <li><a href="#supporting-scripts">Supporting scripts</a></li>
+    <li><a href="#confidence">Confidence and validation</a></li>
+  </ul>
+</aside>
+
+<main class="content">
+<header>
+  <h1>Query Tuner – RockyPC/SQLStorm – QueryHash 0x872C7773968C6AAF</h1>
+  <p class="subtitle">Tuning goal: Query Tuner — reduce execution cost and eliminate avoidable work while preserving the query's current result set.</p>
+  <div class="meta">
+    <strong>Context:</strong> Server <code>RockyPC</code> · Database <code>SQLStorm</code> · SQL Server 2022 RTM-GDR 16.0.1200.5 · Developer Edition on Enterprise engine capabilities · Query hash <code>0x872C7773968C6AAF</code> · Plan hash <code>0x719670049B01A401</code>.
+  </div>
+</header>
+
+<section id="summary">
+<h2>Executive summary</h2>
+<div class="kpi-grid">
+  <div class="kpi"><strong>196.93</strong>Estimated statement cost — critical</div>
+  <div class="kpi"><strong>157.29</strong>Nested Loops own cost — about 80% of statement cost</div>
+  <div class="kpi"><strong>104,436</strong>Rows entering tag matching and windowing</div>
+  <div class="kpi"><strong>5.5 GB</strong>Estimated desired memory, not measured granted memory</div>
+</div>
+<ol>
+  <li><strong>Critical: fix the tag-matching design.</strong> The join <code>p.Tags LIKE '%' + t.TagName + '%'</code> is evaluated by a nested-loops plan over approximately 104,436 question rows and 1,232 tags. The nested loops operator has own cost 157.2936, and the spool subtree is 33.6225.</li>
+  <li><strong>Critical correctness review: validate the final join.</strong> The query joins <code>tp.UserId = rp.PostId</code>, not a user/post-owner relationship. This may be intentional, but it is a strong semantic anomaly. Changing it would not preserve the current result set, so no corrective rewrite is supplied as an equivalent rewrite.</li>
+  <li><strong>High: remove aggregate row multiplication for the intended business result.</strong> Posts, Votes, and Badges are joined before aggregation, producing an estimated 1,677,770 intermediate rows and requiring two distinct aggregates. A corrected business rewrite could be materially faster, but it would change results where a user has both multiple badges and multiple vote rows.</li>
+  <li><strong>High: refresh statistics.</strong> Automatic statistics creation and update are disabled. Votes statistics show 1,600,424 modifications since their last update on 2026-09-12, while the plan relies on those statistics.</li>
+  <li><strong>Do not blindly add DMV missing indexes.</strong> The supplied plan's dominant cost is not an uncovered equality seek. Existing indexes already support the Votes/PostId and Badges/UserId scans, and the DMV candidates are workload-wide recommendations without size or plan-specific benefit evidence.</li>
+</ol>
+<div class="callout">
+<strong>Bottom line:</strong> statistics maintenance is the safe immediate change. The largest query-specific gain requires changing the denormalized tag relationship or introducing a maintained tag bridge/full-text-compatible design. Adding another conventional index on <code>Posts.Tags</code> will not make a leading-wildcard predicate seekable.
+</div>
+</section>
+
+<section id="environment">
+<h2>Environment and scope</h2>
+<table>
+<tr><th>Item</th><th>Reported value</th></tr>
+<tr><td>Server/database</td><td>RockyPC / SQLStorm</td></tr>
+<tr><td>Engine</td><td>SQL Server 2022, build 16.0.1200.5, RTM-GDR</td></tr>
+<tr><td>Edition/capabilities</td><td>Developer Edition; Enterprise engine capabilities reported; online operations, compression, columnstore, partitioning, IQP and PSP available</td></tr>
+<tr><td>Statistics scope</td><td>Usage, missing-index, operational and plan-cache data cover only the 37.6-hour period since the 2026-09-25 23:38:04 restart</td></tr>
+<tr><td>Query Store</td><td>No matching Query Store history; parameter-sensitive behavior cannot be assessed from Query Store</td></tr>
+</table>
+<p class="evidence"><strong>Evidence:</strong> The input reports 37.6 hours of uptime and explicitly states that DMVs and plan cache were cleared at restart. The plan uses CE model 160 and batch mode on rowstore.</p>
+</section>
+
+<section id="plan">
+<h2>Plan diagnosis</h2>
+<table>
+<tr><th>Priority</th><th>Finding</th><th>Evidence and impact</th></tr>
+<tr>
+<td><span class="badge badge-critical">Critical</span></td>
+<td>Leading-wildcard tag join</td>
+<td>Nested Loops Node 8 has own cost 157.2936 and 104,436 estimated rows. Its residual predicate is <code>Posts.Tags LIKE Expr1020</code>, where the expression is <code>'%' + Tags.TagName + '%'</code>. This prevents a normal B-tree seek on <code>Posts.Tags</code>.</td>
+</tr>
+<tr>
+<td><span class="badge badge-high">High</span></td>
+<td>Lazy spool repeated for tag matching</td>
+<td>Table Spool Node 10 has estimated 1,232 rows, 104,435 rewinds and subtree cost 33.6225. The spool avoids rescanning Tags physically, but does not remove the repeated wildcard comparisons.</td>
+</tr>
+<tr>
+<td><span class="badge badge-high">High</span></td>
+<td>Large aggregate input and distinct aggregates</td>
+<td>Hash Aggregate Node 18 receives an estimated 1,677,770 rows and computes both <code>COUNT(DISTINCT p.Id)</code> and <code>COUNT(DISTINCT b.Id)</code>. The plan's intermediate row volume is substantially greater than the 267,193 Users rows, 246,672 Posts rows used in the join, and 439,352 Badges rows scanned.</td>
+</tr>
+<tr>
+<td><span class="badge badge-medium">Medium</span></td>
+<td>Three sorts and wide rows</td>
+<td>The plan contains Sort operators for tag row numbering, user ranking and final ordering. The final Sort handles 63,469 estimated rows with average row size 721 bytes. The tag sort handles 104,436 rows with average row size 177 bytes.</td>
+</tr>
+<tr>
+<td><span class="badge badge-medium">Medium</span></td>
+<td>Potentially excessive memory grant</td>
+<td>Estimated serial desired memory is 5,783,616 KB, while the estimated plan reports granted and used memory as unknown. No spill warning is present in the supplied XML, so an actual spill cannot be concluded.</td>
+</tr>
+<tr>
+<td><span class="badge badge-low">Low</span></td>
+<td>Implicit conversions in aggregate outputs</td>
+<td>Compute Scalar Nodes 17/15 contain <code>CONVERT_IMPLICIT(int,...)</code> for aggregate expressions. This is not a join or filter conversion and is unlikely to be the main bottleneck, but explicit output typing can make intent clearer.</td>
+</tr>
+<tr>
+<td><span class="badge badge-low">Low</span></td>
+<td>No parameter sniffing evidence</td>
+<td>The supplied query has no parameters, and the plan contains no parameter references. Parameter Sensitive Plan optimization and plan guides are therefore not applicable to this execution.</td>
+</tr>
+</table>
+</section>
+
+<section id="recommendations">
+<h2>Detailed prioritized recommendations</h2>
+
+<article class="recommendation critical">
+<h3>1. Redesign the denormalized tag relationship before adding another Posts index</h3>
+<p><strong>Recommendation:</strong> Replace substring matching against <code>Posts.Tags</code> with a relational post/tag bridge or another semantically equivalent tag-search implementation. The current predicate searches for a tag name anywhere in a delimited string, so an ordinary index on <code>Tags</code> cannot seek to the substring.</p>
+<p><strong>Expected benefit:</strong> This targets the plan's dominant operator: Nested Loops Node 8, own cost 157.2936, approximately 80% of the 196.93 statement cost. The current tag branch processes 104,436 question rows and performs wildcard matching against 1,232 tag rows.</p>
+<p><strong>Important semantic note:</strong> A bridge table must preserve the current substring semantics if exact row equivalence is required. A tokenized bridge may differ for substrings, delimiters, escaping and case/collation behavior. Full-text search also has different tokenization semantics and should not be substituted without an approved result-set change.</p>
+<p class="evidence"><strong>Evidence:</strong> Node 8 shows <code>Posts.Tags LIKE '%' + Tags.TagName + '%'</code>; Node 9 reads 104,436 question rows; Node 10 has 104,435 rewinds and subtree cost 33.6225.</p>
+<p><strong>Risk:</strong> High implementation and data-maintenance risk because the schema/data model changes. No executable object-creation script is supplied because the input does not define a bridge table, change-capture process, or exact tag-token semantics.</p>
+</article>
+
+<article class="recommendation critical">
+<h3>2. Validate the apparent UserId/PostId join defect before any result-changing rewrite</h3>
+<p><strong>Recommendation:</strong> Review <code>LEFT JOIN RankedPosts rp ON tp.UserId = rp.PostId</code>. The CTE exposes <code>p.Id AS PostId</code>, while the outer row is keyed by <code>tp.UserId</code>. This associates a user with a post whose identifier equals the user identifier, rather than associating the user's own posts.</p>
+<p><strong>Why no rewrite is provided:</strong> Replacing this condition with <code>rp.OwnerUserId = tp.UserId</code> would likely represent the intended business rule, but it would not return exactly the same rows as the supplied query. The requested tuning constraint requires result preservation.</p>
+<p class="evidence"><strong>Evidence:</strong> The plan's final Hash Match Node 4 builds on <code>Posts.Id</code> and probes with <code>Users.Id</code>. The query text explicitly specifies <code>tp.UserId = rp.PostId</code>.</p>
+<p><strong>Risk:</strong> Very high if changed without business approval; result cardinality and displayed latest-post data can change. Confidence that this is a correctness anomaly: 95%; confidence that it is unintended: 75%, because intent was not separately documented.</p>
+</article>
+
+<article class="recommendation high">
+<h3>3. Separate the Posts/Votes/Badges aggregates in a future approved business rewrite</h3>
+<p><strong>Recommendation:</strong> For the intended user-statistics result, aggregate Posts, Votes and Badges independently by user, then join the three compact aggregate sets to Users. This prevents the multiplication of vote rows by badge rows and avoids the need for two distinct aggregates over the multiplied stream.</p>
+<p><strong>Expected benefit:</strong> The current aggregate branch receives 1,677,770 estimated rows at Node 19 and uses Hash Aggregate Node 18 with two distinct aggregates. The source tables contain 1,852,168 Votes, 878,704 Badges, 1,091,124 Posts and 534,386 Users rows.</p>
+<p><strong>Result-preservation limitation:</strong> This is not included as a runnable “rewritten query” because it changes the current arithmetic whenever a user has multiple badges and multiple vote rows. The supplied query's <code>SUM(CASE...)</code> values are multiplied by badge cardinality for users with posts and badges.</p>
+<p class="evidence"><strong>Evidence:</strong> Node 18 computes <code>COUNT(DISTINCT Posts.Id)</code>, vote sums and <code>COUNT(DISTINCT Badges.Id)</code> after joins; Node 19 estimates 1,677,770 rows. No plan warning indicates a missing join predicate; the multiplication follows directly from the query's join shape.</p>
+<p><strong>Risk:</strong> High semantic risk unless the intended counts are confirmed. Performance confidence is high for workloads with many users having both votes and badges, but the exact runtime reduction is unavailable because no actual execution metrics were supplied.</p>
+</article>
+
+<article class="recommendation high">
+<h3>4. Refresh statistics immediately, then enable automatic statistics management</h3>
+<p><strong>Recommendation:</strong> Run the supplied statistics-maintenance script in a controlled maintenance window. Then enable <code>AUTO_CREATE_STATISTICS</code>, <code>AUTO_UPDATE_STATISTICS</code> and, where acceptable, asynchronous updates for SQLStorm.</p>
+<p><strong>Expected benefit:</strong> Better cardinality estimates can reduce memory-grant errors and improve join/aggregate choices. This will not eliminate the leading-wildcard cost, but it addresses stale input information used by the compiled plan.</p>
+<p class="evidence"><strong>Evidence:</strong> Database settings report all three automatic statistics options disabled. Votes statistics were last updated on 2026-09-12 with modification count 1,600,424 and sampling 71.5712%; the plan uses those statistics.</p>
+<p><strong>Risk:</strong> Statistics updates consume CPU and I/O and can compile plans. FULLSCAN on the largest referenced objects may be expensive; the script uses targeted updates rather than a database-wide operation.</p>
+</article>
+
+<article class="recommendation medium">
+<h3>5. Do not add the DMV missing-index candidates for this query without workload proof</h3>
+<p><strong>Recommendation:</strong> Do not implement the reported DMV candidates solely from their percentages. The most relevant missing-index-looking item for the current join would be <code>Votes(UserId) INCLUDE (VoteTypeId)</code>, but this query joins Votes by <code>PostId</code>, and the existing <code>IX_Votes_PostId_VoteType</code> already supports that access.</p>
+<p><strong>Evidence:</strong> The plan scans <code>IX_Votes_PostId_VoteType</code>, reading 926,084 rows at cost 1.05937, and scans <code>IX_Badges_UserId_Id</code>, reading 439,352 rows at cost 0.502074. The DMV recommendation for Votes.UserId has only 10 total seeks/scans in the post-restart window.</p>
+<p><strong>Risk:</strong> Adding workload-specific indexes can increase DML, storage and maintenance cost without improving this statement. The supplied index usage statistics show zero reported updates during this short observation window, so write overhead cannot be quantified from the input.</p>
+</article>
+
+<article class="recommendation low">
+<h3>6. Treat sort and memory-grant tuning as secondary</h3>
+<p><strong>Recommendation:</strong> Do not force join algorithms, MAXDOP or memory-grant hints from this estimated plan. First address tag matching, aggregate shape and statistics. Capture an actual plan to determine whether any sort spills.</p>
+<p class="evidence"><strong>Evidence:</strong> Three Sort operators are present, but their individual own costs are only 0.0580, 0.1100 and 0.0586. Estimated desired memory is 5,783,616 KB, while granted/used memory is explicitly unknown and no spill warning is supplied.</p>
+<p><strong>Risk:</strong> Hints can stabilize a single estimate while harming other executions. No parameter exists in this query, so parameter sniffing remediation is not applicable.</p>
+</article>
+</section>
+
+<section id="indexes">
+<h2>Index assessment</h2>
+<table>
+<tr><th>Index/table</th><th>Reported usage and size</th><th>Assessment</th></tr>
+<tr>
+<td><code>Posts.IX_Posts_Question_TagScan</code></td>
+<td>Seeks 18, scans 0, lookups 0, updates 0; 10.5 MB, PAGE compression</td>
+<td>Useful for <code>PostTypeId = 1</code> and covers CreationDate, Title and Tags. It already reduces the question branch to an index seek, but cannot make the leading wildcard searchable. Retain.</td>
+</tr>
+<tr>
+<td><code>Posts.IX_Posts_OwnerUserId_Cover</code></td>
+<td>Seeks 46, scans 82, lookups 0; 2.4 MB, PAGE compression</td>
+<td>Used by the user-statistics branch and reads 246,672 estimated rows. Retain.</td>
+</tr>
+<tr>
+<td><code>Votes.IX_Votes_PostId_VoteType</code></td>
+<td>Seeks 90, scans 76, lookups 0; 9.8 MB, PAGE compression</td>
+<td>Used by the query and covers PostId/VoteTypeId. The 926,084-row scan is cheaper than adding a redundant PostId index. Retain.</td>
+</tr>
+<tr>
+<td><code>Badges.IX_Badges_UserId_Id</code></td>
+<td>Seeks 34, scans 40, lookups 0; 4.6 MB, PAGE compression</td>
+<td>Used by the query and covers UserId/Id. Retain.</td>
+</tr>
+<tr>
+<td>Clustered indexes on Users, Posts, Votes, Badges and Tags</td>
+<td>Reported sizes: Users 44.8 MB; Posts 400.3 MB; Votes 11.8 MB; Badges 8.0 MB; Tags 0.1 MB</td>
+<td>No drop or modification is justified. All have scans or seeks in the observed period, and clustered-key changes would have broad impact.</td>
+</tr>
+</table>
+<p class="evidence"><strong>Evidence:</strong> The plan uses all listed nonclustered indexes in the relevant branches. The observation period is only 37.6 hours, so low update counts are not evidence that an index has no write cost.</p>
+</section>
+
+<section id="storage">
+<h2>Storage impact</h2>
+<table>
+<tr><th>Recommendation</th><th>Estimated size and assumptions</th><th>Net storage impact</th></tr>
+<tr>
+<td>Statistics refresh/automatic statistics settings</td>
+<td>Statistics storage is not reported separately in the input.</td>
+<td>Not quantified; no index storage change.</td>
+</tr>
+<tr>
+<td>No new conventional index</td>
+<td>No missing-index candidate in the supplied data has a reported physical size. Column widths and row counts are available for some candidates, but the candidates are not justified for this query.</td>
+<td>0 MB index change.</td>
+</tr>
+<tr>
+<td>No index drop or modification</td>
+<td>Existing index sizes are reported but no index is recommended for removal.</td>
+<td>0 MB reclaimed; 0 MB modified-index net change.</td>
+</tr>
+<tr>
+<td>Future normalized tag bridge</td>
+<td>Cannot estimate responsibly: bridge row count, key widths, tag-token rules and maintenance design are not provided.</td>
+<td>Range unavailable from supplied metadata; a firm MB/GB estimate requires those missing inputs.</td>
+</tr>
+</table>
+<p><strong>Current reported referenced-index footprint:</strong> approximately 482.3 MB, calculated by summing the nine reported index sizes: 44.8 + 400.3 + 9.8 + 2.4 + 11.8 + 4.6 + 8.0 + 10.5 + 0.1 MB. This is an estimate based on the supplied rounded sizes, not a new storage measurement.</p>
+<p class="evidence"><strong>Evidence:</strong> The input reports sizes for every referenced index, but no size for a new tag bridge or for the DMV missing-index candidates. No recommendation can legitimately claim a new-index MB value without those dimensions.</p>
+</section>
+
+<section id="comparison">
+<h2>Before/after plan comparison</h2>
+<table>
+<tr><th>Area</th><th>Current plan</th><th>Expected optimized direction</th><th>Confidence</th></tr>
+<tr>
+<td>Tag lookup</td>
+<td>Nested Loops, 104,436 question rows, wildcard residual predicate, own cost 157.2936; Tags spool rewinds 104,435 times.</td>
+<td>Use a maintained tag relationship that can seek or directly join by post/tag key. The exact optimized operator and row count require schema/data changes and an actual recompile.</td>
+<td>High for bottleneck identification; medium for benefit magnitude.</td>
+</tr>
+<tr>
+<td>User statistics</td>
+<td>Hash joins followed by a 1,677,770-row aggregate with two distinct counts.</td>
+<td>For the intended business logic, independently aggregate Posts, Votes and Badges before joining to Users. This is a result-changing rewrite relative to the current text and is not supplied as an equivalent query.</td>
+<td>High for row-multiplication diagnosis.</td>
+</tr>
+<tr>
+<td>Statistics</td>
+<td>Automatic create/update disabled; Votes modification count 1,600,424 since last update.</td>
+<td>Updated histograms and enabled automatic maintenance should improve estimates; operator changes cannot be guaranteed from estimated XML alone.</td>
+<td>High for maintenance recommendation.</td>
+</tr>
+<tr>
+<td>Memory/sorts</td>
+<td>Three sorts; desired memory 5,783,616 KB; actual grant/use and spills unknown.</td>
+<td>Measure an actual execution after upstream changes. Avoid hints until spill and runtime data exist.</td>
+<td>High for caution, low for predicted runtime change.</td>
+</tr>
+</table>
+</section>
+
+<section id="scripts">
+<h2>Scripts</h2>
+<h3>Refresh statistics used by the query and enable automatic statistics management — Recommendation 4</h3>
+<pre><code>USE [SQLStorm];
+GO
+
+UPDATE STATISTICS [dbo].[Votes] [_WA_Sys_00000003_5BE2A6F2] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Votes] [ST_Votes_VoteTypeId_CreationDate_PostId] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Votes] [IX_Votes_PostId_VoteType] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Votes] [ST_Votes_Post_VoteType_User] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Posts] [PK__Posts__3214EC07AF21AC3E] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Posts] [IX_Posts_Question_TagScan] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Posts] [ST_Posts_PostType_Creation_Owner] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Posts] [IX_Posts_OwnerUserId_Cover] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Posts] [_WA_Sys_00000002_440B1D61] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Posts] [_WA_Sys_00000005_440B1D61] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Badges] [ST_Badges_User_Class_Date] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Badges] [_WA_Sys_00000002_628FA481] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Users] [PK__Users__3214EC079D12375D] WITH FULLSCAN;
+GO
+
+ALTER DATABASE [SQLStorm] SET AUTO_CREATE_STATISTICS ON;
+GO
+ALTER DATABASE [SQLStorm] SET AUTO_UPDATE_STATISTICS ON;
+GO
+ALTER DATABASE [SQLStorm] SET AUTO_UPDATE_STATISTICS_ASYNC ON;
+GO</code></pre>
+<p class="evidence"><strong>Implementation note:</strong> The script changes only statistics and database statistics settings. It does not add, drop or modify indexes, so its index storage impact is 0 MB.</p>
+</section>
+
+<section id="supporting-scripts">
+<h2>Supporting scripts (not part of the change)</h2>
+<h3>Capture actual I/O, CPU time and execution plan for before/after validation</h3>
+<pre><code>USE [SQLStorm];
+GO
+
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+SET STATISTICS XML ON;
+
+WITH RankedPosts AS
+(
+    SELECT
+        p.Id AS PostId,
+        p.Title,
+        p.CreationDate,
+        ROW_NUMBER() OVER
+        (
+            PARTITION BY t.Id
+            ORDER BY p.CreationDate DESC
+        ) AS rn,
+        t.TagName
+    FROM Posts AS p
+    JOIN Tags AS t
+        ON p.Tags LIKE '%' + t.TagName + '%'
+    WHERE p.PostTypeId = 1
+),
+UserStats AS
+(
+    SELECT
+        u.Id AS UserId,
+        u.DisplayName,
+        COUNT(DISTINCT p.Id) AS TotalPosts,
+        SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpVotes,
+        SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownVotes,
+        COUNT(DISTINCT b.Id) AS BadgeCount
+    FROM Users AS u
+    LEFT JOIN Posts AS p
+        ON u.Id = p.OwnerUserId
+    LEFT JOIN Votes AS v
+        ON p.Id = v.PostId
+    LEFT JOIN Badges AS b
+        ON u.Id = b.UserId
+    GROUP BY
+        u.Id,
+        u.DisplayName
+),
+TopUsers AS
+(
+    SELECT
+        us.UserId,
+        us.DisplayName,
+        us.TotalPosts,
+        us.UpVotes,
+        us.DownVotes,
+        us.BadgeCount,
+        DENSE_RANK() OVER
+        (
+            ORDER BY
+                us.TotalPosts DESC,
+                us.UpVotes - us.DownVotes DESC
+        ) AS UserRank
+    FROM UserStats AS us
+    WHERE us.TotalPosts &gt; 10
+)
+SELECT
+    tp.UserRank,
+    tp.DisplayName,
+    tp.TotalPosts,
+    tp.UpVotes,
+    tp.DownVotes,
+    tp.BadgeCount,
+    rp.Title AS LatestPostTitle,
+    rp.CreationDate AS LatestPostDate,
+    CASE
+        WHEN rp.rn = 1 THEN 'Latest'
+        ELSE 'Older'
+    END AS PostStatus
+FROM TopUsers AS tp
+LEFT JOIN RankedPosts AS rp
+    ON tp.UserId = rp.PostId
+ORDER BY
+    tp.UserRank,
+    rp.CreationDate DESC;
+
+SET STATISTICS XML OFF;
+SET STATISTICS TIME OFF;
+SET STATISTICS IO OFF;
+GO</code></pre>
+<p class="evidence"><strong>Validation requirement:</strong> Compare logical reads, CPU time, elapsed time, actual rows, memory grant, spills and returned-row checksum before and after the statistics change. The supplied plan is estimated only, so actual performance cannot be claimed yet.</p>
+</section>
+
+<section id="confidence">
+<h2>Confidence and validation</h2>
+<table>
+<tr><th>Conclusion</th><th>Confidence</th><th>Basis</th></tr>
+<tr><td>Leading-wildcard tag join is the primary bottleneck</td><td>98%</td><td>Nested Loops own cost 157.2936, approximately 80% of statement cost, with an explicit wildcard residual predicate and 104,436 estimated rows.</td></tr>
+<tr><td>Statistics are stale or insufficiently maintained</td><td>98%</td><td>Automatic statistics options are disabled; Votes has 1,600,424 modifications since its reported update.</td></tr>
+<tr><td>Current aggregate shape multiplies rows</td><td>99%</td><td>Independent one-to-many joins are followed by aggregate expressions over the combined stream; Node 19 estimates 1,677,770 rows.</td></tr>
+<tr><td>UserId/PostId join is a likely correctness defect</td><td>95% anomaly / 75% unintended</td><td>The query explicitly joins those unrelated logical roles, but business intent was not supplied.</td></tr>
+<tr><td>A new conventional index will solve tag matching</td><td>1% confidence</td><td>The predicate begins with a wildcard and the existing filtered covering index already supports PostTypeId filtering.</td></tr>
+</table>
+<p>Validate all changes with <code>SET STATISTICS IO ON</code> and <code>SET STATISTICS TIME ON</code>, plus an actual execution plan. Confirm that the output rows and values remain unchanged for any change claimed to be performance-only. Because Query Store has no matching history and the server restarted 37.6 hours ago, reported usage and missing-index figures should be treated as provisional.</p>
+</section>
+
+
+</main>
+</div>
+<footer>
+<p>Generated by AI SQL Tuner Studio v3.0.5.0 using model gpt-5.6-luna with reasoning effort medium.</p>
+<p>Based on analysis as of 2026-09-27 17:14:00 UTC</p>
+<p><a href="https://aisqltuner.com">https://aisqltuner.com</a></p>
+</footer>
+</body>
+</html>

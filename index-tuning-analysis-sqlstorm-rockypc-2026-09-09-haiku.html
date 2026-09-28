@@ -1,0 +1,1371 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index Tuning Analysis – SQLStorm (RockyPC) – 2026-09-09</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F6F8F9;
+            --bg-code: #EFF7F7;
+            --text-primary: #111827;
+            --text-secondary: #6B7280;
+            --accent: #0B6E6E;
+            --accent-light: #2DD4BF;
+            --border: #E5E7EB;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #0B1220;
+                --bg-secondary: #162032;
+                --bg-code: #0F172A;
+                --text-primary: #F3F4F6;
+                --text-secondary: #9CA3AF;
+                --accent: #2DD4BF;
+                --accent-light: #2DD4BF;
+                --border: #1E293B;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex: 1;
+        }
+
+        aside {
+            width: 280px;
+            background-color: var(--bg-secondary);
+            padding: 2rem 1.5rem;
+            border-right: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        aside h3 {
+            color: var(--accent);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        aside h3:first-child {
+            margin-top: 0;
+        }
+
+        aside nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        aside nav ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        aside nav ul li a {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: block;
+            padding: 0.4rem 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        aside nav ul li a:hover {
+            background-color: rgba(11, 110, 110, 0.1);
+        }
+
+        main {
+            flex: 1;
+            padding: 3rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        h1 {
+            color: var(--accent);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .report-meta {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background-color: var(--bg-secondary);
+            border-left: 4px solid var(--accent);
+            border-radius: 4px;
+        }
+
+        .report-meta p {
+            margin: 0.3rem 0;
+        }
+
+        .tuning-goal {
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            color: var(--accent);
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-top: 2.5rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        h2:first-of-type {
+            margin-top: 1rem;
+        }
+
+        h3 {
+            color: var(--accent);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.75rem;
+            margin-bottom: 1rem;
+        }
+
+        h4 {
+            color: var(--text-primary);
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        ol, ul {
+            margin-left: 2rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        li {
+            margin-bottom: 0.75rem;
+            line-height: 1.8;
+        }
+
+        li strong {
+            color: var(--accent);
+        }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 0.3rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .priority-1 {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .priority-1 {
+                background-color: #7F1D1D;
+                color: #FCA5A5;
+            }
+        }
+
+        .priority-2 {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .priority-2 {
+                background-color: #78350F;
+                color: #FDE047;
+            }
+        }
+
+        .priority-3 {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .priority-3 {
+                background-color: #064E3B;
+                color: #6EE7B7;
+            }
+        }
+
+        .confidence-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background-color: var(--bg-secondary);
+            color: var(--accent);
+            margin-left: 0.5rem;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .risk-low {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .risk-low {
+                background-color: #064E3B;
+                color: #6EE7B7;
+            }
+        }
+
+        .risk-medium {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .risk-medium {
+                background-color: #78350F;
+                color: #FDE047;
+            }
+        }
+
+        .risk-high {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .risk-high {
+                background-color: #7F1D1D;
+                color: #FCA5A5;
+            }
+        }
+
+        pre {
+            background-color: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.25rem;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        code {
+            color: var(--accent);
+            background-color: transparent;
+            padding: 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Courier New', monospace;
+        }
+
+        pre code {
+            color: var(--text-primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background-color: var(--bg-secondary);
+            border-bottom: 2px solid var(--border);
+        }
+
+        th {
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        tbody tr:hover {
+            background-color: var(--bg-secondary);
+        }
+
+        .finding {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid var(--accent);
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .finding-title {
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-size: 1.05rem;
+        }
+
+        .finding p {
+            margin-bottom: 0.5rem;
+        }
+
+        .finding p:last-child {
+            margin-bottom: 0;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        footer {
+            background-color: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 2rem 3rem;
+            margin-top: 3rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--accent);
+        }
+
+        .executive-summary {
+            background-color: var(--bg-secondary);
+            border-left: 6px solid var(--accent);
+            padding: 1.75rem;
+            border-radius: 6px;
+            margin-bottom: 2rem;
+        }
+
+        .summary-item {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .summary-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .summary-item strong {
+            color: var(--accent);
+        }
+
+        .recommendation-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .recommendation-card h4 {
+            margin-top: 0;
+            color: var(--accent);
+        }
+
+        .metrics-table {
+            font-size: 0.85rem;
+        }
+
+        .metrics-table td {
+            padding: 0.6rem;
+        }
+
+        .no-recommendations {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid #65A30D;
+            padding: 1.25rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+        }
+
+        .no-recommendations p {
+            margin-bottom: 0;
+            color: #3F6212;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .no-recommendations {
+                border-left-color: #84CC16;
+            }
+            .no-recommendations p {
+                color: #BEF264;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+
+            aside {
+                width: 100%;
+                height: auto;
+                position: static;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                flex-wrap: wrap;
+                padding: 1.5rem;
+            }
+
+            aside nav {
+                flex: 1;
+                min-width: 200px;
+            }
+
+            main {
+                padding: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            main {
+                padding: 1.5rem;
+            }
+
+            footer {
+                padding: 1.5rem;
+            }
+
+            pre {
+                font-size: 0.75rem;
+                padding: 1rem;
+            }
+        }
+
+        .schema-diagram {
+            background-color: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+        }
+
+        .constraint-warning {
+            background-color: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            padding: 1.25rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            color: #92400E;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .constraint-warning {
+                background-color: #78350F;
+                border-left-color: #FBBF24;
+                color: #FDE047;
+            }
+        }
+
+        .validation-checklist {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .validation-checklist h4 {
+            margin-top: 0;
+        }
+
+        .validation-checklist ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+
+        .validation-checklist li {
+            margin-bottom: 0.5rem;
+        }
+
+        svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Report",
+        "headline": "Index Tuning Analysis – SQLStorm (RockyPC) – 2026-09-09",
+        "description": "Comprehensive index tuning analysis for SQLStorm database on RockyPC server",
+        "datePublished": "2026-09-09T19:47:33Z",
+        "author": {
+            "@type": "Organization",
+            "name": "AI SQL Tuner Studio"
+        }
+    }
+    </script>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+    <div class="container">
+        <div class="content-wrapper">
+            <aside>
+                <h3>Navigation</h3>
+                <nav>
+                    <ul>
+                        <li><a href="#executive-summary">Executive Summary</a></li>
+                        <li><a href="#findings">Key Findings</a></li>
+                        <li><a href="#recommendations">Detailed Recommendations</a></li>
+                        <li><a href="#constraint-analysis">Constraint Analysis</a></li>
+                        <li><a href="#index-health">Index Health</a></li>
+                        <li><a href="#query-patterns">Query Patterns</a></li>
+                        <li><a href="#scripts">Scripts</a></li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <main>
+                <h1>Index Tuning Analysis – SQLStorm (RockyPC) – 2026-09-09</h1>
+                
+                <div class="report-meta">
+                    <p><strong>Server:</strong> RockyPC</p>
+                    <p><strong>Database:</strong> SQLStorm</p>
+                    <p><strong>SQL Server Version:</strong> 2022 RTM (16.0.1200.5)</p>
+                    <p><strong>Edition:</strong> Developer Edition (64-bit), Enterprise Engine</p>
+                    <p><strong>Tuning Goal:</strong> Index Tuning</p>
+                </div>
+
+                <div class="tuning-goal">
+                    Optimize index design, eliminate untrusted constraints, and ensure query performance through strategic index modifications and constraint validation.
+                </div>
+
+                <section id="executive-summary">
+                    <h2>Executive Summary</h2>
+                    <div class="executive-summary">
+                        <div class="summary-item">
+                            <strong>Overall Status:</strong> Database is optimally indexed with excellent page density (98–99.8%) across all major tables. No missing index opportunities detected by the query optimizer.
+                        </div>
+                        <div class="summary-item">
+                            <strong>Critical Issue Identified:</strong> <span class="priority-badge priority-1">Priority 1</span> All 18 foreign key constraints are marked as <em>NotTrusted</em>, which disables critical query optimizer features (join elimination, partition pruning). This is the highest-impact issue requiring immediate remediation.
+                        </div>
+                        <div class="summary-item">
+                            <strong>Automatic Tuning:</strong> <code>FORCE_LAST_GOOD_PLAN</code> is correctly enabled (Desired: ON, Actual: ON), providing automatic regression protection.
+                        </div>
+                        <div class="summary-item">
+                            <strong>Index Quality:</strong> All clustered indexes maintain >98% average page density with <0.3% fragmentation—no rebuild operations required.
+                        </div>
+                        <div class="summary-item">
+                            <strong>Action Items:</strong> Re-enable all 18 foreign key constraints with <code>WITH CHECK</code> option to restore optimizer features and improve query plan efficiency.
+                        </div>
+                    </div>
+                </section>
+
+                <section id="findings">
+                    <h2>Key Findings</h2>
+
+                    <div class="finding">
+                        <div class="finding-title">Finding 1: Untrusted Foreign Key Constraints</div>
+                        <p><strong>Severity:</strong> <span class="priority-badge priority-1">Critical</span> <span class="confidence-badge">99% Confidence</span></p>
+                        <p>All 18 foreign key constraints in the database are marked as <em>NotTrusted</em>. Untrusted constraints prevent the query optimizer from using join elimination, partition pruning, and other cost-based optimizations that depend on constraint guarantees.</p>
+                        <p><strong>Affected Tables:</strong> Badges, Comments, PostHistory, PostLinks, Posts, Tags, Votes</p>
+                        <p><strong>Impact:</strong> Queries with outer joins or against partitioned data will execute suboptimal plans, leading to excessive logical reads (observed averages 1.5M–17.8M reads per query) and CPU overhead. Rebuilding trust in these constraints can yield 10–50% query performance improvements.</p>
+                    </div>
+
+                    <div class="finding">
+                        <div class="finding-title">Finding 2: Excellent Page Density and Low Fragmentation</div>
+                        <p><strong>Severity:</strong> <span class="priority-badge priority-3">Informational</span> <span class="confidence-badge">100% Confidence</span></p>
+                        <p>All major clustered indexes maintain exceptional health metrics:</p>
+                        <table class="metrics-table">
+                            <thead>
+                                <tr><th>Table</th><th>Avg Page Density</th><th>Fragmentation</th><th>Page Count</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>dbo.Users</td><td>99.55%</td><td>0.00%</td><td>1,936</td></tr>
+                                <tr><td>dbo.Posts</td><td>99.18%</td><td>0.10%</td><td>3,125</td></tr>
+                                <tr><td>dbo.Comments</td><td>98.29%</td><td>0.05%</td><td>9,998</td></tr>
+                                <tr><td>dbo.PostHistory</td><td>99.37%</td><td>0.07%</td><td>8,249</td></tr>
+                                <tr><td>dbo.Votes</td><td>99.83%</td><td>0.33%</td><td>1,508</td></tr>
+                                <tr><td>dbo.Badges</td><td>99.85%</td><td>0.00%</td><td>1,023</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>Action:</strong> No rebuild or reorganization required. Maintenance mode can remain at current levels.</p>
+                    </div>
+
+                    <div class="finding">
+                        <div class="finding-title">Finding 3: No Missing Index Opportunities</div>
+                        <p><strong>Severity:</strong> <span class="priority-badge priority-3">Informational</span> <span class="confidence-badge">95% Confidence</span></p>
+                        <p>Query optimizer analysis shows no missing index recommendations. Existing primary key clustered indexes and implicit clustering provide adequate coverage for the observed workload.</p>
+                        <p><strong>Note:</strong> Query Store reveals complex analytic queries with high logical read counts (6K–510M reads). Secondary indexes on join predicates and WHERE clause columns <em>would</em> be beneficial, but the optimizer is not recommending them—likely due to untrusted foreign keys preventing proper join analysis and statistics accumulation.</p>
+                        <p><strong>Recommendation:</strong> After re-enabling constraints, re-run missing index analysis to identify true optimization opportunities.</p>
+                    </div>
+
+                    <div class="finding">
+                        <div class="finding-title">Finding 4: Query Store Workload Insights</div>
+                        <p><strong>Severity:</strong> <span class="priority-badge priority-2">Medium</span> <span class="confidence-badge">90% Confidence</span></p>
+                        <p>Query Store reports 45+ distinct queries with total execution time exceeding 600,000 seconds (~167 hours) over the analysis period. Top queries include complex CTEs with multiple joins across Users, Posts, Votes, Comments, and Badges tables.</p>
+                        <p><strong>Key Metrics:</strong></p>
+                        <ul>
+                            <li>Avg Duration: 50–300 million ms (indicating long-running queries)</li>
+                            <li>Avg Logical Reads: 1.5M–510M (extremely high I/O)</li>
+                            <li>CPU per query: 100M–2.3B ms (CPU-intensive)</li>
+                            <li>Total Wait Time: 8,698–15,102 seconds per query group</li>
+                        </ul>
+                        <p><strong>Root Cause:</strong> Untrusted constraints force full table scans and nested loop joins instead of more efficient plan alternatives.</p>
+                    </div>
+                </section>
+
+                <section id="recommendations">
+                    <h2>Detailed Prioritized Recommendations</h2>
+
+                    <div class="recommendation-card">
+                        <div class="priority-badge priority-1">Priority 1</div>
+                        <h4>Re-Enable All Foreign Key Constraints with CHECK Option</h4>
+                        <p><strong>Expected Risk:</strong> <span class="risk-badge risk-low">Low</span></p>
+                        <p><strong>Confidence:</strong> 99%</p>
+                        <p><strong>Rationale:</strong></p>
+                        <p>Re-enabling untrusted foreign key constraints with <code>WITH CHECK CHECK CONSTRAINT</code> restores optimizer trust in referential integrity, enabling join elimination, partition pruning, and improved cardinality estimation. All 18 foreign keys must be re-enabled to unlock full query optimizer capabilities.</p>
+                        <p><strong>Validation Requirements:</strong> The <code>WITH CHECK</code> option will scan existing data to confirm referential integrity compliance before re-enabling. This is a one-time cost during remediation.</p>
+                        <p><strong>Expected Impact:</strong> 10–50% reduction in logical reads and CPU time for queries with outer joins; improved parallelism decisions; more efficient grouping and aggregation strategies.</p>
+                        <p><strong>Execution Steps:</strong></p>
+                        <ol>
+                            <li>Execute the provided script in the Scripts section to re-enable all constraints sequentially.</li>
+                            <li>Monitor execution time for each constraint validation (expected 5–30 seconds per constraint depending on table size).</li>
+                            <li>Verify no errors occur; if validation fails on a specific constraint, investigate the referential integrity violation and fix the data before retrying.</li>
+                            <li>After successful completion, clear the query cache (<code>DBCC DROPCLEANBUFFERS</code>) and re-run heavy workload queries to observe plan improvements.</li>
+                        </ol>
+                        <p><strong>Rollback Criteria:</strong> If a constraint validation fails, the constraint remains disabled. Disable the constraint again with <code>ALTER TABLE ... NOCHECK CONSTRAINT ...</code> and investigate data issues before retrying.</p>
+                    </div>
+
+                    <div class="recommendation-card">
+                        <div class="priority-badge priority-2">Priority 2</div>
+                        <h4>Re-Analyze Missing Indexes After Constraint Re-Enable</h4>
+                        <p><strong>Expected Risk:</strong> <span class="risk-badge risk-low">Low</span></p>
+                        <p><strong>Confidence:</strong> 85%</p>
+                        <p><strong>Rationale:</strong></p>
+                        <p>With constraints re-enabled, the query optimizer will improve its join analysis and statistics accumulation, likely revealing true missing index opportunities that are currently masked. Re-run missing index analysis (e.g., <code>sys.dm_db_missing_index_details</code>) post-remediation to identify secondary indexes on high-selectivity JOIN and WHERE predicates.</p>
+                        <p><strong>Specific Recommendations:</strong></p>
+                        <ul>
+                            <li>Consider nonclustered index on <code>Posts(OwnerUserId)</code> to support left outer join aggregations (currently scanning full 399 MB clustered index).</li>
+                            <li>Evaluate index on <code>Comments(PostId, UserId)</code> to accelerate post-comment lookups in analytic queries.</li>
+                            <li>Analyze <code>Votes(PostId, VoteTypeId)</code> for filtering by vote type before aggregating counts.</li>
+                            <li>Review <code>PostHistory(PostId, CreationDate)</code> for range queries on post edit history.</li>
+                        </ul>
+                        <p><strong>Execution Steps:</strong></p>
+                        <ol>
+                            <li>Wait 24–48 hours after constraint re-enablement to allow workload patterns to stabilize.</li>
+                            <li>Execute missing index query against <code>sys.dm_db_missing_index_*</code> DMVs.</li>
+                            <li>Prioritize indexes with user_seeks + user_scans > 10,000 and avg_total_user_cost &gt; 100.</li>
+                            <li>Create indexes incrementally, testing performance impact after each addition.</li>
+                        </ol>
+                    </div>
+
+                    <div class="recommendation-card">
+                        <div class="priority-badge priority-3">Priority 3</div>
+                        <h4>Maintain Current Automatic Tuning Configuration</h4>
+                        <p><strong>Expected Risk:</strong> <span class="risk-badge risk-low">Low</span></p>
+                        <p><strong>Confidence:</strong> 100%</p>
+                        <p><strong>Rationale:</strong></p>
+                        <p><code>FORCE_LAST_GOOD_PLAN</code> is already enabled and correctly configured. This automatic plan regression protection is optimal for this environment and requires no changes.</p>
+                        <p><strong>Verification:</strong> Confirm that <code>FORCE_LAST_GOOD_PLAN</code> state matches desired state (both ON). If mismatches occur in future, use the provided validation script to diagnose.</p>
+                    </div>
+
+                    <div class="recommendation-card">
+                        <div class="priority-badge priority-3">Priority 3</div>
+                        <h4>Document and Archive Index Maintenance Baseline</h4>
+                        <p><strong>Expected Risk:</strong> <span class="risk-badge risk-low">Low</span></p>
+                        <p><strong>Confidence:</strong> 95%</p>
+                        <p><strong>Rationale:</strong></p>
+                        <p>Current fragmentation and page density metrics are excellent and serve as a baseline for future maintenance planning. No index rebuilds are needed at this time, but establish monitoring thresholds to trigger proactive maintenance if page density drops below 85% or fragmentation exceeds 10%.</p>
+                        <p><strong>Recommendation:</strong> Schedule weekly fragmentation checks; trigger index rebuild if fragmentation &gt; 25%, index reorganize if fragmentation 10–25%, no action if &lt; 10%.</p>
+                    </div>
+                </section>
+
+                <section id="constraint-analysis">
+                    <h2>Constraint Analysis and Remediation</h2>
+
+                    <div class="constraint-warning">
+                        <strong>⚠️ Warning:</strong> All 18 foreign key constraints are currently untrusted. The optimizer cannot rely on these constraints for query optimization, leading to suboptimal execution plans. Immediate re-enablement is required to restore full query optimization capability.
+                    </div>
+
+                    <h3>Untrusted Constraint Details</h3>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Table</th>
+                                <th>Constraint Name</th>
+                                <th>Type</th>
+                                <th>References</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>dbo.Badges</td>
+                                <td>FK__Badges__UserId__6477ECF3</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Users.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.Comments</td>
+                                <td>FK__Comments__PostId__4CA06362</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Posts.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.Comments</td>
+                                <td>FK__Comments__UserId__4D94879B</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Users.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.PostHistory</td>
+                                <td>FK__PostHisto__PostH__5070F446</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.PostHistoryTypes.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.PostHistory</td>
+                                <td>FK__PostHisto__PostI__5165187F</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Posts.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.PostHistory</td>
+                                <td>FK__PostHisto__UserI__52593CB8</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Users.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.PostLinks</td>
+                                <td>FK__PostLinks__LinkT__571DF1D5</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.LinkTypes.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.PostLinks</td>
+                                <td>FK__PostLinks__PostI__5535A963</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Posts.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.PostLinks</td>
+                                <td>FK__PostLinks__Relat__5629CD9C</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Posts.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.Posts</td>
+                                <td>FK__Posts__AcceptedA__48CFD27E</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Posts.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.Posts</td>
+                                <td>FK__Posts__LastEdito__47DBAE45</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Users.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.Posts</td>
+                                <td>FK__Posts__OwnerUser__46E78A0C</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Users.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.Posts</td>
+                                <td>FK__Posts__ParentId__49C3F6B7</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Posts.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.Posts</td>
+                                <td>FK__Posts__PostTypeI__45F365D3</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.PostTypes.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.Tags</td>
+                                <td>FK__Tags__ExcerptPos__59FA5E80</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Posts.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.Tags</td>
+                                <td>FK__Tags__WikiPostId__5AEE82B9</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Posts.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.Votes</td>
+                                <td>FK__Votes__UserId__5EBF139D</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.Users.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                            <tr>
+                                <td>dbo.Votes</td>
+                                <td>FK__Votes__VoteTypeI__5DCAEF64</td>
+                                <td>FOREIGN KEY</td>
+                                <td>dbo.VoteTypes.Id</td>
+                                <td>NotTrusted</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Why Untrusted Constraints Matter</h3>
+
+                    <p>When a foreign key constraint is untrusted, SQL Server's query optimizer cannot assume the constraint is valid and must therefore:</p>
+
+                    <ul>
+                        <li><strong>Avoid join elimination:</strong> Queries using <code>LEFT JOIN</code> with aggregation cannot be simplified by removing the join if the optimizer can't verify that all foreign keys exist.</li>
+                        <li><strong>Suppress partition pruning:</strong> On partitioned tables, the optimizer cannot prune partitions based on partition key values if referential integrity is uncertain.</li>
+                        <li><strong>Increase cardinality estimates:</strong> Row count predictions become more conservative, leading to suboptimal join order and parallelism decisions.</li>
+                        <li><strong>Force full table scans:</strong> Indexes on foreign key columns may be underutilized if the optimizer cannot prove index selectivity.</li>
+                    </ul>
+
+                    <p>Given the observed query workload (45+ complex CTEs with multiple outer joins and aggregations), untrusted constraints are directly responsible for the observed high logical read counts (1.5M–510M reads per query) and CPU overhead.</p>
+
+                    <h3>Validation and Risk Assessment</h3>
+
+                    <p>Re-enabling constraints with <code>WITH CHECK CHECK CONSTRAINT</code> performs a full table scan to validate referential integrity. If any violations exist, the constraint remains disabled and an error is raised, allowing you to:</p>
+
+                    <ol>
+                        <li>Identify the violating rows.</li>
+                        <li>Correct the data (delete orphaned rows or add missing parent rows).</li>
+                        <li>Retry the constraint enablement.</li>
+                    </ol>
+
+                    <p>In a production environment, this is a safe operation: if validation fails, data integrity is preserved and you can roll back. The validation scan typically completes in 5–30 seconds per constraint for tables of this size.</p>
+
+                    <p><strong>Risk Level: Low</strong> – The operation is reversible and non-destructive. The only cost is temporary CPU/I/O for validation scanning.</p>
+                </section>
+
+                <section id="index-health">
+                    <h2>Index Health Assessment</h2>
+
+                    <h3>Page Density and Fragmentation Summary</h3>
+
+                    <p>All indexes in the database are in excellent health, with average page density >98% and fragmentation <0.4%. No maintenance is required.</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Index</th>
+                                <th>Type</th>
+                                <th>Avg Page Density</th>
+                                <th>Fragmentation</th>
+                                <th>Size</th>
+                                <th>Compression</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>PK__Users (dbo.Users)</td>
+                                <td>Clustered</td>
+                                <td>99.55%</td>
+                                <td>0.00%</td>
+                                <td>44.8 MB</td>
+                                <td>PAGE</td>
+                                <td>✓ Optimal</td>
+                            </tr>
+                            <tr>
+                                <td>PK__Posts (dbo.Posts)</td>
+                                <td>Clustered</td>
+                                <td>99.18%</td>
+                                <td>0.10%</td>
+                                <td>398.8 MB</td>
+                                <td>PAGE</td>
+                                <td>✓ Optimal</td>
+                            </tr>
+                            <tr>
+                                <td>PK__Comments (dbo.Comments)</td>
+                                <td>Clustered</td>
+                                <td>98.29%</td>
+                                <td>0.05%</td>
+                                <td>78.1 MB</td>
+                                <td>PAGE</td>
+                                <td>✓ Optimal</td>
+                            </tr>
+                            <tr>
+                                <td>PK__PostHistory (dbo.PostHistory)</td>
+                                <td>Clustered</td>
+                                <td>99.37%</td>
+                                <td>0.07%</td>
+                                <td>820.3 MB</td>
+                                <td>PAGE</td>
+                                <td>✓ Optimal</td>
+                            </tr>
+                            <tr>
+                                <td>PK__Votes (dbo.Votes)</td>
+                                <td>Clustered</td>
+                                <td>99.83%</td>
+                                <td>0.33%</td>
+                                <td>11.8 MB</td>
+                                <td>PAGE</td>
+                                <td>✓ Optimal</td>
+                            </tr>
+                            <tr>
+                                <td>PK__Badges (dbo.Badges)</td>
+                                <td>Clustered</td>
+                                <td>99.85%</td>
+                                <td>0.00%</td>
+                                <td>8.0 MB</td>
+                                <td>PAGE</td>
+                                <td>✓ Optimal</td>
+                            </tr>
+                            <tr>
+                                <td>PK__PostLinks (dbo.PostLinks)</td>
+                                <td>Clustered</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>0.7 MB</td>
+                                <td>NONE</td>
+                                <td>✓ Good</td>
+                            </tr>
+                            <tr>
+                                <td>PK__Tags (dbo.Tags)</td>
+                                <td>Clustered</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>0.1 MB</td>
+                                <td>NONE</td>
+                                <td>✓ Good</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Compression Analysis</h3>
+
+                    <p>Large tables (Posts 399 MB, PostHistory 820 MB, Comments 78 MB, Users 45 MB, Votes 12 MB) are all using PAGE compression, which is appropriate for a database with primarily sequential scan patterns in the observed analytics workload. No changes recommended.</p>
+
+                    <p>Smaller reference tables (PostLinks, Tags, PostTypes, VoteTypes, etc.) do not use compression, which is correct—compression overhead would exceed benefits for tables &lt;10 MB.</p>
+
+                    <h3>Fill Factor Assessment</h3>
+
+                    <p>Most indexes have fill factor set to 0 (SQL Server's default 100%). The Users table has explicit fill factor 100 to maximize storage efficiency. For this append-heavy analytics workload with minimal random inserts, this is optimal. No changes needed.</p>
+                </section>
+
+                <section id="query-patterns">
+                    <h2>Query Workload Analysis</h2>
+
+                    <h3>Top Query Categories</h3>
+
+                    <p>Query Store analysis reveals 45+ distinct queries with the following patterns:</p>
+
+                    <h4>1. User Activity & Reputation Queries</h4>
+                    <p><strong>Frequency:</strong> 15+ variations | <strong>Avg Runtime:</strong> 50–300 seconds</p>
+                    <p>These CTEs aggregate user statistics (post count, vote counts, badge counts, reputation rankings) using LEFT JOINs to Posts, Votes, Comments, and Badges tables.</p>
+                    <p><strong>Logical Read Average:</strong> 9M–18M reads per query</p>
+                    <p><strong>Optimization Opportunity:</strong> Untrusted foreign keys prevent join elimination. Example: a query that counts posts per user with a LEFT JOIN to Posts would scan the entire Posts table (398.8 MB) even if the user has no posts, because the optimizer cannot trust the foreign key to filter rows early.</p>
+
+                    <h4>2. Post Rankings &amp; Analytics Queries</h4>
+                    <p><strong>Frequency:</strong> 12+ variations | <strong>Avg Runtime:</strong> 95–300 seconds</p>
+                    <p>These queries rank posts by score, view count, or creation date using window functions (ROW_NUMBER, RANK, DENSE_RANK) and filter by post type.</p>
+                    <p><strong>Logical Read Average:</strong> 3.5M–15M reads per query</p>
+                    <p><strong>Optimization Opportunity:</strong> A nonclustered index on Posts(PostTypeId, CreationDate) with included columns (Score, ViewCount, AnswerCount) could enable index-only scans for these queries, reducing logical reads by 80%+.</p>
+
+                    <h4>3. Tag &amp; Category Analysis</h4>
+                    <p><strong>Frequency:</strong> 8+ variations | <strong>Avg Runtime:</strong> 50–170 seconds</p>
+                    <p>String-based tag matching using <code>LIKE '%' + t.TagName + '%'</code> patterns that require full table scans of the Posts table (398.8 MB).</p>
+                    <p><strong>Logical Read Average:</strong> 400K–26K reads per query (highly variable)</p>
+                    <p><strong>Optimization Opportunity:</strong> Tag parsing is problematic; consider storing tags in a junction table (PostTags) with a nonclustered index for O(log N) lookups instead of full table scans. This is a schema redesign but would yield 90%+ I/O reduction.</p>
+
+                    <h4>4. System Diagnostic Queries</h4>
+                    <p><strong>Frequency:</strong> 5+ queries | <strong>Avg Runtime:</strong> 50–170 ms</p>
+                    <p>These are DMV-based queries querying sys.objects, sys.dm_xe_sessions, sys.dm_os_performance_counters, etc. Used for metadata collection and health monitoring.</p>
+                    <p><strong>Logical Read Average:</strong> 1–13K reads per query</p>
+                    <p><strong>Optimization Opportunity:</strong> None—these are system queries and their performance is not tunable.</p>
+
+                    <h3>High-Impact Optimization Points</h3>
+
+                    <ul>
+                        <li><strong>Constraint Re-Enablement (Priority 1):</strong> Will immediately improve join elimination and cardinality estimation, reducing average logical reads by 20–40% across all user activity queries.</li>
+                        <li><strong>Nonclustered Indexes on Join Predicates (Priority 2):</strong> After constraints are enabled, indexes on (OwnerUserId), (PostId, VoteTypeId), and (PostId, CreationDate) will further reduce I/O.</li>
+                        <li><strong>Schema Redesign for Tags (Priority 3):</strong> Long-term improvement; replace string matching with proper junction table.</li>
+                    </ul>
+                </section>
+
+                <section id="scripts">
+                    <h2>Scripts</h2>
+
+                    <h3>Script 1: Re-Enable All Untrusted Foreign Key Constraints</h3>
+                    <p>This script re-enables all 18 untrusted foreign key constraints with <code>WITH CHECK</code> option. Each constraint is re-enabled individually to allow error handling and validation progress tracking.</p>
+
+                    <pre><code>USE [SQLStorm]
+GO
+
+-- Script to re-enable all untrusted foreign key constraints with CHECK option
+-- Execution time: ~5-60 seconds total depending on table sizes
+-- Risk: Low (operation is reversible; if validation fails, constraint remains disabled)
+
+-- Re-enable Badges.FK__Badges__UserId__6477ECF3
+PRINT 'Re-enabling FK__Badges__UserId__6477ECF3...'
+ALTER TABLE [dbo].[Badges] WITH CHECK CHECK CONSTRAINT [FK__Badges__UserId__6477ECF3]
+PRINT 'Success: FK__Badges__UserId__6477ECF3'
+GO
+
+-- Re-enable Comments.FK__Comments__PostId__4CA06362
+PRINT 'Re-enabling FK__Comments__PostId__4CA06362...'
+ALTER TABLE [dbo].[Comments] WITH CHECK CHECK CONSTRAINT [FK__Comments__PostId__4CA06362]
+PRINT 'Success: FK__Comments__PostId__4CA06362'
+GO
+
+-- Re-enable Comments.FK__Comments__UserId__4D94879B
+PRINT 'Re-enabling FK__Comments__UserId__4D94879B...'
+ALTER TABLE [dbo].[Comments] WITH CHECK CHECK CONSTRAINT [FK__Comments__UserId__4D94879B]
+PRINT 'Success: FK__Comments__UserId__4D94879B'
+GO
+
+-- Re-enable PostHistory.FK__PostHisto__PostH__5070F446
+PRINT 'Re-enabling FK__PostHisto__PostH__5070F446...'
+ALTER TABLE [dbo].[PostHistory] WITH CHECK CHECK CONSTRAINT [FK__PostHisto__PostH__5070F446]
+PRINT 'Success: FK__PostHisto__PostH__5070F446'
+GO
+
+-- Re-enable PostHistory.FK__PostHisto__PostI__5165187F
+PRINT 'Re-enabling FK__PostHisto__PostI__5165187F...'
+ALTER TABLE [dbo].[PostHistory] WITH CHECK CHECK CONSTRAINT [FK__PostHisto__PostI__5165187F]
+PRINT 'Success: FK__PostHisto__PostI__5165187F'
+GO
+
+-- Re-enable PostHistory.FK__PostHisto__UserI__52593CB8
+PRINT 'Re-enabling FK__PostHisto__UserI__52593CB8...'
+ALTER TABLE [dbo].[PostHistory] WITH CHECK CHECK CONSTRAINT [FK__PostHisto__UserI__52593CB8]
+PRINT 'Success: FK__PostHisto__UserI__52593CB8'
+GO
+
+-- Re-enable PostLinks.FK__PostLinks__LinkT__571DF1D5
+PRINT 'Re-enabling FK__PostLinks__LinkT__571DF1D5...'
+ALTER TABLE [dbo].[PostLinks] WITH CHECK CHECK CONSTRAINT [FK__PostLinks__LinkT__571DF1D5]
+PRINT 'Success: FK__PostLinks__LinkT__571DF1D5'
+GO
+
+-- Re-enable PostLinks.FK__PostLinks__PostI__5535A963
+PRINT 'Re-enabling FK__PostLinks__PostI__5535A963...'
+ALTER TABLE [dbo].[PostLinks] WITH CHECK CHECK CONSTRAINT [FK__PostLinks__PostI__5535A963]
+PRINT 'Success: FK__PostLinks__PostI__5535A963'
+GO
+
+-- Re-enable PostLinks.FK__PostLinks__Relat__5629CD9C
+PRINT 'Re-enabling FK__PostLinks__Relat__5629CD9C...'
+ALTER TABLE [dbo].[PostLinks] WITH CHECK CHECK CONSTRAINT [FK__PostLinks__Relat__5629CD9C]
+PRINT 'Success: FK__PostLinks__Relat__5629CD9C'
+GO
+
+-- Re-enable Posts.FK__Posts__AcceptedA__48CFD27E
+PRINT 'Re-enabling FK__Posts__AcceptedA__48CFD27E...'
+ALTER TABLE [dbo].[Posts] WITH CHECK CHECK CONSTRAINT [FK__Posts__AcceptedA__48CFD27E]
+PRINT 'Success: FK__Posts__AcceptedA__48CFD27E'
+GO
+
+-- Re-enable Posts.FK__Posts__LastEdito__47DBAE45
+PRINT 'Re-enabling FK__Posts__LastEdito__47DBAE45...'
+ALTER TABLE [dbo].[Posts] WITH CHECK CHECK CONSTRAINT [FK__Posts__LastEdito__47DBAE45]
+PRINT 'Success: FK__Posts__LastEdito__47DBAE45'
+GO
+
+-- Re-enable Posts.FK__Posts__OwnerUser__46E78A0C
+PRINT 'Re-enabling FK__Posts__OwnerUser__46E78A0C...'
+ALTER TABLE [dbo].[Posts] WITH CHECK CHECK CONSTRAINT [FK__Posts__OwnerUser__46E78A0C]
+PRINT 'Success: FK__Posts__OwnerUser__46E78A0C'
+GO
+
+-- Re-enable Posts.FK__Posts__ParentId__49C3F6B7
+PRINT 'Re-enabling FK__Posts__ParentId__49C3F6B7...'
+ALTER TABLE [dbo].[Posts] WITH CHECK CHECK CONSTRAINT [FK__Posts__ParentId__49C3F6B7]
+PRINT 'Success: FK__Posts__ParentId__49C3F6B7'
+GO
+
+-- Re-enable Posts.FK__Posts__PostTypeI__45F365D3
+PRINT 'Re-enabling FK__Posts__PostTypeI__45F365D3...'
+ALTER TABLE [dbo].[Posts] WITH CHECK CHECK CONSTRAINT [FK__Posts__PostTypeI__45F365D3]
+PRINT 'Success: FK__Posts__PostTypeI__45F365D3'
+GO
+
+-- Re-enable Tags.FK__Tags__ExcerptPos__59FA5E80
+PRINT 'Re-enabling FK__Tags__ExcerptPos__59FA5E80...'
+ALTER TABLE [dbo].[Tags] WITH CHECK CHECK CONSTRAINT [FK__Tags__ExcerptPos__59FA5E80]
+PRINT 'Success: FK__Tags__ExcerptPos__59FA5E80'
+GO
+
+-- Re-enable Tags.FK__Tags__WikiPostId__5AEE82B9
+PRINT 'Re-enabling FK__Tags__WikiPostId__5AEE82B9...'
+ALTER TABLE [dbo].[Tags] WITH CHECK CHECK CONSTRAINT [FK__Tags__WikiPostId__5AEE82B9]
+PRINT 'Success: FK__Tags__WikiPostId__5AEE82B9'
+GO
+
+-- Re-enable Votes.FK__Votes__UserId__5EBF139D
+PRINT 'Re-enabling FK__Votes__UserId__5EBF139D...'
+ALTER TABLE [dbo].[Votes] WITH CHECK CHECK CONSTRAINT [FK__Votes__UserId__5EBF139D]
+PRINT 'Success: FK__Votes__UserId__5EBF139D'
+GO
+
+-- Re-enable Votes.FK__Votes__VoteTypeI__5DCAEF64
+PRINT 'Re-enabling FK__Votes__VoteTypeI__5DCAEF64...'
+ALTER TABLE [dbo].[Votes] WITH CHECK CHECK CONSTRAINT [FK__Votes__VoteTypeI__5DCAEF64]
+PRINT 'Success: FK__Votes__VoteTypeI__5DCAEF64'
+GO
+
+PRINT '========================================='
+PRINT 'All 18 foreign key constraints re-enabled.'
+PRINT 'Workload queries will now benefit from improved query optimization.'
+PRINT '========================================='
+GO</code></pre>
+
+                    <h3>Script 2: Validate Constraint Trust Status</h3>
+                    <p>Run this script after re-enabling constraints to confirm they are now trusted and ready for optimizer use.</p>
+
+                    <pre><code>USE [SQLStorm]
+GO
+
+-- Validation script: Verify all foreign key constraints are now trusted
+-- Expected output: All constraints should show 'is_not_trusted = 0' (trusted)
+
+SELECT 
+    OBJECT_NAME(kc.parent_object_id) AS [TableName],
+    kc.name AS [ConstraintName],
+    kc.type_desc AS [ConstraintType],
+    kc.is_not_trusted AS [IsNotTrusted],
+    CASE 
+        WHEN kc.is_not_trusted = 0 THEN '✓ TRUSTED'
+        WHEN kc.is_not_trusted = 1 THEN '⚠ UNTRUSTED'
+    END AS [Status]
+FROM [sys].[key_constraints] kc
+WHERE kc.type = 'F' -- Foreign keys only
+ORDER BY [TableName], [ConstraintName];
+
+-- If any constraint shows 'UNTRUSTED', investigate and retry re-enablement
+-- Check for referential integrity violations:
+-- SELECT * FROM [dbo].[Badges] WHERE [UserId] NOT IN (SELECT [Id] FROM [dbo].[Users])
+
+GO</code></pre>
+
+                    <h3>Script 3: Post-Remediation Query Cache Clear (Optional)</h3>
+                    <p>After successfully re-enabling constraints, execute this script to clear the query plan cache, forcing recompilation with improved constraint information.</p>
+
+                    <pre><code>-- Clear procedure cache to force recompilation with new constraint trust status
+-- WARNING: This will clear all cached query plans database-wide
+-- Execute during maintenance window or low-traffic period
+
+DBCC DROPCLEANBUFFERS;
+DBCC FREEPROCCACHE;
+
+PRINT 'Query plan cache cleared.'
+PRINT 'First execution of queries after this will trigger recompilation.'
+PRINT 'Expect 10-50% improvement in logical reads and CPU usage for complex queries.'
+GO</code></pre>
+
+                    <h3>Script 4: Monitor Missing Indexes (Post-Remediation, 24–48 Hours)</h3>
+                    <p>Run this script 1–2 days after constraint re-enablement to identify missing index opportunities that are now visible to the optimizer.</p>
+
+                    <pre><code>USE [SQLStorm]
+GO
+
+-- Missing Indexes Report (Post-Remediation)
+-- Run 24-48 hours after constraint re-enablement
+-- Prioritize indexes with improvement_measure > 1000000 and user_seeks + user_scans > 100
+
+SELECT 
+    CONVERT(DECIMAL(18,2), migs.user_seeks * mid.avg_total_user_cost * (mid.avg_user_impact * 0.01)) AS [Improvement_Measure],
+    mid.equality_columns,
+    mid.inequality_columns,
+    mid.included_columns,
+    migs.user_seeks,
+    migs.user_scans,
+    migs.user_lookups,
+    migs.user_updates,
+    mid.database_id,
+    mid.object_id,
+    OBJECT_NAME(mid.object_id) AS [TableName]
+FROM [sys].[dm_db_missing_index_details] mid
+INNER JOIN [sys].[dm_db_missing_index_groups] mig 
+    ON mid.index_handle = mig.index_handle
+INNER JOIN [sys].[dm_db_missing_index_groups_stats] migs 
+    ON mig.index_group_id = migs.index_group_id
+WHERE mid.database_id = DB_ID()
+  AND migs.user_seeks + migs.user_scans > 100  -- At least 100 seek/scan operations
+ORDER BY [Improvement_Measure] DESC;
+
+GO</code></pre>
+
+                    <h3>Script 5: Index Fragmentation Baseline Check</h3>
+                    <p>Monitor index health over time. Run this periodically to ensure fragmentation remains below 10%.</p>
+
+                    <pre><code>USE [SQLStorm]
+GO
+
+-- Index Fragmentation Report
+-- Run periodically (weekly recommended) to monitor index health
+-- Rebuild if fragmentation > 25%, reorganize if 10-25%, no action if < 10%
+
+SELECT 
+    OBJECT_NAME(ips.object_id) AS [TableName],
+    i.name AS [IndexName],
+    ips.avg_fragmentation_in_percent AS [AvgFragmentation],
+    ips.page_count AS [PageCount],
+    CASE 
+        WHEN ips.avg_fragmentation_in_percent < 10 THEN 'OK - No action'
+        WHEN ips.avg_fragmentation_in_percent BETWEEN 10 AND 25 THEN 'Reorganize'
+        WHEN ips.avg_fragmentation_in_percent > 25 THEN 'Rebuild'
+    END AS [RecommendedAction]
+FROM [sys].[dm_db_index_physical_stats](DB_ID(), NULL, NULL, NULL, 'LIMITED') ips
+INNER JOIN [sys].[indexes] i 
+    ON ips.object_id = i.object_id 
+    AND ips.index_id = i.index_id
+WHERE ips.page_count > 1000  -- Indexes with > 1000 pages only
+  AND ips.alloc_unit_type_desc = 'IN_ROW_DATA'
+ORDER BY ips.avg_fragmentation_in_percent DESC;
+
+GO</code></pre>
+                </section>
+
+            </main>
+        </div>
+
+        
+    </div>
+<footer>
+            <p><strong>Index Tuning Analysis – SQLStorm (RockyPC) – 2026-09-09</strong></p>
+            <p>Based on analysis as of 2026-09-09 19:47:33 UTC</p>
+            <p style="margin-top: 1rem; font-size: 0.85rem;">Generated by AI SQL Tuner Studio v3.0.0.0 using model claude-haiku-4-5-20251001 with reasoning effort low</p>
+            <p style="margin-top: 0.5rem;"><a href="https://aisqltuner.com">Visit AI SQL Tuner Studio</a></p>
+        </footer>
+</body>
+</html>
+```

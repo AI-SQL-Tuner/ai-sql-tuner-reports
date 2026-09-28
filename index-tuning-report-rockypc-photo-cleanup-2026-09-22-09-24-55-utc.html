@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Index Tuning Report – RockyPC – 2026-09-22 09:24:55 UTC</title>
+<meta name="description" content="Prioritized SQL Server index tuning recommendations for PhotoCleanup on RockyPC.">
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"TechArticle",
+  "headline":"Index Tuning Report – RockyPC – 2026-09-22 09:24:55 UTC",
+  "about":"SQL Server index tuning",
+  "dateModified":"2026-09-22T09:24:55Z",
+  "author":{"@type":"Organization","name":"AI SQL Tuner Studio"}
+}
+</script>
+<style>
+:root {
+  --paper:#FFFFFF;
+  --sidebar:#F6F8F9;
+  --text:#111827;
+  --muted:#6B7280;
+  --teal:#0B6E6E;
+  --border:#D9E2E5;
+  --code:#EFF7F7;
+  --good:#18794E;
+  --warn:#A15C00;
+  --bad:#B42318;
+  --shadow:0 2px 10px rgba(17,24,39,.06);
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  margin:0;
+  background:var(--paper);
+  color:var(--text);
+  font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height:1.6;
+}
+.layout { display:flex; min-height:100vh; }
+aside {
+  width:270px;
+  flex:0 0 270px;
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+  padding:28px 20px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+}
+aside h2 { font-size:1rem; margin:0 0 16px; color:var(--teal); }
+aside ul { list-style:none; padding:0; margin:0; }
+aside li { margin:7px 0; }
+aside a { color:var(--teal); text-decoration:none; font-size:.92rem; }
+aside a:hover { text-decoration:underline; }
+main { max-width:1180px; width:100%; padding:42px 54px 28px; margin:0 auto; }
+h1,h2,h3 { color:var(--teal); line-height:1.25; }
+h1 { font-size:2rem; margin:0 0 8px; }
+h2 { font-size:1.45rem; border-bottom:2px solid var(--teal); padding-bottom:7px; margin-top:38px; }
+h3 { font-size:1.05rem; margin-top:24px; }
+p { margin:10px 0 15px; }
+.lede { color:var(--muted); font-size:1.05rem; }
+.badge {
+  display:inline-block;
+  border:1px solid var(--teal);
+  color:var(--teal);
+  border-radius:999px;
+  padding:3px 10px;
+  font-size:.8rem;
+  font-weight:700;
+  letter-spacing:.02em;
+}
+.card {
+  border:1px solid var(--border);
+  border-left:5px solid var(--teal);
+  border-radius:7px;
+  padding:18px 20px;
+  margin:16px 0;
+  box-shadow:var(--shadow);
+}
+.priority-high { border-left-color:var(--bad); }
+.priority-medium { border-left-color:var(--warn); }
+.priority-low { border-left-color:var(--good); }
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin:16px 0 22px;
+  font-size:.91rem;
+}
+th,td { border:1px solid var(--border); padding:9px 10px; text-align:left; vertical-align:top; }
+th { background:var(--sidebar); color:var(--teal); }
+code {
+  background:var(--code);
+  color:var(--text);
+  padding:1px 4px;
+  border-radius:3px;
+  font-family:"SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size:.88em;
+}
+pre {
+  background:var(--code);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:16px;
+  overflow-x:auto;
+  white-space:pre-wrap;
+  word-break:break-word;
+  color:var(--text);
+}
+pre code { background:transparent; padding:0; }
+.small { color:var(--muted); font-size:.9rem; }
+.metric { font-weight:700; color:var(--teal); }
+.risk-high { color:var(--bad); font-weight:700; }
+.risk-medium { color:var(--warn); font-weight:700; }
+.risk-low { color:var(--good); font-weight:700; }
+footer {
+  border-top:1px solid var(--border);
+  margin-top:44px;
+  padding:20px 0 8px;
+  color:var(--muted);
+  font-size:.88rem;
+}
+footer a { color:var(--teal); }
+@media (max-width: 850px) {
+  .layout { display:block; }
+  aside { width:auto; height:auto; position:relative; border-right:0; border-bottom:1px solid var(--border); }
+  main { padding:28px 20px; }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:#0B1220;
+    --sidebar:#162032;
+    --text:#F3F4F6;
+    --muted:#9CA3AF;
+    --teal:#2DD4BF;
+    --border:#334155;
+    --code:#0F172A;
+    --good:#5EE6A8;
+    --warn:#F6C453;
+    --bad:#FF8A80;
+    --shadow:0 2px 10px rgba(0,0,0,.25);
+  }
+  body { background:#0B1220; color:#F3F4F6; }
+  th { background:#162032; }
+  code,pre { background:#0F172A; color:#F3F4F6; }
+  aside { background:#162032; }
+}
+</style>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<aside aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ul>
+    <li><a href="#executive-summary">Executive summary</a></li>
+    <li><a href="#environment">Environment and evidence</a></li>
+    <li><a href="#priorities">Prioritized recommendations</a></li>
+    <li><a href="#usage">Index usage assessment</a></li>
+    <li><a href="#density">Page density and maintenance</a></li>
+    <li><a href="#query-store">Query Store insights</a></li>
+    <li><a href="#automatic-tuning">Automatic tuning</a></li>
+    <li><a href="#constraints">Constraints and statistics</a></li>
+    <li><a href="#scripts">Scripts</a></li>
+    <li><a href="#supporting-scripts">Supporting scripts (not part of the change)</a></li>
+    <li><a href="#validation">Validation and rollback criteria</a></li>
+  </ul>
+</aside>
+
+<main>
+<header>
+  <span class="badge">Index Tuning</span>
+  <h1>Index Tuning Report – RockyPC – 2026-09-22 09:24:55 UTC</h1>
+  <p class="lede">Tuning goal: Index Tuning</p>
+  <p class="small"><strong>Server:</strong> RockyPC &nbsp;|&nbsp; <strong>Database:</strong> PhotoCleanup &nbsp;|&nbsp; <strong>Version:</strong> SQL Server 2022 RTM-GDR 16.0.1200.5 &nbsp;|&nbsp; <strong>Edition:</strong> Developer Edition, Enterprise engine capabilities</p>
+</header>
+
+<section id="executive-summary">
+<h2>Executive summary</h2>
+<div class="card priority-high">
+  <h3>Top priority: reduce full-table work on dbo.Files</h3>
+  <p>Query Store shows repeated or extremely expensive scans of <code>dbo.Files</code>, including a 19,955-second workload entry returning 537,863 rows, a 13,506-second entry returning 345,737 rows, and multiple aggregate queries with approximately 43,000–48,000 logical reads per execution. Create narrowly targeted filtered indexes for live, non-placeholder images awaiting perceptual hashing, live videos awaiting fingerprinting, and live-file aggregates.</p>
+</div>
+<div class="card priority-high">
+  <h3>Repair severe physical index degradation</h3>
+  <p>Several heavily used indexes have page density below 75% and fragmentation above 80%. Rebuild the clustered <code>PK_Files</code> and the operationally important <code>IX_Files_RootId_PathHash</code>, <code>IX_Files_ScanState_IsQuarantined</code>, and <code>IX_Files_SizeBytes</code> using online PAGE-compressed rebuilds with a controlled fill factor.</p>
+</div>
+<div class="card priority-medium">
+  <h3>Remove demonstrably unused nonconstraint indexes</h3>
+  <p>Drop five indexes with zero seeks and zero or negligible scans after replacement indexes are created. Their combined reported storage is approximately <span class="metric">35.0 MB</span>, and they add write and maintenance overhead without demonstrated read benefit.</p>
+</div>
+<div class="card priority-medium">
+  <h3>Enable automatic last-good-plan correction</h3>
+  <p><code>FORCE_LAST_GOOD_PLAN</code> is desired as DEFAULT but is actually OFF. Enable it so SQL Server can automatically revert regressions. No forced-plan failures were reported, so there is no immediate unforce operation.</p>
+</div>
+<table>
+<tr><th>Overall finding</th><th>Assessment</th><th>Confidence</th></tr>
+<tr><td>Missing-index DMV report</td><td>No direct missing-index recommendations; workload evidence still supports selective filtered indexes.</td><td>High</td></tr>
+<tr><td>Index bloat and fragmentation</td><td>Severe on several dbo.Files indexes; maintenance is justified for high-use structures.</td><td>High</td></tr>
+<tr><td>Duplicate/overlap risk</td><td>No duplicate or left-prefix overlaps detected in the supplied scope.</td><td>High</td></tr>
+<tr><td>Write overhead</td><td>dbo.Files is write-active, especially during bulk synchronization; avoid broad low-cardinality indexes.</td><td>High</td></tr>
+<tr><td>Columnstore suitability</td><td>No table over 1,000,000 rows was reported. Do not add columnstore indexes based on this data.</td><td>High</td></tr>
+</table>
+</section>
+
+<section id="environment">
+<h2>Environment and evidence</h2>
+<ul>
+  <li>SQL Server 2022, compatibility and feature set capable of online operations, compression, columnstore, PSP optimization, and automatic plan correction.</li>
+  <li>The largest reported table is <code>dbo.Files</code> with <strong>567,884 rows</strong>; it is large enough for selective rowstore indexes but below the supplied columnstore threshold.</li>
+  <li>Automatic create and update statistics are enabled; asynchronous statistics updates are disabled.</li>
+  <li>All supplied foreign keys and check constraints are trusted and enabled. No constraint repair script is required.</li>
+  <li>No deadlock, blocking-chain, Query Store forced-plan failure, disabled index, heap, or duplicate-index evidence was supplied.</li>
+</ul>
+</section>
+
+<section id="priorities">
+<h2>Detailed prioritized recommendations</h2>
+
+<ol>
+<li>
+<div class="card priority-high">
+<h3>1. Create three selective filtered indexes on dbo.Files</h3>
+<p><strong>Recommendation:</strong> create:</p>
+<ul>
+  <li><code>IX_Files_LiveImage_PHashPending</code> on <code>(PHash)</code>, filtered to <code>IsImage = 1 AND IsMissing = 0 AND IsQuarantined = 0 AND IsPlaceholder = 0 AND PHash IS NULL</code>, including <code>FileId, RootId, RelativePath, SizeBytes, Extension</code>.</li>
+  <li><code>IX_Files_LiveVideo_FingerprintPending</code> on <code>(VideoFingerprint)</code>, filtered to <code>IsVideo = 1 AND IsMissing = 0 AND IsQuarantined = 0 AND IsPlaceholder = 0 AND VideoFingerprint IS NULL</code>, including <code>FileId, RootId, RelativePath, SizeBytes, Extension</code>.</li>
+  <li><code>IX_Files_Live_SizeBytes</code> on <code>(SizeBytes)</code>, filtered to <code>IsMissing = 0</code>, including <code>FileId, IsPlaceholder, IsImage, IsVideo, IsQuarantined, ScanState</code>.</li>
+</ul>
+<p><strong>Evidence:</strong> Query Store reports 623 seconds for the PHash-pending query with 17,367 actual rows and 41,814 reads, 199 seconds for the video-fingerprint query with 235 rows and 4,801 reads, and repeated live-file count/sum queries with approximately 43,716 reads per execution. The supplied missing-index overlap data also reports a 43.3 MB candidate matching the PHash workload and a 13.0 MB candidate for <code>IsMissing</code> with <code>SizeBytes</code>.</p>
+<p><strong>Estimated size:</strong> PHash index <strong>43.3 MB</strong> using the supplied candidate estimate for 567,884 rows; video index <strong>20–45 MB</strong> because no candidate size or complete column widths were supplied; live aggregate index <strong>13.0 MB</strong> using the supplied candidate estimate. Assumptions are filtered-row counts comparable to the workload, existing clustering key propagation, rowstore PAGE compression, and normal page overhead.</p>
+<p><strong>Net storage impact:</strong> approximately <strong>76.3–101.3 MB added</strong> before drops and rebuild effects.</p>
+<p><strong>Risk:</strong> <span class="risk-medium">Medium</span>. Every insert or update affecting filter columns can maintain these indexes. The filters are selective and the workload evidence is strong.</p>
+<p><strong>Confidence:</strong> High for the PHash and live aggregate indexes; Medium-High for the video index.</p>
+</div>
+</li>
+
+<li>
+<div class="card priority-high">
+<h3>2. Rebuild heavily fragmented, high-value indexes</h3>
+<p>Rebuild <code>PK_Files</code>, <code>IX_Files_RootId_PathHash</code>, <code>IX_Files_ScanState_IsQuarantined</code>, and <code>IX_Files_SizeBytes</code> online with PAGE compression and fill factor 95. These structures have reported page densities of 60.43%, 51.66%, 43.66%, and 60.31%, respectively, with fragmentation from 82.17% to 98.90%.</p>
+<table>
+<tr><th>Index</th><th>Rows / before size</th><th>After estimate</th><th>Net change</th><th>Rationale</th></tr>
+<tr><td><code>PK_Files</code></td><td>570,600 / 329.5 MB</td><td>280–360 MB</td><td>-49.5 to +30.5 MB</td><td>High seeks and 99% fragmentation; clustered access path for all dependent indexes.</td></tr>
+<tr><td><code>IX_Files_RootId_PathHash</code></td><td>567,884 / 72.1 MB</td><td>55–75 MB</td><td>-17.1 to +2.9 MB</td><td>Critical synchronization join key; used by INSERT and UPDATE workloads.</td></tr>
+<tr><td><code>IX_Files_ScanState_IsQuarantined</code></td><td>567,884 / 37.6 MB</td><td>28–40 MB</td><td>-9.6 to +2.4 MB</td><td>14 seeks and 12 scans; supports scan-state processing.</td></tr>
+<tr><td><code>IX_Files_SizeBytes</code></td><td>567,884 / 37.3 MB</td><td>28–40 MB</td><td>-9.3 to +2.7 MB</td><td>Used by size-based duplicate processing and has high fragmentation.</td></tr>
+</table>
+<p>Estimates assume SQL Server PAGE compression and fill factor 95; actual size depends on data compressibility and row distribution. Online rebuilds still consume CPU, I/O, log space, and temporary sort space.</p>
+<p><strong>Risk:</strong> <span class="risk-medium">Medium</span>; schedule outside the busiest synchronization window and verify transaction-log capacity.</p>
+<p><strong>Confidence:</strong> High for <code>IX_Files_RootId_PathHash</code>; Medium-High for the other three.</p>
+</div>
+</li>
+
+<li>
+<div class="card priority-medium">
+<h3>3. Drop unused nonconstraint indexes after filtered-index creation</h3>
+<p>Drop the following indexes:</p>
+<ul>
+  <li><code>dbo.Files.IX_Files_IsImage_IsQuarantined</code>: 0 seeks, 0 scans, 17.6 MB.</li>
+  <li><code>dbo.Files.IX_Files_QuickHash</code>: 0 seeks, 0 scans, 6.2 MB.</li>
+  <li><code>dbo.Actions.IX_Actions_FileId_ActionType</code>: 0 seeks, 0 scans, 1.6 MB.</li>
+  <li><code>dbo.DupMembers.IX_DupMembers_FileId</code>: 0 seeks, 0 scans, 5.9 MB.</li>
+  <li><code>dbo.DupGroups.IX_DupGroups_WastedBytes</code>: 0 seeks, 2 scans, 3.7 MB and 683 updates.</li>
+</ul>
+<p>These are not reported as primary-key or unique-constraint backing indexes. Retain all constraint-enforcing indexes. DMV counters reset after restart, detach, restore, or index recreation; the recommendation is therefore appropriate only for the supplied observation period.</p>
+<p><strong>Storage reclaimed:</strong> approximately <strong>35.0 MB</strong>.</p>
+<p><strong>Risk:</strong> <span class="risk-medium">Medium</span>, mainly because the supplied observation window is not explicitly stated. <strong>Confidence:</strong> Medium-High.</p>
+</div>
+</li>
+
+<li>
+<div class="card priority-medium">
+<h3>4. Enable FORCE_LAST_GOOD_PLAN</h3>
+<p>The desired state is DEFAULT while the actual state is OFF, with reason AUTO_CONFIGURED. Enable the database-scoped option. This is a safe corrective action for a workload showing large, scan-heavy executions, even though no forced-plan failures were reported.</p>
+<p><strong>Risk:</strong> <span class="risk-low">Low</span>. Automatic tuning may choose a prior plan that is safer but not optimal for every parameter distribution; monitor plan selection after enabling.</p>
+<p><strong>Confidence:</strong> High.</p>
+</div>
+</li>
+
+<li>
+<div class="card priority-medium">
+<h3>5. Improve synchronization query design and staging indexes</h3>
+<p>The most expensive write statements join <code>dbo.Files</code> to temporary tables using <code>RootId, PathHash</code>. The existing <code>IX_Files_RootId_PathHash</code> is the correct access path and should be retained and rebuilt. Ensure <code>#Staging</code> and <code>#HashUpdate</code> receive temporary indexes on their join keys before the UPDATE or INSERT statements. This is a query-code and temporary-table change rather than a permanent database index recommendation.</p>
+<p>The large Query Store entries show 3,465 seconds for the hash-update statement and 3,305 seconds for a synchronization UPDATE. Because the staging-table definitions were not supplied, no executable permanent-table script is generated for them.</p>
+<p><strong>Risk:</strong> <span class="risk-low">Low</span> for adding correctly scoped temporary indexes; <strong>confidence:</strong> Medium.</p>
+</div>
+</li>
+</ol>
+</section>
+
+<section id="usage">
+<h2>Index usage assessment</h2>
+<table>
+<tr><th>Table</th><th>Useful access paths</th><th>Write/read interpretation</th></tr>
+<tr><td><code>dbo.Files</code></td><td><code>PK_Files</code>: 2,362 seeks, 99 scans; <code>IX_Files_ScanState_IsQuarantined</code>: 14 seeks, 12 scans; <code>IX_Files_SizeBytes</code>: 1 seek, 6 scans; <code>IX_Files_RootId_PathHash</code> supports synchronization despite low read counters.</td><td>High-value table with 567,884 rows and heavy bulk updates. Add only filtered or join-specific indexes.</td></tr>
+<tr><td><code>dbo.DupGroups</code></td><td><code>PK_DupGroups</code>: 1,716 seeks, 175 scans; <code>IX_DupGroups_GroupType_ResolvedUtc</code>: 191 seeks, 12 scans.</td><td>Existing composite index aligns with frequent GroupType/ResolvedUtc predicates. Do not add another index.</td></tr>
+<tr><td><code>dbo.DupMembers</code></td><td><code>PK_DupMembers</code>: 83 seeks, 15 scans.</td><td>Composite primary key supports GroupId/FileId joins. The unused FileId-only index can be removed cautiously.</td></tr>
+<tr><td><code>dbo.Actions</code></td><td><code>PK_Actions</code>: scans and lookups; <code>IX_Actions_PerformedUtc</code> has scans.</td><td>No new index justified. ActionType has one distinct value and is unsuitable as a standalone key.</td></tr>
+</table>
+<p>Low-cardinality columns such as <code>IsImage</code>, <code>IsVideo</code>, <code>IsPlaceholder</code>, and <code>IsQuarantined</code> should not receive broad standalone indexes. Their use inside highly selective filtered predicates is justified by the Query Store workload.</p>
+</section>
+
+<section id="density">
+<h2>Page density and maintenance</h2>
+<p>Indexes below approximately 75% page utilization include 12 structures. The highest-impact cases are the dbo.Files indexes selected for rebuild. Fragmentation is above 80% on most of them, indicating wasted pages and likely page-split or update pressure. The supplied latch waits are modest, so the primary expected benefit is reduced I/O and improved scan efficiency rather than latch-wait elimination.</p>
+<table>
+<tr><th>Action</th><th>Indexes</th><th>Reason</th></tr>
+<tr><td>Rebuild now</td><td><code>PK_Files</code>, <code>IX_Files_RootId_PathHash</code>, <code>IX_Files_ScanState_IsQuarantined</code>, <code>IX_Files_SizeBytes</code></td><td>High usage or synchronization importance, density 43.66–60.43%, fragmentation 82.17–98.90%.</td></tr>
+<tr><td>Drop instead of rebuild</td><td><code>IX_Files_IsImage_IsQuarantined</code>, <code>IX_Files_QuickHash</code>, <code>IX_Actions_FileId_ActionType</code>, <code>IX_DupMembers_FileId</code>, <code>IX_DupGroups_WastedBytes</code></td><td>Unused or nearly unused; maintenance cost exceeds demonstrated read value.</td></tr>
+<tr><td>Monitor</td><td><code>IX_Files_Sha256</code>, <code>IX_Files_NameKey</code>, <code>IX_Actions_PerformedUtc</code></td><td>Some scans or workload relevance exist; no immediate change.</td></tr>
+</table>
+</section>
+
+<section id="query-store">
+<h2>Query Store workload insights</h2>
+<p>The Query Store telemetry contains several suspiciously large duration values and inconsistent execution-count formatting, so absolute totals should be validated against runtime statistics before declaring a sustained outage. Nevertheless, the relative pattern is clear: dbo.Files scans and synchronization operations dominate the workload.</p>
+<table>
+<tr><th>Workload example</th><th>Observed metrics</th><th>Index implication</th></tr>
+<tr><td>PHash pending image query</td><td>1 execution, 623 s, 528,884 ms duration, 41814 reads, 17,367 rows.</td><td>Strong candidate for <code>IX_Files_LiveImage_PHashPending</code>.</td></tr>
+<tr><td>Video fingerprint pending query</td><td>1 execution, 199 s, 198,786 ms duration, 4801 reads, 235 rows.</td><td>Strong candidate for <code>IX_Files_LiveVideo_FingerprintPending</code>.</td></tr>
+<tr><td>Files synchronization UPDATE</td><td>1 execution, 3,465 s, 1,682,212 reads, 69,216 writes, 520,299 rows.</td><td>Retain and rebuild <code>IX_Files_RootId_PathHash</code>; optimize staging joins.</td></tr>
+<tr><td>Live-file count and sum aggregates</td><td>10–11 executions each; approximately 128–174 seconds average and 43,716 reads.</td><td>Use filtered live-file index with <code>SizeBytes</code>.</td></tr>
+<tr><td>DupGroups aggregate</td><td>Repeated GroupType and ResolvedUtc predicates; plan-cache reads 389–6,596.</td><td>Existing <code>IX_DupGroups_GroupType_ResolvedUtc</code> is correctly aligned; no new index.</td></tr>
+</table>
+<p>No forced-plan failures were detected. Therefore there are no affected <code>query_id</code> or <code>plan_id</code> values, failure counts, timestamps, or failure reasons to classify. No unforce or plan recreation is warranted.</p>
+</section>
+
+<section id="automatic-tuning">
+<h2>Automatic tuning</h2>
+<table>
+<tr><th>Option</th><th>Desired state</th><th>Actual state</th><th>Finding</th></tr>
+<tr><td><code>FORCE_LAST_GOOD_PLAN</code></td><td>DEFAULT</td><td>OFF</td><td>Actual state differs from the desired operational posture. Enable explicitly.</td></tr>
+</table>
+<p>Because Automatic Plan Correction is currently not enabled, the immediate action is to enable it rather than manually force or unforce any plan. After enabling, allow the engine to monitor and revert regressions while the index changes are validated.</p>
+<p><strong>One-line remediation:</strong> Enable last-good-plan correction, add the three selective filtered indexes, rebuild the four important fragmented indexes, then remove only the five unused nonconstraint indexes.</p>
+</section>
+
+<section id="constraints">
+<h2>Constraints and statistics</h2>
+<ul>
+  <li>All supplied foreign keys and check constraints are trusted and enabled. No <code>ALTER TABLE ... WITH CHECK CHECK CONSTRAINT</code> action is required.</li>
+  <li>Trusted constraints allow optimizer join elimination and predicate simplification. Do not disable them during index maintenance.</li>
+  <li>Primary keys and their foreign-key relationships must remain intact. None of the recommended changes drops or recreates a primary key, so no foreign-key drop/recreate sequence is required.</li>
+  <li>Automatic statistics creation and updates are enabled. Index creation and rebuilds create or refresh relevant index statistics. The implementation script also updates <code>dbo.Files</code> statistics with FULLSCAN after structural changes.</li>
+  <li>Do not add a columnstore index: no table over 1,000,000 rows was reported. A columnstore index would add storage and write-maintenance overhead without sufficient evidence of an analytic scan workload.</li>
+</ul>
+</section>
+
+<section id="storage">
+<h2>Storage impact summary</h2>
+<table>
+<tr><th>Category</th><th>Estimated change</th></tr>
+<tr><td>New filtered indexes</td><td>+76.3 to +101.3 MB</td></tr>
+<tr><td>Dropped unused indexes</td><td>-35.0 MB</td></tr>
+<tr><td>Rebuilds</td><td>-85.5 to +38.5 MB, based on reported before sizes and PAGE-compression estimates</td></tr>
+<tr><td><strong>Estimated net change</strong></td><td><strong>+55.8 to +104.8 MB</strong></td></tr>
+</table>
+<p>The net range excludes transient sort and transaction-log space. Rebuild estimates are uncertain because actual compression ratios and row widths were not supplied. The new video index is also a range because no source candidate size was reported.</p>
+</section>
+
+<section id="scripts">
+<h2>Scripts</h2>
+
+<h3>Create filtered indexes for high-cost dbo.Files workloads</h3>
+<pre><code>USE [PhotoCleanup];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Files')
+      AND name = N'IX_Files_LiveImage_PHashPending'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Files_LiveImage_PHashPending]
+    ON [dbo].[Files] ([PHash])
+    INCLUDE ([FileId], [RootId], [RelativePath], [SizeBytes], [Extension])
+    WHERE [IsImage] = 1
+      AND [IsMissing] = 0
+      AND [IsQuarantined] = 0
+      AND [IsPlaceholder] = 0
+      AND [PHash] IS NULL
+    WITH
+    (
+        DATA_COMPRESSION = PAGE,
+        SORT_IN_TEMPDB = ON,
+        ONLINE = ON,
+        FILLFACTOR = 95
+    );
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Files')
+      AND name = N'IX_Files_LiveVideo_FingerprintPending'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Files_LiveVideo_FingerprintPending]
+    ON [dbo].[Files] ([VideoFingerprint])
+    INCLUDE ([FileId], [RootId], [RelativePath], [SizeBytes], [Extension])
+    WHERE [IsVideo] = 1
+      AND [IsMissing] = 0
+      AND [IsQuarantined] = 0
+      AND [IsPlaceholder] = 0
+      AND [VideoFingerprint] IS NULL
+    WITH
+    (
+        DATA_COMPRESSION = PAGE,
+        SORT_IN_TEMPDB = ON,
+        ONLINE = ON,
+        FILLFACTOR = 95
+    );
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Files')
+      AND name = N'IX_Files_Live_SizeBytes'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Files_Live_SizeBytes]
+    ON [dbo].[Files] ([SizeBytes])
+    INCLUDE ([FileId], [IsPlaceholder], [IsImage], [IsVideo], [IsQuarantined], [ScanState])
+    WHERE [IsMissing] = 0
+    WITH
+    (
+        DATA_COMPRESSION = PAGE,
+        SORT_IN_TEMPDB = ON,
+        ONLINE = ON,
+        FILLFACTOR = 95
+    );
+END;
+GO</code></pre>
+
+<h3>Rebuild fragmented dbo.Files indexes with online PAGE compression</h3>
+<pre><code>USE [PhotoCleanup];
+GO
+
+IF EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Files')
+      AND name = N'PK_Files'
+)
+BEGIN
+    ALTER INDEX [PK_Files] ON [dbo].[Files]
+    REBUILD WITH
+    (
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        DATA_COMPRESSION = PAGE,
+        FILLFACTOR = 95
+    );
+END;
+GO
+
+IF EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Files')
+      AND name = N'IX_Files_RootId_PathHash'
+)
+BEGIN
+    ALTER INDEX [IX_Files_RootId_PathHash] ON [dbo].[Files]
+    REBUILD WITH
+    (
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        DATA_COMPRESSION = PAGE,
+        FILLFACTOR = 95
+    );
+END;
+GO
+
+IF EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Files')
+      AND name = N'IX_Files_ScanState_IsQuarantined'
+)
+BEGIN
+    ALTER INDEX [IX_Files_ScanState_IsQuarantined] ON [dbo].[Files]
+    REBUILD WITH
+    (
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        DATA_COMPRESSION = PAGE,
+        FILLFACTOR = 95
+    );
+END;
+GO
+
+IF EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Files')
+      AND name = N'IX_Files_SizeBytes'
+)
+BEGIN
+    ALTER INDEX [IX_Files_SizeBytes] ON [dbo].[Files]
+    REBUILD WITH
+    (
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        DATA_COMPRESSION = PAGE,
+        FILLFACTOR = 95
+    );
+END;
+GO
+
+UPDATE STATISTICS [dbo].[Files] WITH FULLSCAN;
+GO</code></pre>
+
+<h3>Drop unused nonconstraint indexes after replacement creation</h3>
+<pre><code>USE [PhotoCleanup];
+GO
+
+DROP INDEX IF EXISTS [IX_Files_IsImage_IsQuarantined] ON [dbo].[Files];
+GO
+
+DROP INDEX IF EXISTS [IX_Files_QuickHash] ON [dbo].[Files];
+GO
+
+DROP INDEX IF EXISTS [IX_Actions_FileId_ActionType] ON [dbo].[Actions];
+GO
+
+DROP INDEX IF EXISTS [IX_DupMembers_FileId] ON [dbo].[DupMembers];
+GO
+
+DROP INDEX IF EXISTS [IX_DupGroups_WastedBytes] ON [dbo].[DupGroups];
+GO</code></pre>
+
+<h3>Enable automatic last-good-plan correction</h3>
+<pre><code>USE [PhotoCleanup];
+GO
+
+ALTER DATABASE SCOPED CONFIGURATION
+SET AUTOMATIC_TUNING (FORCE_LAST_GOOD_PLAN = ON);
+GO</code></pre>
+</section>
+
+<section id="supporting-scripts">
+<h2>Supporting scripts (not part of the change)</h2>
+
+<h3>Measure index usage, physical density, and compression after implementation</h3>
+<pre><code>USE [PhotoCleanup];
+GO
+
+SELECT
+    OBJECT_SCHEMA_NAME(i.object_id) AS SchemaName,
+    OBJECT_NAME(i.object_id) AS TableName,
+    i.name AS IndexName,
+    i.type_desc,
+    i.is_disabled,
+    i.fill_factor,
+    ds.user_seeks,
+    ds.user_scans,
+    ds.user_lookups,
+    ds.user_updates,
+    ips.avg_page_space_used_in_percent,
+    ips.avg_fragmentation_in_percent,
+    ips.page_count,
+    ips.record_count,
+    p.data_compression_desc
+FROM sys.indexes AS i
+LEFT JOIN sys.dm_db_index_usage_stats AS ds
+    ON ds.database_id = DB_ID()
+   AND ds.object_id = i.object_id
+   AND ds.index_id = i.index_id
+CROSS APPLY sys.dm_db_index_physical_stats
+(
+    DB_ID(), i.object_id, i.index_id, NULL, 'SAMPLED'
+) AS ips
+LEFT JOIN sys.partitions AS p
+    ON p.object_id = i.object_id
+   AND p.index_id = i.index_id
+   AND p.partition_number = ips.partition_number
+WHERE i.object_id IN
+(
+    OBJECT_ID(N'dbo.Files'),
+    OBJECT_ID(N'dbo.Actions'),
+    OBJECT_ID(N'dbo.DupGroups'),
+    OBJECT_ID(N'dbo.DupMembers')
+)
+AND i.name IS NOT NULL
+AND ips.alloc_unit_type_desc = N'IN_ROW_DATA'
+ORDER BY ips.avg_page_space_used_in_percent ASC, ips.avg_fragmentation_in_percent DESC;
+GO</code></pre>
+
+<h3>Check automatic tuning state and Query Store forced-plan failures</h3>
+<pre><code>USE [PhotoCleanup];
+GO
+
+SELECT
+    name,
+    value,
+    value_for_secondary
+FROM sys.database_scoped_configurations
+WHERE name = N'AUTOMATIC_TUNING';
+
+SELECT
+    qpf.query_id,
+    qpf.plan_id,
+    qpf.failure_count,
+    qpf.last_force_failure_time,
+    qpf.last_force_failure_reason_desc
+FROM sys.query_store_plan AS qsp
+INNER JOIN sys.query_store_query AS q
+    ON q.query_id = qsp.query_id
+INNER JOIN sys.query_store_plan_forcing_policy AS qpf
+    ON qpf.plan_id = qsp.plan_id
+WHERE qpf.failure_count &gt; 0
+ORDER BY qpf.last_force_failure_time DESC;
+GO</code></pre>
+</section>
+
+<section id="validation">
+<h2>Validation and rollback criteria</h2>
+<h3>Three-step safe implementation playbook</h3>
+<ol>
+  <li>During a maintenance window, create the three filtered indexes. Confirm creation succeeds and that log, tempdb, CPU, and I/O remain within limits.</li>
+  <li>Rebuild the four selected dbo.Files indexes online, then update dbo.Files statistics with FULLSCAN.</li>
+  <li>After a stable observation period, drop the five unused indexes and enable FORCE_LAST_GOOD_PLAN. Recheck Query Store and index usage counters.</li>
+</ol>
+<p><strong>Rollback criteria:</strong> stop or revert the change if synchronization duration increases by more than 20%, writes or log generation materially exceed the maintenance budget, blocking appears, or any critical query regresses by more than 20% at p95 for two consecutive observation intervals. If a new index is unused and adds measurable write latency, remove that specific index. If compression increases CPU materially without reducing I/O, rebuild the affected index using the prior compression setting.</p>
+<ul>
+  <li>Confirm the filtered indexes are enabled and have nonzero seeks or scans for their target queries.</li>
+  <li>Confirm page density improves substantially and fragmentation is reduced after rebuild.</li>
+  <li>Compare Query Store duration, CPU, logical reads, writes, execution count, and plan count before and after.</li>
+  <li>Verify synchronization INSERT and UPDATE statements still use the <code>RootId, PathHash</code> access path.</li>
+  <li>Confirm no foreign key or check constraint becomes untrusted or disabled.</li>
+  <li>Confirm automatic tuning reports <code>FORCE_LAST_GOOD_PLAN</code> as ON.</li>
+  <li>Reassess dropped indexes only after a full representative workload period, since usage counters can reset.</li>
+</ul>
+</section>
+
+
+</main>
+</div>
+<footer>
+  <p>Based on analysis as of 2026-09-22 09:24:55 UTC</p>
+  <p>Generated by AI SQL Tuner Studio v3.0.0.0 using model gpt-5.6-luna with reasoning effort low. <a href="https://aisqltuner.com">aisqltuner.com</a></p>
+</footer>
+</body>
+</html>

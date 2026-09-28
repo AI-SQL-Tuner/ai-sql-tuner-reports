@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Index Tuning Report – RockyPC / PhotoCleanup – 2026-07-30</title>
+  <style>
+    :root{
+      --bg:#FFFFFF;
+      --text:#111827;
+      --muted:#6B7280;
+      --accent:#0B6E6E;
+      --sidebar:#F6F8F9;
+      --border:#D7E3E3;
+      --codebg:#EFF7F7;
+      --card:#FFFFFF;
+      --warn:#8A5A00;
+      --good:#166534;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font:15px/1.55 "Segoe UI", Roboto, Inter, Arial, sans-serif;
+    }
+    .layout{
+      display:grid;
+      grid-template-columns: 290px 1fr;
+      min-height:100vh;
+    }
+    nav{
+      background:var(--sidebar);
+      border-right:1px solid var(--border);
+      padding:24px 20px;
+      position:sticky;
+      top:0;
+      height:100vh;
+      overflow:auto;
+    }
+    nav h2{
+      margin:0 0 12px 0;
+      font-size:1.05rem;
+      color:var(--accent);
+    }
+    nav ul{
+      list-style:none;
+      padding:0;
+      margin:0;
+    }
+    nav li{
+      margin:8px 0;
+    }
+    nav a{
+      color:var(--accent);
+      text-decoration:none;
+    }
+    nav a:hover{text-decoration:underline}
+    main{
+      padding:32px 40px 48px;
+      max-width:1200px;
+    }
+    h1,h2,h3,h4{
+      color:var(--accent);
+      line-height:1.25;
+    }
+    h1{
+      font-size:2rem;
+      margin:0 0 8px;
+    }
+    h2{
+      margin-top:34px;
+      padding-top:8px;
+      border-top:1px solid var(--border);
+      font-size:1.45rem;
+    }
+    h3{
+      margin-top:26px;
+      font-size:1.1rem;
+    }
+    p, li{color:var(--text)}
+    .muted,.secondary{color:var(--muted)}
+    .meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px 22px;
+      margin:10px 0 18px;
+      color:var(--muted);
+      font-size:.96rem;
+    }
+    .goal{
+      margin:6px 0 16px;
+      font-weight:600;
+      color:var(--text);
+    }
+    .summary-box, .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:16px 18px;
+      margin:14px 0;
+    }
+    .priority{
+      display:inline-block;
+      padding:2px 10px;
+      border-radius:999px;
+      font-size:.82rem;
+      font-weight:700;
+      letter-spacing:.02em;
+      margin-right:8px;
+      border:1px solid var(--border);
+    }
+    .p1{background:#E6F6F6;color:#0B6E6E}
+    .p2{background:#FFF6E5;color:#8A5A00}
+    .p3{background:#EEF2F7;color:#475569}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin:12px 0 18px;
+      font-size:.95rem;
+    }
+    th,td{
+      border:1px solid var(--border);
+      padding:10px 12px;
+      text-align:left;
+      vertical-align:top;
+    }
+    th{
+      background:#F9FBFB;
+      color:var(--accent);
+    }
+    a{color:var(--accent)}
+    code{
+      background:var(--codebg);
+      padding:.1rem .3rem;
+      border-radius:4px;
+      font-family:Consolas, "Courier New", monospace;
+      font-size:.93em;
+    }
+    pre{
+      background:var(--codebg);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:14px 16px;
+      overflow:auto;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    pre code{
+      background:transparent;
+      padding:0;
+      border-radius:0;
+    }
+    .small{font-size:.92rem}
+    .confidence{
+      font-weight:600;
+      color:var(--good);
+    }
+    .viz-caption{
+      color:var(--muted);
+      font-size:.92rem;
+      margin-top:8px;
+    }
+    .footer{
+      border-top:1px solid var(--border);
+      margin-top:40px;
+      padding-top:18px;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+    .toc-sub{
+      padding-left:16px;
+      margin-top:6px;
+    }
+    @media (max-width: 980px){
+      .layout{grid-template-columns:1fr}
+      nav{
+        position:relative;
+        height:auto;
+        border-right:none;
+        border-bottom:1px solid var(--border);
+      }
+      main{padding:24px 18px 40px}
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0B1220;
+        --text:#F3F4F6;
+        --muted:#9CA3AF;
+        --accent:#2DD4BF;
+        --sidebar:#162032;
+        --border:#243247;
+        --codebg:#0F172A;
+        --card:#0B1220;
+        --warn:#FBBF24;
+        --good:#86EFAC;
+      }
+      th{background:#111C2E}
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Report",
+    "headline":"Index Tuning Report – RockyPC / PhotoCleanup – 2026-07-30",
+    "datePublished":"2026-07-30",
+    "author":{
+      "@type":"Organization",
+      "name":"AI SQL Tuner Studio"
+    },
+    "about":{
+      "@type":"SoftwareApplication",
+      "name":"Microsoft SQL Server 2022"
+    }
+  }
+  </script>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+  <div class="layout">
+    <nav aria-label="Table of contents">
+      <h2>Contents</h2>
+      <ul>
+        <li><a href="#executive-summary">Executive summary</a></li>
+        <li><a href="#detailed-recommendations">Detailed prioritized recommendations</a>
+          <ul class="toc-sub">
+            <li><a href="#rec1">1. Drop unused write-heavy indexes</a></li>
+            <li><a href="#rec2">2. Rebuild high-fragmentation indexes</a></li>
+            <li><a href="#rec3">3. Enable automatic plan correction</a></li>
+            <li><a href="#rec4">4. Refresh statistics after index changes</a></li>
+            <li><a href="#rec5">5. Code/query changes instead of new indexes</a></li>
+            <li><a href="#rec6">6. Findings not requiring action</a></li>
+          </ul>
+        </li>
+        <li><a href="#workload-evidence">Workload evidence</a></li>
+        <li><a href="#index-structure">Index structure visual aid</a></li>
+        <li><a href="#forced-plan-review">Forced plan review</a></li>
+        <li><a href="#scripts">Scripts</a></li>
+      </ul>
+    </nav>
+
+    <main>
+      <header>
+        <h1>Index Tuning Report – RockyPC / PhotoCleanup – 2026-07-30</h1>
+        <div class="goal">Tuning goal: <strong>Index Tuning</strong></div>
+        <div class="meta">
+          <div><strong>Server:</strong> RockyPC</div>
+          <div><strong>Database:</strong> PhotoCleanup</div>
+          <div><strong>Version:</strong> SQL Server 2022 (16.0.1190.2), RTM-GDR</div>
+          <div><strong>Edition:</strong> Developer Edition / Enterprise engine features available</div>
+        </div>
+      </header>
+
+      <section id="executive-summary">
+        <h2>Executive summary</h2>
+        <div class="summary-box">
+          <ol>
+            <li><strong>Drop clearly unused nonclustered indexes on <code>dbo.Files</code> and <code>dbo.Actions</code> before adding anything new.</strong> There are multiple indexes with <code>0</code> reads but meaningful write cost, especially on the write-heavy <code>dbo.Files</code> table. Best immediate candidates are <code>IX_Files_IsImage_IsQuarantined</code>, <code>IX_Files_IsVideo_IsQuarantined</code>, and <code>IX_Actions_FileId_ActionType</code>.</li>
+            <li><strong>Rebuild the badly fragmented, low-density indexes that remain in use.</strong> The largest win is on <code>PK_Files</code> and <code>IX_Files_ScanState_IsQuarantined</code>, where page density is very poor and fragmentation is extreme. Current scan-heavy workload is paying unnecessary I/O.</li>
+            <li><strong>Do not add new indexes from the overlap signals.</strong> The missing-index section is empty, and most candidate keys are low-cardinality Boolean columns on a table with heavy update activity. Adding more Boolean-heavy indexes would likely worsen DML cost without enough selectivity benefit.</li>
+            <li><strong>Enable Query Store automatic plan correction.</strong> <code>FORCE_LAST_GOOD_PLAN</code> is currently <code>OFF</code>. On SQL Server 2022 this is a safe, useful protection against future regressions.</li>
+            <li><strong>Address expensive repeated aggregate scans with code changes rather than indexes.</strong> Repeated <code>COUNT(*)</code> and <code>SUM(SizeBytes)</code> queries over <code>dbo.Files</code> each read about <code>43,070</code> pages. Because <code>IsMissing</code> has estimated distinct values of <code>1</code>, indexing that flag will not be selective enough to justify more write overhead.</li>
+          </ol>
+          <p class="confidence">Overall confidence: Medium-High</p>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Priority</th>
+              <th>Recommendation</th>
+              <th>Expected benefit</th>
+              <th>Risk</th>
+              <th>Confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="priority p1">P1</span></td>
+              <td>Drop unused write-heavy indexes on <code>dbo.Files</code> and <code>dbo.Actions</code></td>
+              <td>Lower insert/update cost, less maintenance, less fragmentation churn</td>
+              <td>Low-Medium</td>
+              <td>High</td>
+            </tr>
+            <tr>
+              <td><span class="priority p1">P1</span></td>
+              <td>Rebuild fragmented indexes that are still useful, especially <code>PK_Files</code> and <code>IX_Files_ScanState_IsQuarantined</code></td>
+              <td>Lower read I/O and shorter scan time for common queries</td>
+              <td>Low</td>
+              <td>High</td>
+            </tr>
+            <tr>
+              <td><span class="priority p2">P2</span></td>
+              <td>Enable <code>FORCE_LAST_GOOD_PLAN</code></td>
+              <td>Protection from future regressions</td>
+              <td>Low</td>
+              <td>High</td>
+            </tr>
+            <tr>
+              <td><span class="priority p2">P2</span></td>
+              <td>Update statistics after index cleanup/rebuild</td>
+              <td>Better cardinality estimates, better plan quality</td>
+              <td>Low</td>
+              <td>Medium-High</td>
+            </tr>
+            <tr>
+              <td><span class="priority p3">P3</span></td>
+              <td>Prefer query rewrites/materialized summaries over new Boolean indexes</td>
+              <td>Avoids write amplification on <code>dbo.Files</code></td>
+              <td>Low-Medium</td>
+              <td>Medium</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="detailed-recommendations">
+        <h2>Detailed prioritized recommendations</h2>
+
+        <article id="rec1" class="card">
+          <h3><span class="priority p1">P1</span>Drop unused write-heavy indexes</h3>
+          <p><strong>Recommendation:</strong> Drop the following indexes:</p>
+          <ul>
+            <li><code>dbo.Files.IX_Files_IsImage_IsQuarantined</code></li>
+            <li><code>dbo.Files.IX_Files_IsVideo_IsQuarantined</code></li>
+            <li><code>dbo.Actions.IX_Actions_FileId_ActionType</code></li>
+          </ul>
+
+          <p><strong>Why:</strong></p>
+          <ul>
+            <li><code>IX_Files_IsImage_IsQuarantined</code>: <strong>0 reads</strong>, <strong>30,193 updates</strong>, size <strong>17.2 MB</strong>.</li>
+            <li><code>IX_Files_IsVideo_IsQuarantined</code>: <strong>2 seeks</strong>, <strong>30,193 updates</strong>, size <strong>17.3 MB</strong>.</li>
+            <li><code>IX_Actions_FileId_ActionType</code>: <strong>0 reads</strong>, <strong>30,021 updates</strong>, size <strong>1.6 MB</strong>.</li>
+          </ul>
+
+          <p>These are poor write-to-read tradeoffs. On <code>dbo.Files</code>, the two Boolean-led indexes are especially weak because the leading keys are low-cardinality. The cardinality data shows:</p>
+          <ul>
+            <li><code>IsImage</code>: estimated distinct values = <strong>2</strong></li>
+            <li><code>IsVideo</code>: estimated distinct values = <strong>2</strong></li>
+            <li><code>IsQuarantined</code>: estimated distinct values = <strong>2</strong></li>
+            <li><code>IsMissing</code>: estimated distinct values = <strong>1</strong></li>
+          </ul>
+
+          <p>That combination explains why these indexes are not helping the repeated aggregate queries; they are not selective enough, and the optimizer is ignoring them.</p>
+
+          <p><strong>Not recommended to drop now:</strong></p>
+          <ul>
+            <li><code>IX_Files_NameKey</code>, <code>IX_Files_QuickHash</code>, and <code>IX_Files_Sha256</code> also show no direct reads in the sampled usage stats, but they align with application semantics and dedupe/hash workflows. Because workload windows can miss occasional but important usage, they should be retained unless repeated observation confirms persistent zero usage.</li>
+            <li><code>IX_Actions_PerformedUtc</code> has only scan usage, but it is small and plausibly supports date-based review/audit access. Keep it for now.</li>
+          </ul>
+
+          <p><strong>Expected impact:</strong> lower DML overhead, less index maintenance, less fragmentation pressure, and better cache efficiency.</p>
+          <p><strong>Risk:</strong> Low-Medium. Validate application features that may occasionally search by these columns before and after deployment.</p>
+          <p><strong>Confidence:</strong> High</p>
+        </article>
+
+        <article id="rec2" class="card">
+          <h3><span class="priority p1">P1</span>Rebuild the fragmented indexes that remain useful</h3>
+          <p><strong>Recommendation:</strong> Rebuild the heavily fragmented, low-density indexes below. Use online operations since Enterprise features are available.</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Index</th>
+                <th>Reads</th>
+                <th>Writes</th>
+                <th>Avg page density</th>
+                <th>Fragmentation</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>dbo.Files.PK_Files</code></td>
+                <td>76,516 seeks, 324 scans</td>
+                <td>30,521 updates</td>
+                <td>60.53%</td>
+                <td>98.89%</td>
+                <td>Rebuild</td>
+              </tr>
+              <tr>
+                <td><code>dbo.Files.IX_Files_ScanState_IsQuarantined</code></td>
+                <td>38 seeks, 34 scans</td>
+                <td>30,508 updates</td>
+                <td>43.24%</td>
+                <td>82.50%</td>
+                <td>Rebuild</td>
+              </tr>
+              <tr>
+                <td><code>dbo.DupMembers.IX_DupMembers_FileId</code></td>
+                <td>3 seeks, 12 scans</td>
+                <td>6,494 updates</td>
+                <td>41.23%</td>
+                <td>97.21%</td>
+                <td>Rebuild</td>
+              </tr>
+              <tr>
+                <td><code>dbo.DupGroups.IX_DupGroups_WastedBytes</code></td>
+                <td>52 scans</td>
+                <td>2,522 updates</td>
+                <td>28.58%</td>
+                <td>98.72%</td>
+                <td>Rebuild</td>
+              </tr>
+              <tr>
+                <td><code>dbo.ImageMeta.PK_ImageMeta</code></td>
+                <td>792 seeks, 26 scans</td>
+                <td>8,596 updates</td>
+                <td>67.48%</td>
+                <td>98.82%</td>
+                <td>Rebuild</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p><strong>Why:</strong> These indexes are being used, but page density is far below the desired range. That means more pages, more I/O, and longer scans than necessary. This aligns directly with the expensive workload patterns seen in Query Store and plan cache.</p>
+
+          <p><strong>Examples that should benefit:</strong></p>
+          <ul>
+            <li>Query hash <code>A562216AF17D4D82</code>: <code>SELECT COUNT(*) FROM [Files] ... WHERE [IsMissing] = 0 AND [IsPlaceholder] = 1</code> — avg logical reads <strong>43,070</strong>.</li>
+            <li>Query hash <code>E800BF84B1A28F51</code>: <code>SELECT COUNT(*) FROM [Files] ... WHERE [IsMissing] = 0 AND [IsImage] = 1</code> — avg logical reads <strong>43,070</strong>.</li>
+            <li>Query hash <code>040E968994F6D988</code>: <code>SELECT COUNT(*) FROM [Files] ... WHERE [IsMissing] = 0 AND [IsVideo] = 1</code> — avg logical reads <strong>43,070</strong>.</li>
+            <li>Query hash <code>5F0938E24B13D9A2</code>: <code>SELECT SUM([WastedBytes]) FROM [DupGroups] WHERE [GroupType] = @_type AND [ResolvedUtc] IS NULL</code>.</li>
+          </ul>
+
+          <p><strong>Fill factor:</strong> For this run, a conservative rebuild target of <code>FILLFACTOR = 90</code> on the most churn-heavy <code>dbo.Files</code> indexes is reasonable. It will not fix poor selectivity, but it should reduce rapid page split recurrence on wide, frequently updated rows. For the smaller supporting indexes, use <code>95</code>.</p>
+
+          <p><strong>Compression:</strong> Compression is available, but I am <strong>not</strong> recommending an immediate compression change on <code>dbo.Files</code>. That table has a substantial write workload, and the current evidence favors first removing dead indexes and repairing physical structure. Revisit compression only after observing post-cleanup read/write behavior.</p>
+
+          <p><strong>Risk:</strong> Low when executed online during a quieter window.</p>
+          <p><strong>Confidence:</strong> High</p>
+        </article>
+
+        <article id="rec3" class="card">
+          <h3><span class="priority p2">P2</span>Enable automatic plan correction</h3>
+          <p><strong>Recommendation:</strong> Enable <code>FORCE_LAST_GOOD_PLAN</code> for <code>PhotoCleanup</code>.</p>
+          <p><strong>Current state:</strong> Desired state <code>DEFAULT</code>, actual state <code>OFF</code>, reason <code>AUTO_CONFIGURED</code>.</p>
+          <p><strong>Why:</strong> SQL Server 2022 supports automatic tuning well, Query Store is active, and the workload shows multiple statements with more than one distinct plan plus parameter sensitivity patterns. Even though there are <strong>no current forced-plan failures</strong>, enabling this option improves resilience against future regressions.</p>
+          <p><strong>Risk:</strong> Low</p>
+          <p><strong>Confidence:</strong> High</p>
+        </article>
+
+        <article id="rec4" class="card">
+          <h3><span class="priority p2">P2</span>Refresh statistics after index cleanup and rebuild</h3>
+          <p><strong>Recommendation:</strong> Run targeted statistics updates on the main tables after the index drops/rebuilds.</p>
+          <p><strong>Why:</strong></p>
+          <ul>
+            <li><code>dbo.Files</code> has very heavy update activity.</li>
+            <li>Query Store shows parameter sensitivity on several statements with multiple plans.</li>
+            <li>Auto-update statistics is enabled, but manual post-maintenance refresh will help the optimizer immediately benefit from the new index layouts.</li>
+          </ul>
+          <p><strong>Priority targets:</strong> <code>dbo.Files</code>, <code>dbo.DupGroups</code>, <code>dbo.DupMembers</code>, <code>dbo.ImageMeta</code>, <code>dbo.Actions</code>.</p>
+          <p><strong>Risk:</strong> Low</p>
+          <p><strong>Confidence:</strong> Medium-High</p>
+        </article>
+
+        <article id="rec5" class="card">
+          <h3><span class="priority p3">P3</span>Use query/code changes instead of adding more Boolean indexes</h3>
+          <p><strong>Recommendation:</strong> Do <strong>not</strong> add new indexes for the overlap signals involving <code>IsMissing</code>, <code>IsPlaceholder</code>, <code>IsImage</code>, <code>IsVideo</code>, or <code>IsQuarantined</code> at this time.</p>
+
+          <p><strong>Why not:</strong></p>
+          <ul>
+            <li>No missing-index recommendations were found.</li>
+            <li><code>dbo.Files</code> is write-heavy.</li>
+            <li>The proposed candidate keys are mostly low-cardinality flags.</li>
+            <li><code>IsMissing</code> currently has estimated distinct values of <strong>1</strong>, so indexing it is not selective.</li>
+          </ul>
+
+          <p><strong>Code changes with better payoff:</strong></p>
+          <ul>
+            <li>Replace repeated dashboard-style aggregate queries with one combined aggregate query or a cached summary table refreshed by the scan pipeline.</li>
+            <li>For the expensive QuickHash duplicate-check query, pre-aggregate candidate hashes into a temp table rather than using a correlated <code>COUNT(*)</code> subquery.</li>
+            <li>For large <code>OPENJSON(@ids)</code> lookups, load IDs into a temp table with a primary key and join to it, instead of parsing long JSON lists inline.</li>
+          </ul>
+
+          <p><strong>Examples where rewrite is preferable to indexing:</strong></p>
+          <ul>
+            <li><code>SELECT COUNT(*) FROM [Files] WHERE [IsMissing] = 0</code></li>
+            <li><code>SELECT COUNT(*) FROM [Files] WHERE [IsMissing] = 0 AND [IsPlaceholder] = 1</code></li>
+            <li><code>SELECT COALESCE(SUM([SizeBytes]),0) FROM [Files] WHERE [IsMissing] = 0</code></li>
+            <li><code>SELECT ... FROM [Files] WHERE [ScanState] = 2 ... AND (SELECT COUNT(*) FROM [Files] AS [f0] WHERE [f0].[QuickHash] = [f].[QuickHash] ... ) &gt; 1</code></li>
+          </ul>
+
+          <p><strong>Reasoning:</strong> these are better treated as workload/query-shape problems than index design problems.</p>
+          <p><strong>Risk:</strong> Low-Medium</p>
+          <p><strong>Confidence:</strong> Medium</p>
+        </article>
+
+        <article id="rec6" class="card">
+          <h3><span class="priority p3">P3</span>Findings that do not require action now</h3>
+          <ul>
+            <li><strong>No duplicate or left-prefix overlapping indexes</strong> were detected in scope, so no consolidation drops are recommended beyond the clearly unused indexes above.</li>
+            <li><strong>No large heaps</strong> were found.</li>
+            <li><strong>No untrusted or disabled constraints</strong> were found; foreign keys and checks are trusted, which is good for optimization.</li>
+            <li><strong>No forced plan failures</strong> were found in Query Store.</li>
+            <li><strong>No columnstore recommendation</strong>: the largest table shown is roughly <code>dbo.Files</code> at ~550k rows, below the &gt;1,000,000-row threshold requested for columnstore consideration.</li>
+          </ul>
+          <p><strong>Confidence:</strong> High</p>
+        </article>
+      </section>
+
+      <section id="workload-evidence">
+        <h2>Workload evidence</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Area</th>
+              <th>Evidence</th>
+              <th>Tuning implication</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>dbo.Files</code> aggregate reads</td>
+              <td>Repeated <code>COUNT</code>/<code>SUM</code> queries read ~<strong>43,070</strong> logical pages on average</td>
+              <td>Rebuild physical structures first; do not add nonselective Boolean indexes</td>
+            </tr>
+            <tr>
+              <td>Write overhead</td>
+              <td><code>dbo.Files</code> indexes with ~<strong>30k</strong> updates and zero/tiny reads</td>
+              <td>Drop dead indexes before considering any new index</td>
+            </tr>
+            <tr>
+              <td>Physical health</td>
+              <td><code>PK_Files</code> density <strong>60.53%</strong>, fragmentation <strong>98.89%</strong></td>
+              <td>High-impact rebuild candidate</td>
+            </tr>
+            <tr>
+              <td>Plan stability</td>
+              <td>Multiple statements with <strong>2-4 distinct plans</strong> and parameter sensitivity telemetry</td>
+              <td>Enable automatic tuning and refresh stats</td>
+            </tr>
+            <tr>
+              <td>DupGroups indexing</td>
+              <td><code>IX_DupGroups_GroupType_ResolvedUtc</code> already matches overlap candidate with redundancy score <strong>100</strong></td>
+              <td>No new index needed there</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="index-structure">
+        <h2>Index structure visual aid</h2>
+        <div class="card">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 300" width="100%" role="img" aria-labelledby="vizTitle vizDesc">
+            <title id="vizTitle">Recommended index actions for key tables</title>
+            <desc id="vizDesc">Diagram showing which indexes to drop, rebuild, or keep on Files, DupGroups, DupMembers, Actions, and ImageMeta.</desc>
+            <rect x="10" y="15" width="300" height="250" rx="12" fill="none" stroke="currentColor" opacity="0.25"/>
+            <text x="25" y="40" fill="currentColor" font-size="20" font-family="Segoe UI, Arial">dbo.Files</text>
+            <text x="25" y="75" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">PK_Files → REBUILD</text>
+            <text x="25" y="102" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">IX_Files_ScanState_IsQuarantined → REBUILD</text>
+            <text x="25" y="129" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">IX_Files_IsImage_IsQuarantined → DROP</text>
+            <text x="25" y="156" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">IX_Files_IsVideo_IsQuarantined → DROP</text>
+            <text x="25" y="183" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">NameKey / QuickHash / Sha256 → KEEP</text>
+            <text x="25" y="210" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">No new Boolean indexes recommended</text>
+
+            <rect x="340" y="15" width="280" height="250" rx="12" fill="none" stroke="currentColor" opacity="0.25"/>
+            <text x="355" y="40" fill="currentColor" font-size="20" font-family="Segoe UI, Arial">dbo.DupGroups / dbo.DupMembers</text>
+            <text x="355" y="75" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">IX_DupGroups_GroupType_ResolvedUtc → KEEP</text>
+            <text x="355" y="102" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">IX_DupGroups_WastedBytes → REBUILD</text>
+            <text x="355" y="129" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">PK_DupGroups → KEEP</text>
+            <text x="355" y="156" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">IX_DupMembers_FileId → REBUILD</text>
+            <text x="355" y="183" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">PK_DupMembers → KEEP</text>
+
+            <rect x="650" y="15" width="320" height="250" rx="12" fill="none" stroke="currentColor" opacity="0.25"/>
+            <text x="665" y="40" fill="currentColor" font-size="20" font-family="Segoe UI, Arial">Other tables</text>
+            <text x="665" y="75" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">Actions.IX_Actions_FileId_ActionType → DROP</text>
+            <text x="665" y="102" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">Actions.IX_Actions_PerformedUtc → KEEP</text>
+            <text x="665" y="129" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">ImageMeta.PK_ImageMeta → REBUILD</text>
+            <text x="665" y="156" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">Automatic tuning → ENABLE</text>
+            <text x="665" y="183" fill="currentColor" font-size="15" font-family="Segoe UI, Arial">Post-change statistics refresh → RUN</text>
+          </svg>
+          <p class="viz-caption">This visual summarizes the physical-design actions with the best risk/reward balance from the supplied data.</p>
+        </div>
+      </section>
+
+      <section id="forced-plan-review">
+        <h2>Forced plan review</h2>
+        <div class="card">
+          <p><strong>No forced plan failures detected.</strong></p>
+          <p>Because there are no affected <code>query_id</code>/<code>plan_id</code> pairs, no forced-plan remediation playbook is required for this run.</p>
+        </div>
+      </section>
+
+      <section id="scripts">
+        <h2>Scripts</h2>
+
+        <h3>Drop unused high-write indexes identified in Recommendation 1</h3>
+        <pre><code>USE [PhotoCleanup];
+GO
+
+IF EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Files')
+      AND name = N'IX_Files_IsImage_IsQuarantined'
+)
+BEGIN
+    DROP INDEX [IX_Files_IsImage_IsQuarantined] ON [dbo].[Files];
+END
+GO
+
+IF EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Files')
+      AND name = N'IX_Files_IsVideo_IsQuarantined'
+)
+BEGIN
+    DROP INDEX [IX_Files_IsVideo_IsQuarantined] ON [dbo].[Files];
+END
+GO
+
+IF EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Actions')
+      AND name = N'IX_Actions_FileId_ActionType'
+)
+BEGIN
+    DROP INDEX [IX_Actions_FileId_ActionType] ON [dbo].[Actions];
+END
+GO</code></pre>
+
+        <h3>Rebuild heavily fragmented indexes that are still useful, implementing Recommendation 2</h3>
+        <pre><code>USE [PhotoCleanup];
+GO
+
+ALTER INDEX [PK_Files]
+ON [dbo].[Files]
+REBUILD WITH (
+    ONLINE = ON,
+    SORT_IN_TEMPDB = ON,
+    FILLFACTOR = 90,
+    MAXDOP = 0
+);
+GO
+
+ALTER INDEX [IX_Files_ScanState_IsQuarantined]
+ON [dbo].[Files]
+REBUILD WITH (
+    ONLINE = ON,
+    SORT_IN_TEMPDB = ON,
+    FILLFACTOR = 90,
+    MAXDOP = 0
+);
+GO
+
+ALTER INDEX [IX_DupMembers_FileId]
+ON [dbo].[DupMembers]
+REBUILD WITH (
+    ONLINE = ON,
+    SORT_IN_TEMPDB = ON,
+    FILLFACTOR = 95,
+    MAXDOP = 0
+);
+GO
+
+ALTER INDEX [IX_DupGroups_WastedBytes]
+ON [dbo].[DupGroups]
+REBUILD WITH (
+    ONLINE = ON,
+    SORT_IN_TEMPDB = ON,
+    FILLFACTOR = 95,
+    MAXDOP = 0
+);
+GO
+
+ALTER INDEX [PK_ImageMeta]
+ON [dbo].[ImageMeta]
+REBUILD WITH (
+    ONLINE = ON,
+    SORT_IN_TEMPDB = ON,
+    FILLFACTOR = 95,
+    MAXDOP = 0
+);
+GO</code></pre>
+
+        <h3>Enable Query Store automatic plan correction, implementing Recommendation 3</h3>
+        <pre><code>USE [master];
+GO
+
+ALTER DATABASE [PhotoCleanup]
+SET AUTOMATIC_TUNING ( FORCE_LAST_GOOD_PLAN = ON );
+GO</code></pre>
+
+        <h3>Refresh optimizer statistics after index changes, implementing Recommendation 4</h3>
+        <pre><code>USE [PhotoCleanup];
+GO
+
+UPDATE STATISTICS [dbo].[Files] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[DupGroups] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[DupMembers] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[ImageMeta] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Actions] WITH FULLSCAN;
+GO</code></pre>
+
+        <h3>Post-change validation script for reads, writes, fragmentation, and automatic tuning status</h3>
+        <pre><code>USE [PhotoCleanup];
+GO
+
+SELECT
+    OBJECT_SCHEMA_NAME(i.object_id) AS schema_name,
+    OBJECT_NAME(i.object_id) AS table_name,
+    i.name AS index_name,
+    us.user_seeks,
+    us.user_scans,
+    us.user_lookups,
+    us.user_updates
+FROM sys.indexes AS i
+LEFT JOIN sys.dm_db_index_usage_stats AS us
+    ON us.database_id = DB_ID()
+   AND us.object_id = i.object_id
+   AND us.index_id = i.index_id
+WHERE i.object_id IN (
+    OBJECT_ID(N'dbo.Files'),
+    OBJECT_ID(N'dbo.Actions'),
+    OBJECT_ID(N'dbo.DupGroups'),
+    OBJECT_ID(N'dbo.DupMembers'),
+    OBJECT_ID(N'dbo.ImageMeta')
+)
+AND i.index_id &gt; 0
+ORDER BY table_name, index_name;
+GO
+
+SELECT
+    OBJECT_SCHEMA_NAME(ips.object_id) AS schema_name,
+    OBJECT_NAME(ips.object_id) AS table_name,
+    i.name AS index_name,
+    ips.avg_fragmentation_in_percent,
+    ips.avg_page_space_used_in_percent,
+    ips.page_count
+FROM sys.dm_db_index_physical_stats(DB_ID(), NULL, NULL, NULL, 'SAMPLED') AS ips
+JOIN sys.indexes AS i
+    ON i.object_id = ips.object_id
+   AND i.index_id = ips.index_id
+WHERE ips.object_id IN (
+    OBJECT_ID(N'dbo.Files'),
+    OBJECT_ID(N'dbo.DupGroups'),
+    OBJECT_ID(N'dbo.DupMembers'),
+    OBJECT_ID(N'dbo.ImageMeta')
+)
+AND ips.index_id &gt; 0
+ORDER BY table_name, index_name;
+GO
+
+SELECT
+    name,
+    desired_state_desc,
+    actual_state_desc,
+    reason_desc
+FROM sys.database_automatic_tuning_options
+WHERE name = 'FORCE_LAST_GOOD_PLAN';
+GO</code></pre>
+      </section>
+
+      
+    </main>
+  </div>
+<footer class="footer">
+        <p>Generated by AI SQL Tuner Studio v2.2.0.0 using model gpt-5.4 with reasoning effort low.</p>
+        <p><a href="https://aisqltuner.com">https://aisqltuner.com</a></p>
+        <p>Based on analysis as of 2026-07-30 10:12:19 UTC</p>
+      </footer>
+</body>
+</html>

@@ -1,0 +1,1469 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Index Tuning Report – RockyPC / SQLStorm – 2026-09-08</title>
+  <meta name="description" content="Prioritized SQL Server index tuning recommendations for the SQLStorm database on RockyPC.">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Index Tuning Report – RockyPC / SQLStorm – 2026-09-08",
+    "dateCreated": "2026-09-08T11:05:36Z",
+    "about": {
+      "@type": "SoftwareApplication",
+      "name": "Microsoft SQL Server 2022"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "AI SQL Tuner Studio"
+    }
+  }
+  </script>
+  <style>
+    :root {
+      --bg: #FFFFFF;
+      --surface: #FFFFFF;
+      --nav: #F6F8F9;
+      --text: #111827;
+      --muted: #6B7280;
+      --accent: #0B6E6E;
+      --accent-soft: #DCEEEE;
+      --code: #EFF7F7;
+      --border: #D8E1E5;
+      --good: #176B45;
+      --warn: #9A5B00;
+      --high: #A33232;
+      --shadow: 0 8px 24px rgba(17, 24, 39, 0.07);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.62;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    a:hover { text-decoration-thickness: 2px; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 28px 22px;
+      background: var(--nav);
+      border-right: 1px solid var(--border);
+    }
+
+    aside strong {
+      display: block;
+      margin-bottom: 14px;
+      color: var(--accent);
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    aside ol {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    aside li { margin: 8px 0; }
+
+    aside a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    aside a:hover { color: var(--accent); }
+
+    main {
+      width: 100%;
+      max-width: 1280px;
+      padding: 46px 52px 64px;
+    }
+
+    header {
+      padding-bottom: 28px;
+      border-bottom: 3px solid var(--accent);
+    }
+
+    h1, h2, h3, h4 {
+      color: var(--accent);
+      line-height: 1.25;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 4vw, 3.25rem);
+      letter-spacing: -0.035em;
+    }
+
+    h2 {
+      margin-top: 46px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      font-size: 1.65rem;
+    }
+
+    h3 {
+      margin-top: 28px;
+      font-size: 1.16rem;
+    }
+
+    h4 { margin-bottom: 6px; }
+
+    p { margin: 10px 0; }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .goal {
+      margin-top: 12px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .metadata,
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .card {
+      padding: 17px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .card .label {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .card .value {
+      margin-top: 4px;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .callout {
+      margin: 20px 0;
+      padding: 16px 18px;
+      background: var(--code);
+      border-left: 4px solid var(--accent);
+      border-radius: 5px;
+    }
+
+    .recommendation {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .recommendation h3 { margin-top: 0; }
+
+    .badge {
+      display: inline-block;
+      margin: 2px 5px 2px 0;
+      padding: 3px 8px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 700;
+    }
+
+    .priority { color: var(--accent); }
+    .risk-low { color: var(--good); }
+    .risk-medium { color: var(--warn); }
+    .risk-high { color: var(--high); }
+
+    table {
+      width: 100%;
+      margin: 18px 0;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+
+    caption {
+      margin-bottom: 8px;
+      color: var(--muted);
+      text-align: left;
+      font-weight: 600;
+    }
+
+    th, td {
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--nav);
+      color: var(--accent);
+    }
+
+    tbody tr:nth-child(even) { background: var(--nav); }
+
+    code {
+      padding: 0.12em 0.3em;
+      background: var(--code);
+      border-radius: 3px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      overflow-x: auto;
+      margin: 14px 0 28px;
+      padding: 18px;
+      background: var(--code);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 7px;
+      line-height: 1.48;
+    }
+
+    pre code {
+      padding: 0;
+      background: transparent;
+      border-radius: 0;
+      white-space: pre;
+    }
+
+    .secondary { color: var(--muted); }
+
+    .compact li { margin: 5px 0; }
+
+    .status-good {
+      color: var(--good);
+      font-weight: 700;
+    }
+
+    .status-warn {
+      color: var(--warn);
+      font-weight: 700;
+    }
+
+    footer {
+      margin-top: 54px;
+      padding-top: 22px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 900px) {
+      .layout { display: block; }
+
+      aside {
+        position: static;
+        width: 100%;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      main { padding: 30px 22px 48px; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0B1220;
+        --surface: #0B1220;
+        --nav: #162032;
+        --text: #F3F4F6;
+        --muted: #9CA3AF;
+        --accent: #2DD4BF;
+        --accent-soft: #173B3B;
+        --code: #0F172A;
+        --border: #314158;
+        --good: #6EE7B7;
+        --warn: #FBBF24;
+        --high: #FCA5A5;
+        --shadow: none;
+      }
+
+      html, body { background: #0B1220; }
+      aside, th, tbody tr:nth-child(even) { background: #162032; }
+      pre, code, .callout { background: #0F172A; }
+      body, aside a { color: #F3F4F6; }
+      .secondary, .subtitle, footer, caption, .card .label { color: #9CA3AF; }
+      h1, h2, h3, h4, a, aside strong, th { color: #2DD4BF; }
+    }
+
+    @media print {
+      .layout { display: block; }
+      aside { display: none; }
+      main { max-width: none; padding: 20px; }
+      .card, .recommendation { box-shadow: none; break-inside: avoid; }
+      pre { white-space: pre-wrap; }
+    }
+  </style>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+  <div class="layout">
+    <aside aria-label="Table of contents">
+      <strong>Table of contents</strong>
+      <ol>
+        <li><a href="#executive-summary">Executive summary</a></li>
+        <li><a href="#prioritized-recommendations">Detailed prioritized recommendations</a></li>
+        <li><a href="#index-design">Recommended index design</a></li>
+        <li><a href="#query-code">Query code optimization</a></li>
+        <li><a href="#constraints">Constraint health</a></li>
+        <li><a href="#maintenance">Maintenance and statistics</a></li>
+        <li><a href="#query-store">Query Store and automatic tuning</a></li>
+        <li><a href="#implementation">Safe implementation playbook</a></li>
+        <li><a href="#scripts">Scripts</a></li>
+        <li><a href="#validation">Validation checklist</a></li>
+      </ol>
+    </aside>
+
+    <main>
+      <header>
+        <h1>Index Tuning Report – RockyPC / SQLStorm – 2026-09-08</h1>
+        <p class="goal">Tuning goal: Index Tuning</p>
+        <p class="subtitle">Read-oriented physical design and query-shape recommendations for a SQL Server 2022 analytical workload.</p>
+
+        <div class="metadata">
+          <div class="card">
+            <div class="label">Server</div>
+            <div class="value">RockyPC</div>
+          </div>
+          <div class="card">
+            <div class="label">Database</div>
+            <div class="value">SQLStorm</div>
+          </div>
+          <div class="card">
+            <div class="label">Version</div>
+            <div class="value">SQL Server 2022, 16.0.1190.2</div>
+          </div>
+          <div class="card">
+            <div class="label">Edition</div>
+            <div class="value">Developer / Enterprise engine</div>
+          </div>
+        </div>
+      </header>
+
+      <section id="executive-summary">
+        <h2>Executive summary</h2>
+
+        <div class="callout">
+          <strong>One-line remediation:</strong> add a small, consolidated set of PAGE-compressed foreign-key and aggregation indexes, then rewrite the largest reporting queries to aggregate each child table before joining it to avoid multiplicative row expansion.
+        </div>
+
+        <div class="summary-grid">
+          <div class="card">
+            <div class="label">Primary issue</div>
+            <div class="value">Large scans and join fan-out</div>
+            <p class="secondary">The clustered indexes record 672–1,593 scans on major child tables, while reporting queries repeatedly join several one-to-many tables before aggregation.</p>
+          </div>
+          <div class="card">
+            <div class="label">Highest-value index</div>
+            <div class="value">PostHistory(PostId, CreationDate)</div>
+            <p class="secondary">The missing-index signal reports 99.63% estimated impact and supports recent-history and per-post aggregation patterns.</p>
+          </div>
+          <div class="card">
+            <div class="label">Maintenance posture</div>
+            <div class="value">No rebuild needed</div>
+            <p class="secondary">Page density is 98.29%–99.85% and fragmentation is at most 0.33%.</p>
+          </div>
+          <div class="card">
+            <div class="label">Automatic tuning</div>
+            <div class="value">Correctly enabled</div>
+            <p class="secondary"><code>FORCE_LAST_GOOD_PLAN</code> desired and actual states are both ON.</p>
+          </div>
+        </div>
+
+        <h3>Top priorities</h3>
+        <ol class="compact">
+          <li><strong>Create consolidated indexes on PostHistory, Votes, Badges, Comments, and Posts.</strong> These tables exceed 200,000 rows, appear throughout the most expensive queries, and currently have only clustered primary-key indexes.</li>
+          <li><strong>Rewrite multi-child aggregates.</strong> Queries joining Posts, Votes, Comments, Badges, and PostHistory before grouping generate millions of intermediate rows, excessive memory grants up to approximately 2.3 GB, and spills as high as 737,146.</li>
+          <li><strong>Restore trust on all 18 untrusted foreign keys.</strong> This improves relational metadata available for join elimination and cardinality reasoning, after orphan validation and during a maintenance window.</li>
+          <li><strong>Refresh statistics after deployment and measure by query hash.</strong> Cardinality data for <code>Votes.UserId</code> is notably skewed: approximately 929 distinct users across 926,084 rows.</li>
+        </ol>
+
+        <p><strong>Overall confidence:</strong> 91% for the first-wave indexes, 82% for the second-wave indexes, and 96% that query rewrites will produce a larger improvement than indexes alone.</p>
+      </section>
+
+      <section id="prioritized-recommendations">
+        <h2>Detailed prioritized recommendations</h2>
+
+        <ol>
+          <li class="recommendation">
+            <h3>Create a consolidated PostHistory access path</h3>
+            <p>
+              <span class="badge priority">Priority 1</span>
+              <span class="badge risk-low">Risk: Low</span>
+              <span class="badge">Confidence: 96%</span>
+            </p>
+            <p>Create <code>IX_PostHistory_PostId_CreationDate</code> on <code>(PostId, CreationDate DESC)</code>, including <code>PostHistoryTypeId</code>, <code>UserId</code>, and <code>Comment</code>.</p>
+            <ul>
+              <li><code>PostId</code> has approximately 246,673 distinct values across 847,593 rows and is highly selective for individual posts.</li>
+              <li>The missing-index recommendation estimates 99.63% impact over 30 observations.</li>
+              <li>The second key supports latest-history queries using partitioning or ordering by <code>CreationDate DESC</code>.</li>
+              <li>The consolidated design replaces the need for separate recommendations on <code>PostId</code> alone and <code>PostId, CreationDate</code>.</li>
+              <li>Estimated storage is approximately 39 MB before compression, modest relative to the 820.3 MB clustered index.</li>
+            </ul>
+            <p><strong>Benefiting workload examples:</strong> query hashes <code>5B44F69546E00566</code>, <code>2614331B5F50B494</code>, <code>09E88EFBFD73A882</code>, and queries calculating recent close or edit history per post.</p>
+          </li>
+
+          <li class="recommendation">
+            <h3>Create complementary Votes indexes for post and user aggregation</h3>
+            <p>
+              <span class="badge priority">Priority 1</span>
+              <span class="badge risk-low">Risk: Low</span>
+              <span class="badge">Confidence: 95%</span>
+            </p>
+            <p>Create one index beginning with <code>PostId</code> and one beginning with <code>UserId</code>, both including <code>VoteTypeId</code> and <code>BountyAmount</code>.</p>
+            <ul>
+              <li><code>PostId</code> has approximately 242,634 distinct values and generated 198 missing-index observations.</li>
+              <li>The <code>UserId</code> recommendations report 97.72%–99.73% estimated impact. Although only about 929 distinct non-null values are estimated, the index enables ordered aggregation and avoids repeatedly scanning 926,084 rows.</li>
+              <li>Separate leading keys are justified because neither index can efficiently satisfy both join directions.</li>
+              <li>The broader included-column design consolidates the duplicate missing-index suggestions for <code>UserId</code>.</li>
+              <li>Expected combined uncompressed footprint is roughly 50 MB; PAGE compression should reduce this.</li>
+            </ul>
+            <p><strong>Benefiting workload examples:</strong> query hashes <code>563E43D720E73157</code>, <code>0EAB7945FE874674</code>, <code>368446D439EFFAFF</code>, <code>5B44F69546E00566</code>, and <code>D3F91D01D1CAE60B</code>.</p>
+          </li>
+
+          <li class="recommendation">
+            <h3>Consolidate all Badges(UserId) recommendations into one index</h3>
+            <p>
+              <span class="badge priority">Priority 1</span>
+              <span class="badge risk-low">Risk: Low</span>
+              <span class="badge">Confidence: 95%</span>
+            </p>
+            <p>Create <code>IX_Badges_UserId</code> on <code>UserId</code>, including <code>Class</code> and <code>Name</code>.</p>
+            <ul>
+              <li><code>UserId</code> has approximately 154,016 distinct values across 439,352 rows.</li>
+              <li>Three missing-index entries share the same key and report estimated impacts from 75.84% to 98.36%.</li>
+              <li>One covering index is preferable to three overlapping indexes.</li>
+              <li><code>Class</code> has only two estimated values and should remain an included column rather than a leading key.</li>
+            </ul>
+            <p><strong>Benefiting workload examples:</strong> query hashes <code>0FA8B0C9F3268C12</code>, <code>8F85C246DC0A4F1F</code>, <code>6394F2FCD1F2AD39</code>, and <code>CAA832839D207CAE</code>.</p>
+          </li>
+
+          <li class="recommendation">
+            <h3>Add Comments(PostId) and Posts(OwnerUserId, CreationDate) indexes</h3>
+            <p>
+              <span class="badge priority">Priority 1</span>
+              <span class="badge risk-low">Risk: Low</span>
+              <span class="badge">Confidence: 92%</span>
+            </p>
+            <ul>
+              <li><code>Comments.PostId</code> has approximately 122,541 distinct values, appears in 327 missing-index observations, and supports nearly every per-post comment count.</li>
+              <li>The clustered key <code>Comments.Id</code> is automatically available in the nonclustered index, so a separate include is unnecessary for <code>COUNT(Id)</code>.</li>
+              <li><code>Posts.OwnerUserId</code> has approximately 65,118 distinct values and is central to user-level reporting.</li>
+              <li>Adding <code>CreationDate DESC</code> supports per-user recent-post ranking. Included numeric attributes reduce lookups without copying wide <code>Title</code>, <code>Body</code>, or <code>Tags</code> columns.</li>
+            </ul>
+            <p><strong>Benefiting workload examples:</strong> query hashes <code>8E0DB20F8C836D8C</code>, <code>D3F91D01D1CAE60B</code>, <code>6394F2FCD1F2AD39</code>, <code>84669A8D2DB48FF8</code>, and <code>92BF2F60806E286F</code>.</p>
+          </li>
+
+          <li class="recommendation">
+            <h3>Add second-wave indexes for Comments(UserId) and Users(Reputation)</h3>
+            <p>
+              <span class="badge priority">Priority 2</span>
+              <span class="badge risk-medium">Risk: Medium</span>
+              <span class="badge">Confidence: 82%</span>
+            </p>
+            <p>Deploy these only after first-wave validation demonstrates that the workload remains read-heavy.</p>
+            <ul>
+              <li><code>Comments.UserId</code> is not in the supplied missing-index list, but many of the longest Query Store statements aggregate comments directly by user. It has approximately 41,822 distinct values.</li>
+              <li><code>Users.Reputation DESC</code> supports frequent filters and ranking. Its missing-index impact is only 8.10%, so it is intentionally deferred.</li>
+              <li>The Users index includes only <code>DisplayName</code> and <code>CreationDate</code>, avoiding wide user profile columns.</li>
+              <li>Recorded user updates are zero and Query Store reports no recent write mix, but these counters may have been reset. Validate real write rates before retaining second-wave indexes.</li>
+            </ul>
+          </li>
+
+          <li class="recommendation">
+            <h3>Do not rebuild, reorganize, drop, or replace existing indexes</h3>
+            <p>
+              <span class="badge priority">Priority 2</span>
+              <span class="badge risk-low">Risk: Low</span>
+              <span class="badge">Confidence: 99%</span>
+            </p>
+            <ul>
+              <li>Page density ranges from 98.29% to 99.85%, comfortably above the 75% concern threshold.</li>
+              <li>Fragmentation ranges from 0.00% to 0.33%, so rebuilds would consume resources without measurable benefit.</li>
+              <li>No exact duplicates or left-prefix overlaps were detected.</li>
+              <li>All existing indexes enforce primary keys; none should be dropped.</li>
+              <li>Keep fill factor at 100 for the proposed indexes because the supplied workload is read-oriented and there is no page-split evidence.</li>
+            </ul>
+          </li>
+
+          <li class="recommendation">
+            <h3>Do not deploy columnstore at the current scale</h3>
+            <p>
+              <span class="badge priority">Priority 3</span>
+              <span class="badge risk-low">Risk: Low</span>
+              <span class="badge">Confidence: 88%</span>
+            </p>
+            <p>The largest supplied row count is <code>Votes</code> at 926,084 rows, below the one-million-row threshold for active consideration. The workload is analytical, so a nonclustered columnstore could eventually help broad scans, but adding one now would duplicate storage and complicate maintenance before the row-expansion problem is corrected. Reassess if Votes or PostHistory exceeds one million rows and scan-heavy reports remain dominant.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section id="index-design">
+        <h2>Recommended index design</h2>
+        <table>
+          <caption>Consolidated physical design, ordered by deployment priority.</caption>
+          <thead>
+            <tr>
+              <th>Wave</th>
+              <th>Table and index</th>
+              <th>Key columns</th>
+              <th>Included columns</th>
+              <th>Primary justification</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><code>PostHistory.IX_PostHistory_PostId_CreationDate</code></td>
+              <td><code>PostId, CreationDate DESC</code></td>
+              <td><code>PostHistoryTypeId, UserId, Comment</code></td>
+              <td>99.63% missing-index impact; latest history by post.</td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td><code>Votes.IX_Votes_PostId</code></td>
+              <td><code>PostId</code></td>
+              <td><code>VoteTypeId, BountyAmount</code></td>
+              <td>Highly selective post joins and 198 observations.</td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td><code>Votes.IX_Votes_UserId</code></td>
+              <td><code>UserId</code></td>
+              <td><code>VoteTypeId, BountyAmount</code></td>
+              <td>User vote aggregation; estimated impact up to 99.73%.</td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td><code>Badges.IX_Badges_UserId</code></td>
+              <td><code>UserId</code></td>
+              <td><code>Class, Name</code></td>
+              <td>Consolidates three recommendations sharing one key.</td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td><code>Comments.IX_Comments_PostId</code></td>
+              <td><code>PostId</code></td>
+              <td>None</td>
+              <td>Frequent per-post counts and joins.</td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td><code>Posts.IX_Posts_OwnerUserId_CreationDate</code></td>
+              <td><code>OwnerUserId, CreationDate DESC</code></td>
+              <td><code>PostTypeId, Score, ViewCount, AcceptedAnswerId</code></td>
+              <td>User aggregation and recent-post ranking.</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><code>Comments.IX_Comments_UserId</code></td>
+              <td><code>UserId</code></td>
+              <td>None</td>
+              <td>Direct user-comment aggregation in Query Store.</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><code>Users.IX_Users_Reputation</code></td>
+              <td><code>Reputation DESC</code></td>
+              <td><code>DisplayName, CreationDate</code></td>
+              <td>Repeated reputation filtering and ranking; lower expected impact.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Filtered-index assessment</h3>
+        <p>A filtered Votes index for bounty vote types 8 and 9 could be useful because many reports use that predicate. It is not recommended in the initial deployment because the general <code>Votes(PostId)</code> and <code>Votes(UserId)</code> indexes already cover those rows, the exact distribution by vote type was not supplied, and an additional filtered index would create overlapping maintenance. Reassess only if validation shows bounty queries remain expensive and types 8/9 represent a small fraction of Votes.</p>
+      </section>
+
+      <section id="query-code">
+        <h2>Query code optimization</h2>
+
+        <div class="recommendation">
+          <h3>Aggregate child tables before joining them</h3>
+          <p>
+            <span class="badge priority">Priority 1</span>
+            <span class="badge risk-medium">Risk: Medium</span>
+            <span class="badge">Confidence: 98%</span>
+          </p>
+          <p>Many captured statements join multiple one-to-many relationships and aggregate only afterward. For one user, posts multiply by votes, comments, and badges, inflating counts and sums unless extensive <code>DISTINCT</code> operations compensate. This explains very high CPU, large memory grants, spills, and outputs exceeding two million rows.</p>
+          <ul>
+            <li>Pre-aggregate Votes by <code>PostId</code> or <code>UserId</code> in a separate CTE or temporary table.</li>
+            <li>Pre-aggregate Comments by <code>PostId</code> or <code>UserId</code>.</li>
+            <li>Pre-aggregate Badges by <code>UserId</code>.</li>
+            <li>Join the one-row-per-parent aggregates to Users or Posts only after aggregation.</li>
+            <li>Remove <code>COUNT(DISTINCT ...)</code> where pre-aggregation guarantees uniqueness.</li>
+          </ul>
+          <p>The principal target is query hash <code>563E43D720E73157</code>, which averages 7,434,704 logical reads, receives a grant up to 2,299,720 KB, and records up to 737,146 spills. The same pattern is present in <code>8E0DB20F8C836D8C</code>, <code>368446D439EFFAFF</code>, and <code>0EAB7945FE874674</code>.</p>
+        </div>
+
+        <div class="recommendation">
+          <h3>Normalize tag membership instead of using leading-wildcard LIKE</h3>
+          <p>
+            <span class="badge priority">Priority 1</span>
+            <span class="badge risk-high">Risk: High</span>
+            <span class="badge">Confidence: 97%</span>
+          </p>
+          <p>Expressions equivalent to <code>Posts.Tags LIKE '%' + Tags.TagName + '%'</code> are non-sargable and cannot use a conventional index to seek. Several Query Store entries lasting approximately 300 seconds contain this pattern.</p>
+          <ul>
+            <li>Create a normalized bridge table with one row per post/tag relationship.</li>
+            <li>Enforce uniqueness on the post/tag pair and index the reverse tag/post order.</li>
+            <li>Replace substring joins with equality joins.</li>
+            <li>Treat this as an application schema change requiring data migration and correctness testing, not an immediate index-only deployment.</li>
+          </ul>
+        </div>
+
+        <div class="recommendation">
+          <h3>Parameterize dates and remove brittle date expressions</h3>
+          <p>
+            <span class="badge priority">Priority 2</span>
+            <span class="badge risk-low">Risk: Low</span>
+            <span class="badge">Confidence: 90%</span>
+          </p>
+          <ul>
+            <li>Replace embedded timestamps such as <code>'2024-10-01 12:34:56'</code> with typed parameters.</li>
+            <li>Calculate cutoff values once and compare the table column directly to the parameter.</li>
+            <li>Avoid unusual expressions such as subtracting a <code>DATEADD</code> result from a datetime value.</li>
+            <li>SQL Server 2022 Parameter Sensitive Plan optimization is available, but the supplied Query Store data shows only one parameter set per statement, so no parameter-sensitivity conclusion can be drawn.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="constraints">
+        <h2>Constraint health</h2>
+        <p><strong>Finding:</strong> all 18 reported foreign keys are enabled but untrusted. Untrusted constraints continue to validate new modifications but do not prove that all existing rows comply. This prevents the optimizer from safely using the relationships for some join-elimination and predicate-pruning transformations.</p>
+
+        <div class="callout">
+          Validate orphan counts first, then execute <code>WITH CHECK CHECK CONSTRAINT</code> during a maintenance window. Validation scans can be I/O-intensive on Posts, Votes, PostHistory, Comments, and Badges. A failing statement leaves the constraint untrusted and identifies a data-quality issue; it does not require dropping the constraint.
+        </div>
+
+        <p><strong>Priority:</strong> 2. <strong>Expected risk:</strong> Medium due to validation scans and possible blocking. <strong>Confidence:</strong> 99% that trust should be restored after data compliance is confirmed.</p>
+      </section>
+
+      <section id="maintenance">
+        <h2>Maintenance and statistics</h2>
+
+        <h3>Page density and fragmentation</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Index</th>
+              <th>Density</th>
+              <th>Fragmentation</th>
+              <th>Recommendation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Comments</code> clustered PK</td>
+              <td>98.29%</td>
+              <td>0.05%</td>
+              <td>No action</td>
+            </tr>
+            <tr>
+              <td><code>Posts</code> clustered PK</td>
+              <td>99.18%</td>
+              <td>0.10%</td>
+              <td>No action</td>
+            </tr>
+            <tr>
+              <td><code>PostHistory</code> clustered PK</td>
+              <td>99.37%</td>
+              <td>0.07%</td>
+              <td>No action</td>
+            </tr>
+            <tr>
+              <td><code>Users</code> clustered PK</td>
+              <td>99.55%</td>
+              <td>0.00%</td>
+              <td>No action</td>
+            </tr>
+            <tr>
+              <td><code>Votes</code> clustered PK</td>
+              <td>99.83%</td>
+              <td>0.33%</td>
+              <td>No action</td>
+            </tr>
+            <tr>
+              <td><code>Badges</code> clustered PK</td>
+              <td>99.85%</td>
+              <td>0.00%</td>
+              <td>No action</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Statistics</h3>
+        <ul>
+          <li>Keep automatic statistics creation and updates enabled; both are already ON.</li>
+          <li>Refresh statistics with FULLSCAN on the six main workload tables after index deployment and constraint validation.</li>
+          <li>The refresh is especially important for skewed columns such as <code>Votes.UserId</code>, <code>VoteTypeId</code>, <code>BountyAmount</code>, and <code>PostHistoryTypeId</code>.</li>
+          <li>Do not drop existing statistics. No redundant or clearly obsolete statistics were reported.</li>
+        </ul>
+
+        <h3>Compression and fill factor</h3>
+        <p>Retain PAGE compression on the large clustered indexes and use PAGE compression for the proposed nonclustered indexes. Use fill factor 100 because no write pressure, page splits, or latch waits were observed. Revisit fill factor only if future operational statistics show sustained random inserts and page-split pressure.</p>
+      </section>
+
+      <section id="query-store">
+        <h2>Query Store and automatic tuning</h2>
+
+        <h3>Forced-plan failures</h3>
+        <p class="status-good">No Query Store forced-plan failures were detected.</p>
+        <ul>
+          <li>No affected <code>query_id</code> or <code>plan_id</code> exists in the supplied data.</li>
+          <li>No failure classification or forced-plan remediation is required.</li>
+          <li>Runtime percentile metrics p50/p95/p99 and compile-time timelines were not included, so validation should capture them after deployment.</li>
+        </ul>
+
+        <h3>Automatic Plan Correction</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Desired</th>
+              <th>Actual</th>
+              <th>Recommendation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>FORCE_LAST_GOOD_PLAN</code></td>
+              <td>ON</td>
+              <td>ON</td>
+              <td><span class="status-good">Keep enabled.</span> Monitor engine-selected corrections; investigate root cause before manually unforcing a plan.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>The Query Store export contains internally inconsistent labels for several execution and time fields, including values where “last 7d executions” resemble elapsed seconds. Use direct Query Store validation queries before treating those fields as execution counts. The consistent findings are that many statements run for minutes, consume substantial CPU and reads, and use only one captured plan.</p>
+
+        <h3>Version posture</h3>
+        <p>The server reports SQL Server 2022 RTM-GDR build 16.0.1190.2. This report does not identify a forced-plan failure or symptom that directly maps to a known engine defect. Nevertheless, RTM-family deployments should be compared with the current supported SQL Server 2022 CU/GDR servicing level before production rollout, particularly when investigating memory-grant feedback, Query Store, or plan-forcing anomalies.</p>
+      </section>
+
+      <section id="implementation">
+        <h2>Safe implementation playbook</h2>
+        <ol>
+          <li>
+            <strong>Capture a baseline, deploy first-wave indexes, and update statistics.</strong>
+            <ul>
+              <li><strong>Rationale:</strong> these indexes have the strongest missing-index and workload support.</li>
+              <li><strong>Risk:</strong> Low; temporary CPU, transaction-log, tempdb, and I/O consumption during online builds.</li>
+              <li><strong>Validation:</strong> confirm all six indexes are enabled, inspect build duration and log growth, and compare target query logical reads, duration, CPU, spills, and grants.</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Rewrite one highest-cost query to aggregate child tables before joining.</strong>
+            <ul>
+              <li><strong>Rationale:</strong> indexes cannot fully correct multiplicative join expansion.</li>
+              <li><strong>Risk:</strong> Medium because aggregate semantics must remain identical.</li>
+              <li><strong>Validation:</strong> compare complete result sets, row counts, null handling, totals, actual rows per operator, memory grants, spills, and Query Store p50/p95 duration.</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Validate and re-trust foreign keys, then consider second-wave indexes.</strong>
+            <ul>
+              <li><strong>Rationale:</strong> trusted constraints improve optimizer metadata; second-wave indexes should be retained only if measured reads justify their maintenance cost.</li>
+              <li><strong>Risk:</strong> Medium due to table scans and blocking during validation.</li>
+              <li><strong>Validation:</strong> verify zero orphan rows, <code>is_not_trusted = 0</code>, <code>is_disabled = 0</code>, and positive seek/scan activity on retained second-wave indexes.</li>
+            </ul>
+          </li>
+        </ol>
+
+        <h3>Rollback criteria</h3>
+        <ul>
+          <li>Drop a newly added index if representative query p95 duration or CPU regresses by more than 15% after statistics and plan stabilization.</li>
+          <li>Drop or defer an index if its maintenance writes materially exceed useful reads over a representative workload window.</li>
+          <li>Stop constraint validation if it causes unacceptable blocking or log/I/O pressure; resume in a maintenance window.</li>
+          <li>Revert a query rewrite if result-set comparison shows any semantic difference.</li>
+          <li>Do not disable Automatic Plan Correction as part of rollback.</li>
+        </ul>
+      </section>
+
+      <section id="scripts"><h2>Scripts</h2>
+        <p class="secondary">Execute first-wave creation separately from second-wave creation. All index builds use SQL Server 2022 Developer Edition capabilities: online operations, PAGE compression, and fill factor 100.</p>
+
+        <h3>Create the six first-wave indexes for recommendations 1–4</h3>
+        <pre><code>USE [SQLStorm];
+GO
+
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.PostHistory')
+      AND name = N'IX_PostHistory_PostId_CreationDate'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_PostHistory_PostId_CreationDate]
+    ON [dbo].[PostHistory] ([PostId], [CreationDate] DESC)
+    INCLUDE ([PostHistoryTypeId], [UserId], [Comment])
+    WITH
+    (
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        DATA_COMPRESSION = PAGE,
+        FILLFACTOR = 100
+    );
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Votes')
+      AND name = N'IX_Votes_PostId'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Votes_PostId]
+    ON [dbo].[Votes] ([PostId])
+    INCLUDE ([VoteTypeId], [BountyAmount])
+    WITH
+    (
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        DATA_COMPRESSION = PAGE,
+        FILLFACTOR = 100
+    );
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Votes')
+      AND name = N'IX_Votes_UserId'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Votes_UserId]
+    ON [dbo].[Votes] ([UserId])
+    INCLUDE ([VoteTypeId], [BountyAmount])
+    WITH
+    (
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        DATA_COMPRESSION = PAGE,
+        FILLFACTOR = 100
+    );
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Badges')
+      AND name = N'IX_Badges_UserId'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Badges_UserId]
+    ON [dbo].[Badges] ([UserId])
+    INCLUDE ([Class], [Name])
+    WITH
+    (
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        DATA_COMPRESSION = PAGE,
+        FILLFACTOR = 100
+    );
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Comments')
+      AND name = N'IX_Comments_PostId'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Comments_PostId]
+    ON [dbo].[Comments] ([PostId])
+    WITH
+    (
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        DATA_COMPRESSION = PAGE,
+        FILLFACTOR = 100
+    );
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Posts')
+      AND name = N'IX_Posts_OwnerUserId_CreationDate'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Posts_OwnerUserId_CreationDate]
+    ON [dbo].[Posts] ([OwnerUserId], [CreationDate] DESC)
+    INCLUDE ([PostTypeId], [Score], [ViewCount], [AcceptedAnswerId])
+    WITH
+    (
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        DATA_COMPRESSION = PAGE,
+        FILLFACTOR = 100
+    );
+END;
+GO</code></pre>
+
+        <h3>Create the two conditional second-wave indexes for recommendation 5</h3>
+        <pre><code>USE [SQLStorm];
+GO
+
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Comments')
+      AND name = N'IX_Comments_UserId'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Comments_UserId]
+    ON [dbo].[Comments] ([UserId])
+    WITH
+    (
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        DATA_COMPRESSION = PAGE,
+        FILLFACTOR = 100
+    );
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Users')
+      AND name = N'IX_Users_Reputation'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Users_Reputation]
+    ON [dbo].[Users] ([Reputation] DESC)
+    INCLUDE ([DisplayName], [CreationDate])
+    WITH
+    (
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        DATA_COMPRESSION = PAGE,
+        FILLFACTOR = 100
+    );
+END;
+GO</code></pre>
+
+        <h3>Refresh full-scan statistics after index deployment</h3>
+        <pre><code>USE [SQLStorm];
+GO
+
+SET NOCOUNT ON;
+GO
+
+UPDATE STATISTICS [dbo].[Votes] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[PostHistory] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Badges] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Comments] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Posts] WITH FULLSCAN;
+GO
+UPDATE STATISTICS [dbo].[Users] WITH FULLSCAN;
+GO</code></pre>
+
+        <h3>Report orphan counts before restoring foreign-key trust</h3>
+        <pre><code>USE [SQLStorm];
+GO
+
+SET NOCOUNT ON;
+GO
+
+SELECT N'dbo.Badges.UserId' AS relationship_name, COUNT_BIG(*) AS orphan_count
+FROM dbo.Badges AS c
+LEFT JOIN dbo.Users AS p ON p.Id = c.UserId
+WHERE c.UserId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.Comments.PostId', COUNT_BIG(*)
+FROM dbo.Comments AS c
+LEFT JOIN dbo.Posts AS p ON p.Id = c.PostId
+WHERE c.PostId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.Comments.UserId', COUNT_BIG(*)
+FROM dbo.Comments AS c
+LEFT JOIN dbo.Users AS p ON p.Id = c.UserId
+WHERE c.UserId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.PostHistory.PostHistoryTypeId', COUNT_BIG(*)
+FROM dbo.PostHistory AS c
+LEFT JOIN dbo.PostHistoryTypes AS p ON p.Id = c.PostHistoryTypeId
+WHERE c.PostHistoryTypeId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.PostHistory.PostId', COUNT_BIG(*)
+FROM dbo.PostHistory AS c
+LEFT JOIN dbo.Posts AS p ON p.Id = c.PostId
+WHERE c.PostId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.PostHistory.UserId', COUNT_BIG(*)
+FROM dbo.PostHistory AS c
+LEFT JOIN dbo.Users AS p ON p.Id = c.UserId
+WHERE c.UserId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.PostLinks.LinkTypeId', COUNT_BIG(*)
+FROM dbo.PostLinks AS c
+LEFT JOIN dbo.LinkTypes AS p ON p.Id = c.LinkTypeId
+WHERE c.LinkTypeId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.PostLinks.PostId', COUNT_BIG(*)
+FROM dbo.PostLinks AS c
+LEFT JOIN dbo.Posts AS p ON p.Id = c.PostId
+WHERE c.PostId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.PostLinks.RelatedPostId', COUNT_BIG(*)
+FROM dbo.PostLinks AS c
+LEFT JOIN dbo.Posts AS p ON p.Id = c.RelatedPostId
+WHERE c.RelatedPostId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.Posts.AcceptedAnswerId', COUNT_BIG(*)
+FROM dbo.Posts AS c
+LEFT JOIN dbo.Posts AS p ON p.Id = c.AcceptedAnswerId
+WHERE c.AcceptedAnswerId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.Posts.LastEditorUserId', COUNT_BIG(*)
+FROM dbo.Posts AS c
+LEFT JOIN dbo.Users AS p ON p.Id = c.LastEditorUserId
+WHERE c.LastEditorUserId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.Posts.OwnerUserId', COUNT_BIG(*)
+FROM dbo.Posts AS c
+LEFT JOIN dbo.Users AS p ON p.Id = c.OwnerUserId
+WHERE c.OwnerUserId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.Posts.ParentId', COUNT_BIG(*)
+FROM dbo.Posts AS c
+LEFT JOIN dbo.Posts AS p ON p.Id = c.ParentId
+WHERE c.ParentId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.Posts.PostTypeId', COUNT_BIG(*)
+FROM dbo.Posts AS c
+LEFT JOIN dbo.PostTypes AS p ON p.Id = c.PostTypeId
+WHERE c.PostTypeId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.Tags.ExcerptPostId', COUNT_BIG(*)
+FROM dbo.Tags AS c
+LEFT JOIN dbo.Posts AS p ON p.Id = c.ExcerptPostId
+WHERE c.ExcerptPostId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.Tags.WikiPostId', COUNT_BIG(*)
+FROM dbo.Tags AS c
+LEFT JOIN dbo.Posts AS p ON p.Id = c.WikiPostId
+WHERE c.WikiPostId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.Votes.UserId', COUNT_BIG(*)
+FROM dbo.Votes AS c
+LEFT JOIN dbo.Users AS p ON p.Id = c.UserId
+WHERE c.UserId IS NOT NULL AND p.Id IS NULL
+UNION ALL
+SELECT N'dbo.Votes.VoteTypeId', COUNT_BIG(*)
+FROM dbo.Votes AS c
+LEFT JOIN dbo.VoteTypes AS p ON p.Id = c.VoteTypeId
+WHERE c.VoteTypeId IS NOT NULL AND p.Id IS NULL
+ORDER BY relationship_name;
+GO</code></pre>
+
+        <h3>Restore trust on all compliant foreign keys for the constraint recommendation</h3>
+        <pre><code>USE [SQLStorm];
+GO
+
+ALTER TABLE [dbo].[Badges]
+WITH CHECK CHECK CONSTRAINT [FK__Badges__UserId__6477ECF3];
+GO
+
+ALTER TABLE [dbo].[Comments]
+WITH CHECK CHECK CONSTRAINT [FK__Comments__PostId__4CA06362];
+GO
+ALTER TABLE [dbo].[Comments]
+WITH CHECK CHECK CONSTRAINT [FK__Comments__UserId__4D94879B];
+GO
+
+ALTER TABLE [dbo].[PostHistory]
+WITH CHECK CHECK CONSTRAINT [FK__PostHisto__PostH__5070F446];
+GO
+ALTER TABLE [dbo].[PostHistory]
+WITH CHECK CHECK CONSTRAINT [FK__PostHisto__PostI__5165187F];
+GO
+ALTER TABLE [dbo].[PostHistory]
+WITH CHECK CHECK CONSTRAINT [FK__PostHisto__UserI__52593CB8];
+GO
+
+ALTER TABLE [dbo].[PostLinks]
+WITH CHECK CHECK CONSTRAINT [FK__PostLinks__LinkT__571DF1D5];
+GO
+ALTER TABLE [dbo].[PostLinks]
+WITH CHECK CHECK CONSTRAINT [FK__PostLinks__PostI__5535A963];
+GO
+ALTER TABLE [dbo].[PostLinks]
+WITH CHECK CHECK CONSTRAINT [FK__PostLinks__Relat__5629CD9C];
+GO
+
+ALTER TABLE [dbo].[Posts]
+WITH CHECK CHECK CONSTRAINT [FK__Posts__AcceptedA__48CFD27E];
+GO
+ALTER TABLE [dbo].[Posts]
+WITH CHECK CHECK CONSTRAINT [FK__Posts__LastEdito__47DBAE45];
+GO
+ALTER TABLE [dbo].[Posts]
+WITH CHECK CHECK CONSTRAINT [FK__Posts__OwnerUser__46E78A0C];
+GO
+ALTER TABLE [dbo].[Posts]
+WITH CHECK CHECK CONSTRAINT [FK__Posts__ParentId__49C3F6B7];
+GO
+ALTER TABLE [dbo].[Posts]
+WITH CHECK CHECK CONSTRAINT [FK__Posts__PostTypeI__45F365D3];
+GO
+
+ALTER TABLE [dbo].[Tags]
+WITH CHECK CHECK CONSTRAINT [FK__Tags__ExcerptPos__59FA5E80];
+GO
+ALTER TABLE [dbo].[Tags]
+WITH CHECK CHECK CONSTRAINT [FK__Tags__WikiPostId__5AEE82B9];
+GO
+
+ALTER TABLE [dbo].[Votes]
+WITH CHECK CHECK CONSTRAINT [FK__Votes__UserId__5EBF139D];
+GO
+ALTER TABLE [dbo].[Votes]
+WITH CHECK CHECK CONSTRAINT [FK__Votes__VoteTypeI__5DCAEF64];
+GO</code></pre>
+
+        <h3>Validate index usage, size, density, constraints, and automatic tuning</h3>
+        <pre><code>USE [SQLStorm];
+GO
+
+SET NOCOUNT ON;
+GO
+
+SELECT
+    OBJECT_SCHEMA_NAME(i.object_id) AS schema_name,
+    OBJECT_NAME(i.object_id) AS table_name,
+    i.name AS index_name,
+    i.is_disabled,
+    i.fill_factor,
+    COALESCE(us.user_seeks, 0) AS user_seeks,
+    COALESCE(us.user_scans, 0) AS user_scans,
+    COALESCE(us.user_lookups, 0) AS user_lookups,
+    COALESCE(us.user_updates, 0) AS user_updates,
+    CAST(SUM(ps.reserved_page_count) * 8.0 / 1024.0 AS decimal(18,2)) AS reserved_mb
+FROM sys.indexes AS i
+LEFT JOIN sys.dm_db_index_usage_stats AS us
+    ON us.database_id = DB_ID()
+   AND us.object_id = i.object_id
+   AND us.index_id = i.index_id
+LEFT JOIN sys.dm_db_partition_stats AS ps
+    ON ps.object_id = i.object_id
+   AND ps.index_id = i.index_id
+WHERE i.name IN
+(
+    N'IX_PostHistory_PostId_CreationDate',
+    N'IX_Votes_PostId',
+    N'IX_Votes_UserId',
+    N'IX_Badges_UserId',
+    N'IX_Comments_PostId',
+    N'IX_Posts_OwnerUserId_CreationDate',
+    N'IX_Comments_UserId',
+    N'IX_Users_Reputation'
+)
+GROUP BY
+    i.object_id,
+    i.name,
+    i.is_disabled,
+    i.fill_factor,
+    us.user_seeks,
+    us.user_scans,
+    us.user_lookups,
+    us.user_updates
+ORDER BY schema_name, table_name, index_name;
+GO
+
+SELECT
+    OBJECT_SCHEMA_NAME(ips.object_id) AS schema_name,
+    OBJECT_NAME(ips.object_id) AS table_name,
+    i.name AS index_name,
+    ips.page_count,
+    CAST(ips.avg_page_space_used_in_percent AS decimal(6,2)) AS page_density_percent,
+    CAST(ips.avg_fragmentation_in_percent AS decimal(6,2)) AS fragmentation_percent
+FROM sys.dm_db_index_physical_stats(DB_ID(), NULL, NULL, NULL, 'SAMPLED') AS ips
+JOIN sys.indexes AS i
+    ON i.object_id = ips.object_id
+   AND i.index_id = ips.index_id
+WHERE i.name IN
+(
+    N'IX_PostHistory_PostId_CreationDate',
+    N'IX_Votes_PostId',
+    N'IX_Votes_UserId',
+    N'IX_Badges_UserId',
+    N'IX_Comments_PostId',
+    N'IX_Posts_OwnerUserId_CreationDate',
+    N'IX_Comments_UserId',
+    N'IX_Users_Reputation'
+)
+  AND ips.index_level = 0
+ORDER BY page_density_percent, fragmentation_percent DESC;
+GO
+
+SELECT
+    OBJECT_SCHEMA_NAME(parent_object_id) AS schema_name,
+    OBJECT_NAME(parent_object_id) AS table_name,
+    name AS constraint_name,
+    is_disabled,
+    is_not_trusted
+FROM sys.foreign_keys
+WHERE is_disabled = 1
+   OR is_not_trusted = 1
+ORDER BY schema_name, table_name, constraint_name;
+GO
+
+SELECT
+    name,
+    desired_state_desc,
+    actual_state_desc,
+    reason_desc
+FROM sys.database_automatic_tuning_options
+WHERE name = N'FORCE_LAST_GOOD_PLAN';
+GO</code></pre>
+
+        <h3>Inspect target plan-cache metrics by query hash after deployment</h3>
+        <pre><code>USE [SQLStorm];
+GO
+
+SET NOCOUNT ON;
+GO
+
+SELECT TOP (100)
+    CONVERT(varchar(18), qs.query_hash, 1) AS query_hash,
+    CONVERT(varchar(18), qs.query_plan_hash, 1) AS query_plan_hash,
+    qs.execution_count,
+    qs.total_worker_time / NULLIF(qs.execution_count, 0) AS avg_cpu_microseconds,
+    qs.total_elapsed_time / NULLIF(qs.execution_count, 0) AS avg_elapsed_microseconds,
+    qs.total_logical_reads / NULLIF(qs.execution_count, 0) AS avg_logical_reads,
+    qs.max_grant_kb,
+    qs.max_spills,
+    qs.last_execution_time,
+    LEFT(st.text, 4000) AS statement_text
+FROM sys.dm_exec_query_stats AS qs
+CROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) AS st
+WHERE qs.query_hash IN
+(
+    0x563E43D720E73157,
+    0x8E0DB20F8C836D8C,
+    0x0FA8B0C9F3268C12,
+    0x0EAB7945FE874674,
+    0x368446D439EFFAFF,
+    0x8F85C246DC0A4F1F,
+    0x5B44F69546E00566,
+    0xD3F91D01D1CAE60B
+)
+ORDER BY avg_elapsed_microseconds DESC;
+GO</code></pre>
+
+        <h3>Rollback all indexes created by this report if validation criteria fail</h3>
+        <pre><code>USE [SQLStorm];
+GO
+
+SET NOCOUNT ON;
+SET XACT_ABORT ON;
+GO
+
+IF EXISTS
+(
+    SELECT 1 FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.PostHistory')
+      AND name = N'IX_PostHistory_PostId_CreationDate'
+)
+    DROP INDEX [IX_PostHistory_PostId_CreationDate] ON [dbo].[PostHistory];
+GO
+
+IF EXISTS
+(
+    SELECT 1 FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Votes')
+      AND name = N'IX_Votes_PostId'
+)
+    DROP INDEX [IX_Votes_PostId] ON [dbo].[Votes];
+GO
+
+IF EXISTS
+(
+    SELECT 1 FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Votes')
+      AND name = N'IX_Votes_UserId'
+)
+    DROP INDEX [IX_Votes_UserId] ON [dbo].[Votes];
+GO
+
+IF EXISTS
+(
+    SELECT 1 FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Badges')
+      AND name = N'IX_Badges_UserId'
+)
+    DROP INDEX [IX_Badges_UserId] ON [dbo].[Badges];
+GO
+
+IF EXISTS
+(
+    SELECT 1 FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Comments')
+      AND name = N'IX_Comments_PostId'
+)
+    DROP INDEX [IX_Comments_PostId] ON [dbo].[Comments];
+GO
+
+IF EXISTS
+(
+    SELECT 1 FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Posts')
+      AND name = N'IX_Posts_OwnerUserId_CreationDate'
+)
+    DROP INDEX [IX_Posts_OwnerUserId_CreationDate] ON [dbo].[Posts];
+GO
+
+IF EXISTS
+(
+    SELECT 1 FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Comments')
+      AND name = N'IX_Comments_UserId'
+)
+    DROP INDEX [IX_Comments_UserId] ON [dbo].[Comments];
+GO
+
+IF EXISTS
+(
+    SELECT 1 FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Users')
+      AND name = N'IX_Users_Reputation'
+)
+    DROP INDEX [IX_Users_Reputation] ON [dbo].[Users];
+GO</code></pre>
+      </section>
+
+      <section id="validation">
+        <h2>Validation checklist</h2>
+        <ul>
+          <li>Confirm all first-wave indexes exist, are enabled, and use PAGE compression.</li>
+          <li>Run representative statements at least five times after cache and Query Store metrics stabilize.</li>
+          <li>Compare median and p95 duration, CPU, logical reads, physical reads, memory grants, spills, and returned row counts.</li>
+          <li>Confirm query hash <code>563E43D720E73157</code> no longer records extreme spills or multi-gigabyte grants.</li>
+          <li>Verify first-wave indexes accumulate seeks or useful ordered scans; compare reads with <code>user_updates</code>.</li>
+          <li>Retain second-wave indexes only when their measured reads justify their storage and update cost.</li>
+          <li>Verify all foreign keys report <code>is_not_trusted = 0</code> and <code>is_disabled = 0</code>.</li>
+          <li>Confirm <code>FORCE_LAST_GOOD_PLAN</code> remains ON with desired and actual states aligned.</li>
+          <li>Verify no query result changes after aggregate-before-join rewrites.</li>
+          <li>Do not schedule index rebuilds while density remains above 75% and fragmentation remains negligible.</li>
+        </ul>
+      </section>
+
+      
+    </main>
+  </div>
+<footer>
+        <p>Based on analysis as of 2026-09-08 11:05:36 UTC</p>
+        <p>Generated by AI SQL Tuner Studio v3.0.0.0 using model gpt-5.6-sol with reasoning effort low. <a href="https://aisqltuner.com">https://aisqltuner.com</a></p>
+      </footer>
+</body>
+</html>

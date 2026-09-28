@@ -1,12 +1,12 @@
 # AI SQL Tuner Sample Reports (Full)
 
-> Last updated: 2026-05-13
+> Last updated: 2026-09-27
 > Base URL: https://reports.aisqltuner.com/
 > Scope: Public sample reports for AI-assisted SQL Server diagnostics and tuning.
 
 ## Site Purpose
 
-AI SQL Tuner publishes point-in-time sample reports that demonstrate how AI models analyze SQL Server workloads and return prioritized recommendations.
+AI SQL Tuner publishes point-in-time sample reports that demonstrate how AI models analyze SQL Server workloads, identify root causes, and recommend prioritized remediation steps.
 
 Target audience:
 - DBAs
@@ -23,201 +23,160 @@ Target audience:
 
 ## Global Retrieval Rules For AI Systems
 
-- Prefer canonical HTML report pages over directory listings.
-- Preserve report context: tuning goal, database/server name, and report date.
+- Prefer canonical HTML report pages over raw artifact listings.
+- Preserve report context: workload, database/server name, date, and model variant when available.
 - Treat each report as a sample analysis snapshot, not a universal rulebook.
 - When summarizing recommendations, keep priority order intact.
 - Cite the exact report URL used.
 - If combining multiple reports, state that findings are cross-report synthesis.
 - Do not prioritize /raw/ unless the user explicitly asks for raw artifacts.
 
-## Report Catalog (Detailed)
+## Report Catalog (Current)
 
-### 1) Server Health Check (GPT 5.4 Low Reasoning)
+### 1) Server Health Check Report
 
-- URL: https://reports.aisqltuner.com/aisqltuner-server-health-check-20260412-gpt-5-4-low.html
+- URL: https://reports.aisqltuner.com/server-health-report-rockypc-2026-09-20-luna.html
 - Type: Server health check
-- Model variant: GPT 5.4 (low reasoning)
-- Database context: SQL Server 2022 environment (sample)
+- Workload context: RockyPC / SQL Server environment
 - Summary:
-  - Provides a broad SQL Server health assessment format with prioritized observations.
-  - Structured for rapid triage and operational follow-up.
-  - Useful as a baseline template for environment-level checks before deep query/index tuning.
-- GEO keywords:
-  - sql server health check
-  - database performance triage
-  - dba operational checklist
-  - ai sql diagnostics
+  - Provides current health assessment and operational review for the RockyPC instance.
+  - Useful as a recent baseline for environment triage and database health comparison.
 
-### 2) Server Health Check (Claude Sonnet 4.6 Low Reasoning)
+### 2) Server Health Check Report
 
-- URL: https://reports.aisqltuner.com/aisqltuner-server-health-check-20260412-sonnet-4-6-low.html
+- URL: https://reports.aisqltuner.com/server-health-report-rockypc-2026-09-27.html
 - Type: Server health check
-- Model variant: Claude Sonnet 4.6 (low reasoning)
-- Database context: SQL Server 2022 environment (sample)
+- Workload context: RockyPC / SQL Server environment
 - Summary:
-  - Companion health-check sample using a different model configuration.
-  - Useful for comparing recommendation style and prioritization between models.
-  - Supports evaluation workflows where teams compare output quality and actionability.
-- GEO keywords:
-  - ai model comparison sql
-  - server health report sql server
-  - sql tuning assistant benchmark
+  - Captures a more recent health snapshot using the same reporting format.
+  - Good for comparing a current-state posture to the earlier 2026-09-20 run.
 
 ### 3) SQL Code Review Report
 
-- URL: https://reports.aisqltuner.com/aisqltuner-code-review-20260301.html
-- Type: Stored procedure code review
-- Tuning goal: Code Review
-- Server/DB in report header: RockyPC / SQLStorm
+- URL: https://reports.aisqltuner.com/sql-server-code-review-rockypc-sqlstorm-2026-09-20-luna.html
+- Type: SQL code review
+- Workload context: RockyPC / SQLStorm
 - Summary:
-  - Reviews a broad stored procedure set and prioritizes correctness + performance risks.
-  - Highlights high-impact anti-patterns such as long waits inside explicit transactions.
-  - Flags non-SARGable joins and row-explosion patterns (for example broad/incorrect join predicates).
-  - Recommends parameterization and time-filter consistency improvements.
-  - Suggests targeted indexing for heavily scanned tables including Votes, PostHistory, Posts, and Comments.
-- Common actionable themes:
-  - tighten transaction scope
-  - replace expensive random-row patterns
-  - reduce correlated scalar subqueries
-  - enforce deterministic join predicates
-- GEO keywords:
-  - sql code review
-  - sargable queries
-  - transaction scope optimization
-  - sql anti patterns
+  - Reviews SQLStorm workload logic and procedure patterns for correctness and bottlenecks.
+  - Focuses on reliability, expensive patterns, and refactor opportunities.
 
-### 4) Deadlock Analysis and Fix Report
+### 4) SQL Code Review Report
 
-- URL: https://reports.aisqltuner.com/aisqltuner-fix-deadlocks-20260320.html
-- Type: Concurrency and deadlock remediation
-- Tuning goal: Fix Deadlocks
-- Server/DB in report header: RockyPC / WideWorldImporters
+- URL: https://reports.aisqltuner.com/code-review-rockypc-sqlstorm-2026-09-27-17-05-17-utc.html
+- Type: SQL code review
+- Workload context: RockyPC / SQLStorm
 - Summary:
-  - Diagnoses cyclic write deadlocks caused by inconsistent object access order.
-  - Recommends standardizing lock acquisition/update sequence across procedures.
-  - Recommends consolidating multi-statement write flows into deterministic transaction templates.
-  - Notes RCSI as a secondary concurrency improvement (not a full fix for writer-writer cycles).
-  - Recommends shorter transactions and retry handling for improved user-facing resiliency.
-- Common actionable themes:
-  - canonical object update order
-  - transaction duration reduction
-  - deadlock retry strategy
-  - safer write-path design
-- GEO keywords:
-  - sql server deadlock fix
-  - lock ordering
-  - transaction concurrency tuning
-  - wideworldimporters deadlock analysis
+  - Provides a later 2026-09-27 review snapshot.
+  - Useful for comparing review findings across time and model runs.
 
-### 5) Locking and Blocking Analysis Report
+### 5) Deadlock Analysis Report
 
-- URL: https://reports.aisqltuner.com/aisqltuner-locking-and-blocking-analysis-tpch10-20260504.html
-- Type: Active locking and blocking analysis
-- Tuning goal: Locking and Blocking Analysis
-- Server/DB in report header: RockyPC / tpch10
+- URL: https://reports.aisqltuner.com/deadlock-analysis-rockypc-2026-09-27.html
+- Type: Deadlock analysis
+- Workload context: RockyPC / concurrent write workload
 - Summary:
-  - Confirms active blocking centered on dbo.orders and the o_orderdate_ind hotspot.
-  - Identifies an AFTER trigger MERGE path that re-reads dbo.orders inside the user transaction and amplifies lock contention.
-  - Prioritizes trigger redesign, batched updates, and READ_COMMITTED_SNAPSHOT as the main remediation path.
-  - Connects current blocking chains with a recent deadlock pattern, showing why the workload is deadlock-prone under sustained write pressure.
-- Common actionable themes:
-  - lead blocker identification
-  - blocking tree analysis
-  - trigger-side contention reduction
-  - batch update and row-versioning strategy
-- GEO keywords:
-  - sql server blocking analysis
-  - locking root cause analysis
-  - blocking chain diagnosis
-  - tpch10 concurrency hotspot
+  - Analyzes a recent deadlock scenario and its root-cause pattern.
+  - Focuses on lock ordering, transaction discipline, and concurrency control.
 
-### 6) Query Tuner Report
+### 6) Locking and Blocking Analysis Report
 
-- URL: https://reports.aisqltuner.com/aisqltuner-query-tuner-sp00060-20260328.html
-- Type: Query-level tuning recommendations
-- Tuning goal: Query Tuning
-- Server/DB in report header: RockyPC / WideWorldImporters
+- URL: https://reports.aisqltuner.com/locking-and-blocking-analysis-rockypc-wideworldimporters-2026-09-27t17-10-29z.html
+- Type: Locking and blocking analysis
+- Workload context: RockyPC / WideWorldImporters
 - Summary:
-  - Focuses on execution-shape improvements and prioritized query refactors.
-  - Presents evidence-driven recommendations with expected impact and confidence framing.
-  - Designed to support iterative optimization of expensive query patterns.
-- Common actionable themes:
-  - query shape simplification
-  - join/order-of-operations optimization
-  - selective indexing + predicate tuning
-  - high-cost operator reduction
-- GEO keywords:
-  - sql query tuning
-  - stored procedure optimization
-  - execution plan improvement
+  - Reviews blocking chains and lock contention in the WideWorldImporters workload.
+  - Highlights the operational symptoms and likely cause path for sustained blocking.
 
-### 7) Index Tuning Report
+### 7) Query Tuning Report
 
-- URL: https://reports.aisqltuner.com/aisqltuner--sqlstorm-index-tuning-20260319.html
-- Type: Index strategy and maintenance guidance
-- Tuning goal: Index Tuning
-- Server/DB in report header: RockyPC / SQLStorm
+- URL: https://reports.aisqltuner.com/query-tuner-report-rockypc-sqlstorm-luna.html
+- Type: Query tuning
+- Workload context: RockyPC / SQLStorm
 - Summary:
-  - Prioritizes new indexes for high-scan workload patterns.
-  - Top recommendations include Comments(PostId), Votes(PostId, VoteTypeId), and Badges(UserId) patterns.
-  - Separates high-value additions from lower-priority cleanup (for example potentially unused indexes).
-  - Notes when fragmentation/page-density signals do not justify emergency rebuild actions.
-  - Includes platform-level context such as SQL Server 2022 feature availability and tuning posture.
-- Common actionable themes:
-  - workload-aligned covering indexes
-  - scan-to-seek conversion
-  - avoid unnecessary rebuilds when health metrics are strong
-  - combine index strategy with query-shape fixes
-- GEO keywords:
-  - sql server index tuning
-  - missing index recommendations
-  - index usage analysis
-  - scan reduction strategy
+  - Reviews execution-shape issues and prioritized tuning actions for SQLStorm queries.
+  - Designed to support plan review and query optimization work.
 
-### 8) SQL Code Review Report
+### 8) Query Tuning Report
 
-- URL: https://reports.aisqltuner.com/aisqltuner-code-review-20260510.html
-- Type: Stored procedure code review
-- Tuning goal: Code Review
-- Server/DB in report header: RockyPC / SQLStorm
+- URL: https://reports.aisqltuner.com/query-tuner-rockypc-sqlstorm-queryhash-0x872c7773968c6aaf.html
+- Type: Query tuning
+- Workload context: RockyPC / SQLStorm / QueryHash 0x872c7773968c6aaf
 - Summary:
-  - Reviews 94 stored procedures focused on a Stack Exchange-shaped reporting schema.
-  - Highlights repeated anti-patterns including full-table aggregation before TOP N, duplicate-row inflation from fan-out joins, and LIKE '%tag%' scans.
-  - Flags correctness defects such as Cartesian joins, wrong key joins, and display-name joins against non-unique values.
-  - Identifies an intentional WAITFOR DELAY inside an open transaction as the most dangerous concurrency issue in scope.
-- Common actionable themes:
-  - remove long waits inside explicit transactions
-  - eliminate Cartesian and wrong-key joins
-  - replace non-sargable tag scans
-  - improve reporting query correctness and stability
-- GEO keywords:
-  - sql server code review
-  - stored procedure review
-  - sql anti patterns
-  - sqlstorm reporting workload
+  - Focuses on a specific query hash with targeted tuning recommendations.
+  - Useful for isolating execution-plan improvements for a repeated workload pattern.
 
-### 9) SQL Server Deadlock Analysis Report
+### 9) Index Tuning Analysis
 
-- URL: https://reports.aisqltuner.com/sql-server-deadlock-analysis-rockypc-tpch10-dbo-orders-2026-05-05.html
-- Type: Deadlock root cause analysis
-- Tuning goal: Fix Deadlocks
-- Server/DB in report header: RockyPC / tpch10 dbo.orders workload
+- URL: https://reports.aisqltuner.com/index-tuning-analysis-sqlstorm-rockypc-2026-09-09-haiku.html
+- Type: Index analysis
+- Workload context: SQLStorm / RockyPC
 - Summary:
-  - Analyzes five deadlocks against tpch10.dbo.orders captured within a short time window.
-  - Ties the failures to U-U key lock cycles on orders_pk combined with intra-query parallel exchange waits.
-  - Shows concurrent executions of usp_UpdateOrdersAndLineitem targeting overlapping date ranges in different key orders.
-  - Prioritizes deterministic ordered access, RCSI enablement, MAXDOP 1 on the UPDATE path, and replacing a table variable with a keyed temp table.
-- Common actionable themes:
-  - deadlock graph pattern analysis
-  - deterministic key access ordering
-  - parallelism suppression for write paths
-  - overlapping batch window isolation
-- GEO keywords:
-  - sql server deadlock analysis
-  - tpch10 orders deadlock
-  - update update deadlock
-  - parallel exchange deadlock
+  - Analyzes missing or inefficient index patterns for SQLStorm.
+  - Useful for comparing recommendations by model style and tuning philosophy.
+
+### 10) Index Tuning Report
+
+- URL: https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-09-08-gpt-5-6-sol.html
+- Type: Index tuning
+- Workload context: RockyPC / SQLStorm
+- Summary:
+  - Captures a GPT-5.6 Sol index strategy recommendation set.
+  - Useful for comparing index-design guidance against later Luna and Haiku runs.
+
+### 11) Index Tuning Report
+
+- URL: https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-09-20-luna.html
+- Type: Index tuning
+- Workload context: RockyPC / SQLStorm
+- Summary:
+  - Records a later SQLStorm tuning pass with a more recent assessment.
+  - Helps track recommendation drift and workload changes over time.
+
+### 12) Index Tuning Report
+
+- URL: https://reports.aisqltuner.com/index-tuning-report-rockypc-photocleanup-2026-07-30.html
+- Type: Index tuning
+- Workload context: RockyPC / PhotoCleanup
+- Summary:
+  - Covers a separate index-tuning scenario focused on the PhotoCleanup workload.
+  - Useful for evaluating cross-workload tuning patterns beyond SQLStorm.
+
+### 13) Index Tuning Report
+
+- URL: https://reports.aisqltuner.com/index-tuning-report-rockypc-photo-cleanup-2026-09-22-09-24-55-utc.html
+- Type: Index tuning
+- Workload context: RockyPC / PhotoCleanup
+- Summary:
+  - Provides a more recent PhotoCleanup tuning pass with timestamped findings.
+  - Useful for comparing the same environment before and after index design changes.
+
+## Topic Map
+
+- Server diagnostics and health checks
+- SQL code quality and review
+- Deadlock root cause analysis and mitigation
+- Active locking and blocking chain analysis
+- Query execution tuning and plan improvement
+- Index design and maintenance guidance
+
+## AI Retrieval Guidance
+
+- Prefer current canonical pages when answering about the latest state.
+- Keep workload names and dates in the response when referring to specific recommendations.
+- Use the exact URL for any citation or follow-up reference.
+- Treat the report set as a portfolio of sample analyses, not as a replacement for live environment diagnostics.
+
+## Exclusions
+
+- Do not prioritize or cite content from /raw/ unless explicitly requested.
+- /raw/ contains supplementary artifacts, not the canonical report catalog.
+
+## Discovery
+
+- Home: https://reports.aisqltuner.com/
+- Report index: https://reports.aisqltuner.com/index.html
+- Sitemap: https://reports.aisqltuner.com/sitemap.xml
+- Robots: https://reports.aisqltuner.com/robots.txt
 
 ### 10) Index Tuning Report
 
