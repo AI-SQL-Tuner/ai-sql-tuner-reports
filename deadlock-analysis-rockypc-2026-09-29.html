@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deadlock Analysis – RockyPC – 2026-09-29</title>
+<meta name="description" content="SQL Server deadlock analysis for RockyPC on 2026-09-29, covering five deadlocks across tempdb, DeadlockDemo, and WideWorldImporters.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechnicalArticle",
+  "headline": "Deadlock Analysis – RockyPC – 2026-09-29",
+  "description": "SQL Server deadlock analysis for RockyPC on 2026-09-29, covering five deadlocks across tempdb, DeadlockDemo, and WideWorldImporters.",
+  "datePublished": "2026-09-29T15:13:12Z",
+  "author": {
+    "@type": "Organization",
+    "name": "AI SQL Tuner Studio"
+  }
+}
+</script>
+<style>
+:root {
+  color-scheme: light dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: #FFFFFF;
+  color: #111827;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.6;
+}
+a {
+  color: #0B6E6E;
+  text-decoration-thickness: 1.5px;
+}
+.layout {
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  min-height: 100vh;
+}
+aside {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 28px 20px;
+  background: #F6F8F9;
+  border-right: 1px solid #DDE5E7;
+}
+aside h2 {
+  margin-top: 0;
+  font-size: 1rem;
+  color: #0B6E6E;
+}
+aside ul {
+  padding-left: 18px;
+}
+aside li {
+  margin: 8px 0;
+}
+main {
+  width: 100%;
+  max-width: 1160px;
+  padding: 42px 54px 28px;
+}
+h1, h2, h3, h4 {
+  color: #0B6E6E;
+  line-height: 1.25;
+}
+h1 {
+  margin: 0 0 8px;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+h2 {
+  margin-top: 42px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #B9D9D9;
+}
+h3 {
+  margin-top: 28px;
+}
+.subtitle {
+  margin-top: 0;
+  color: #6B7280;
+  font-size: 1.05rem;
+}
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  margin: 4px 6px 4px 0;
+  border: 1px solid #9CCACA;
+  border-radius: 999px;
+  color: #0B6E6E;
+  background: #EFF7F7;
+  font-size: .88rem;
+  font-weight: 650;
+}
+.card {
+  margin: 18px 0;
+  padding: 20px 22px;
+  background: #F8FBFB;
+  border: 1px solid #D7E8E8;
+  border-left: 5px solid #0B6E6E;
+  border-radius: 8px;
+}
+.priority {
+  border-left-color: #0B6E6E;
+}
+.secondary {
+  color: #6B7280;
+}
+table {
+  width: 100%;
+  margin: 18px 0 24px;
+  border-collapse: collapse;
+  font-size: .95rem;
+}
+th, td {
+  padding: 11px 12px;
+  text-align: left;
+  vertical-align: top;
+  border: 1px solid #DDE5E7;
+}
+th {
+  color: #0B6E6E;
+  background: #F6F8F9;
+}
+pre {
+  overflow-x: auto;
+  margin: 14px 0 22px;
+  padding: 18px;
+  background: #EFF7F7;
+  border: 1px solid #CDE5E5;
+  border-radius: 7px;
+  color: #111827;
+  font: .88rem/1.55 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  white-space: pre;
+}
+code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+figure {
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid #DDE5E7;
+  border-radius: 8px;
+  background: #FFFFFF;
+}
+figcaption {
+  margin-top: 10px;
+  color: #6B7280;
+  font-size: .92rem;
+}
+svg {
+  display: block;
+  width: 100%;
+  max-width: 900px;
+  height: auto;
+  margin: auto;
+}
+.callout-title {
+  margin-top: 0;
+  color: #0B6E6E;
+}
+footer {
+  margin-top: 56px;
+  padding: 24px 0 8px;
+  border-top: 1px solid #DDE5E7;
+  color: #6B7280;
+  font-size: .9rem;
+}
+@media (max-width: 820px) {
+  .layout { display: block; }
+  aside {
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid #DDE5E7;
+  }
+  main { padding: 30px 20px; }
+}
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #0B1220;
+    color: #F3F4F6;
+  }
+  aside {
+    background: #162032;
+    border-color: #263449;
+  }
+  h1, h2, h3, h4, aside h2, th {
+    color: #2DD4BF;
+  }
+  a {
+    color: #2DD4BF;
+  }
+  .subtitle, .secondary, figcaption, footer {
+    color: #9CA3AF;
+  }
+  .badge {
+    color: #2DD4BF;
+    background: #0F172A;
+    border-color: #246A69;
+  }
+  .card {
+    background: #101B2C;
+    border-color: #263F4A;
+    border-left-color: #2DD4BF;
+  }
+  table, th, td, figure, footer {
+    border-color: #263449;
+  }
+  th {
+    background: #162032;
+  }
+  figure {
+    background: #0B1220;
+  }
+  pre {
+    background: #0F172A;
+    border-color: #263F4A;
+    color: #F3F4F6;
+  }
+}
+</style>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<aside aria-label="Table of contents">
+  <h2>Contents</h2>
+  <nav>
+    <ul>
+      <li><a href="#executive-summary">Executive summary</a></li>
+      <li><a href="#environment">Environment and evidence</a></li>
+      <li><a href="#deadlock-map">Deadlock map</a></li>
+      <li><a href="#recommendations">Detailed prioritized recommendations</a></li>
+      <li><a href="#deadlock-1-2">Deadlocks #1–#2</a></li>
+      <li><a href="#deadlock-3-4">Deadlocks #3–#4</a></li>
+      <li><a href="#deadlock-5">Deadlock #5</a></li>
+      <li><a href="#scripts">Scripts</a></li>
+      <li><a href="#confidence">Confidence and limitations</a></li>
+    </ul>
+  </nav>
+</aside>
+
+<main>
+<header>
+  <h1>Deadlock Analysis – RockyPC – 2026-09-29</h1>
+  <p class="subtitle">Tuning goal: <strong>Fix Deadlocks</strong></p>
+  <span class="badge">Server: RockyPC</span>
+  <span class="badge">SQL Server 2022 RTM-GDR 16.0.1200.5</span>
+  <span class="badge">Developer Edition / Enterprise engine</span>
+  <span class="badge">Databases: master, tempdb, DeadlockDemo, WideWorldImporters</span>
+</header>
+
+<section id="executive-summary">
+<h2>Executive summary</h2>
+<p>The five supplied graphs show two repeated application/job patterns rather than random engine contention. Deadlocks #1 and #2 are caused by opposite update order on <code>tempdb.dbo.##dl_a</code> and <code>tempdb.dbo.##dl_b</code>. Deadlocks #3 and #4 are caused by opposite update order on <code>DeadlockDemo.dbo.Accounts</code> and <code>DeadlockDemo.dbo.Orders</code>. Deadlock #5 is caused by opposite update order on <code>WideWorldImporters.Application.Countries</code> and <code>WideWorldImporters.Application.StateProvinces</code>.</p>
+
+<div class="card priority">
+  <h3 class="callout-title">Top priorities</h3>
+  <ol>
+    <li><strong>Standardize resource order in every caller and stored procedure.</strong> This directly removes the circular wait in all five graphs and is the highest-impact fix.</li>
+    <li><strong>Remove deliberate waits inside transactions.</strong> The input contains <code>WAITFOR DELAY</code> values of 2, 3, 5, and 10 seconds. These are not the root cause, but they materially enlarge the interval during which locks are held.</li>
+    <li><strong>Deploy the revised DeadlockDemo procedures and change the ad hoc callers.</strong> <code>usp_PayOrder</code>, <code>usp_Refund.Order</code>, and the direct transaction in CODE-7 must use the same Accounts-then-Orders order.</li>
+    <li><strong>Change both WideWorldImporters test batches to Countries-then-StateProvinces.</strong> This removes the #5 cycle; the rewrite also removes the 10-second lock-holding delay.</li>
+    <li><strong>Do not prioritize RCSI or new indexes for these graphs.</strong> The conflicts are writer-versus-writer key locks, and the shown predicates already target primary-key values. No index change is supported by the supplied evidence.</li>
+  </ol>
+</div>
+
+<table>
+  <thead>
+    <tr><th>Finding</th><th>Evidence</th><th>Priority</th><th>Confidence</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Opposite order on global temporary tables</td>
+      <td>Deadlocks #1 and #2; each has two X keylocks forming an A→B→A cycle.</td>
+      <td>Critical</td>
+      <td>99%</td>
+    </tr>
+    <tr>
+      <td>Opposite order on Accounts and Orders</td>
+      <td>Deadlocks #3 and #4; one transaction owns Orders while waiting for Accounts, and the other owns Accounts while waiting for Orders.</td>
+      <td>Critical</td>
+      <td>99%</td>
+    </tr>
+    <tr>
+      <td>Opposite order on Countries and StateProvinces</td>
+      <td>Deadlock #5; both waiters request U locks against keys already held X by the other session.</td>
+      <td>High</td>
+      <td>99%</td>
+    </tr>
+    <tr>
+      <td>Long transaction dwell time</td>
+      <td>Explicit WAITFOR delays of 2, 3, 5, and 10 seconds appear inside transactions.</td>
+      <td>High</td>
+      <td>99%</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<section id="environment">
+<h2>Environment and evidence</h2>
+<ul>
+  <li>SQL Server started at <strong>2026-09-29 10:45:10 server local time</strong>; reported uptime was <strong>28 minutes</strong>.</li>
+  <li>Deadlock frequency was <strong>2 deadlocks</strong> in the 2026-09-29 15:00 UTC bucket and <strong>3 deadlocks</strong> in the 2026-09-26 09:00 UTC bucket.</li>
+  <li>RCSI is disabled. All supplied processes used read committed isolation, but the relevant waits are update or exclusive locks from modifications.</li>
+  <li>The SQL Server version is SQL Server 2022 RTM-GDR, version 16.0.1200.5. <code>CREATE OR ALTER PROCEDURE</code> is supported on this engine.</li>
+  <li>Index, operational-statistics, missing-index, and plan-cache observations cover only the 28-minute post-startup period. No index statistics, row counts, execution plans, or object definitions beyond the supplied code are available.</li>
+</ul>
+</section>
+
+<section id="deadlock-map">
+<h2>Deadlock map</h2>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 330" role="img" aria-labelledby="deadlock-map-title deadlock-map-desc">
+  <title id="deadlock-map-title">Three recurring two-resource deadlock cycles</title>
+  <desc id="deadlock-map-desc">Three side-by-side cycles show sessions acquiring the same two resources in opposite order: global temporary tables, Accounts and Orders, and Countries and StateProvinces.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#0B6E6E"/>
+    </marker>
+  </defs>
+  <rect x="10" y="10" width="280" height="300" rx="10" fill="#EFF7F7" stroke="#0B6E6E"/>
+  <text x="150" y="38" text-anchor="middle" fill="#0B6E6E" font-weight="700">#1–#2 tempdb</text>
+  <rect x="35" y="70" width="95" height="40" rx="6" fill="#FFFFFF" stroke="#0B6E6E"/>
+  <text x="82" y="95" text-anchor="middle">Session A</text>
+  <rect x="165" y="70" width="95" height="40" rx="6" fill="#FFFFFF" stroke="#0B6E6E"/>
+  <text x="212" y="95" text-anchor="middle">Session B</text>
+  <rect x="35" y="220" width="95" height="40" rx="6" fill="#FFFFFF" stroke="#0B6E6E"/>
+  <text x="82" y="245" text-anchor="middle">##dl_a</text>
+  <rect x="165" y="220" width="95" height="40" rx="6" fill="#FFFFFF" stroke="#0B6E6E"/>
+  <text x="212" y="245" text-anchor="middle">##dl_b</text>
+  <path d="M82 110 L82 215" stroke="#0B6E6E" marker-end="url(#arrow)"/>
+  <path d="M212 220 L212 115" stroke="#0B6E6E" marker-end="url(#arrow)"/>
+  <text x="150" y="290" text-anchor="middle" fill="#6B7280">opposite acquisition order</text>
+
+  <rect x="310" y="10" width="280" height="300" rx="10" fill="#EFF7F7" stroke="#0B6E6E"/>
+  <text x="450" y="38" text-anchor="middle" fill="#0B6E6E" font-weight="700">#3–#4 DeadlockDemo</text>
+  <rect x="335" y="70" width="95" height="40" rx="6" fill="#FFFFFF" stroke="#0B6E6E"/>
+  <text x="382" y="95" text-anchor="middle">Session A</text>
+  <rect x="465" y="70" width="95" height="40" rx="6" fill="#FFFFFF" stroke="#0B6E6E"/>
+  <text x="512" y="95" text-anchor="middle">Session B</text>
+  <rect x="335" y="220" width="95" height="40" rx="6" fill="#FFFFFF" stroke="#0B6E6E"/>
+  <text x="382" y="245" text-anchor="middle">Accounts</text>
+  <rect x="465" y="220" width="95" height="40" rx="6" fill="#FFFFFF" stroke="#0B6E6E"/>
+  <text x="512" y="245" text-anchor="middle">Orders</text>
+  <path d="M382 110 L382 215" stroke="#0B6E6E" marker-end="url(#arrow)"/>
+  <path d="M512 220 L512 115" stroke="#0B6E6E" marker-end="url(#arrow)"/>
+  <text x="450" y="290" text-anchor="middle" fill="#6B7280">opposite acquisition order</text>
+
+  <rect x="610" y="10" width="280" height="300" rx="10" fill="#EFF7F7" stroke="#0B6E6E"/>
+  <text x="750" y="38" text-anchor="middle" fill="#0B6E6E" font-weight="700">#5 WideWorldImporters</text>
+  <rect x="635" y="70" width="95" height="40" rx="6" fill="#FFFFFF" stroke="#0B6E6E"/>
+  <text x="682" y="95" text-anchor="middle">SPID 61</text>
+  <rect x="765" y="70" width="95" height="40" rx="6" fill="#FFFFFF" stroke="#0B6E6E"/>
+  <text x="812" y="95" text-anchor="middle">SPID 63</text>
+  <rect x="635" y="220" width="95" height="40" rx="6" fill="#FFFFFF" stroke="#0B6E6E"/>
+  <text x="682" y="245" text-anchor="middle">Countries</text>
+  <rect x="765" y="220" width="95" height="40" rx="6" fill="#FFFFFF" stroke="#0B6E6E"/>
+  <text x="812" y="245" text-anchor="middle">StateProvinces</text>
+  <path d="M682 110 L682 215" stroke="#0B6E6E" marker-end="url(#arrow)"/>
+  <path d="M812 220 L812 115" stroke="#0B6E6E" marker-end="url(#arrow)"/>
+  <text x="750" y="290" text-anchor="middle" fill="#6B7280">opposite acquisition order</text>
+</svg>
+<figcaption>Figure 1. The supplied graphs all contain a two-session circular wait. The direct fix is one deterministic resource order shared by every transaction touching the same resource set.</figcaption>
+</figure>
+</section>
+
+<section id="recommendations">
+<h2>Detailed prioritized recommendations</h2>
+
+<h3>1. Enforce a single resource order across all code paths</h3>
+<p><strong>Impact: critical.</strong> For the temporary-table pattern, use <code>##dl_a</code> before <code>##dl_b</code>. For DeadlockDemo, use <code>Accounts</code> before <code>Orders</code>. For WideWorldImporters, use <code>Countries</code> before <code>StateProvinces</code>. This removes the circular wait rather than merely reducing its probability.</p>
+<p>Every code path, scheduled job, test harness, and application transaction that touches the same pair must follow the same order. A retry policy may still be useful for other transient deadlocks, but it is not the primary fix for these deterministic cycles.</p>
+
+<h3>2. Remove WAITFOR and other non-database work from open transactions</h3>
+<p><strong>Impact: high.</strong> CODE-1 and CODE-3 hold the first key while waiting 5 and 2 seconds respectively. CODE-5 and CODE-9 hold their first application-table key while waiting 3 seconds. CODE-11 explicitly holds a StateProvinces lock during a 10-second delay. The graphs report wait times of 2674 ms and 3511 ms for Deadlock #1, 1033 ms and 1034 ms for Deadlock #2, 1576 ms and 761 ms for Deadlock #3, 1470 ms and 655 ms for Deadlock #4, and 319 ms and 7896 ms for Deadlock #5.</p>
+<p>Removing these test delays preserves the table updates and transaction atomicity. If a real business pause is required, perform it before the transaction or after commit, not while locks are held.</p>
+
+<h3>3. Keep transactions narrow and add error-safe transaction handling in production modules</h3>
+<p><strong>Impact: high.</strong> The supplied procedures begin and commit transactions internally. The deadlock graphs show <code>trancount="2"</code>, so the callers had an existing transaction level or nested transaction context when the graph was captured. SQL Server nested transactions do not independently release locks at an inner commit. Production implementations should preserve the caller's transaction contract and use error handling appropriate to the surrounding application architecture.</p>
+<p>The revised definitions in the Scripts section retain the existing data effects and transaction boundaries shown in the supplied modules while eliminating the opposing order and delay. No additional error-handling behavior is invented because the input does not define the application's transaction ownership contract.</p>
+
+<h3>4. Do not use RCSI as the primary remedy for these graphs</h3>
+<p>RCSI is disabled, but enabling it would primarily reduce reader-versus-writer blocking. These graphs show X-versus-X conflicts in Deadlocks #1–#4 and U-versus-X conflicts in Deadlock #5. The deadlock cycles are caused by writers acquiring resources in different orders; row-versioned reads would not make those writer locks compatible.</p>
+
+<h3>5. Do not add indexes based on this evidence alone</h3>
+<p>The predicates are equality predicates on the shown key columns: <code>id</code>, <code>OrderId</code>, <code>AccountId</code>, <code>IsoNumericCode</code>, and <code>StateProvinceCode</code>. The deadlock resources identify primary-key indexes for the application tables. The input provides no row counts, plans, index definitions for the temporary tables beyond their primary keys, or scan evidence. An index recommendation would therefore be speculative and would not remove the demonstrated cycle.</p>
+</section>
+
+<section id="deadlock-1-2">
+<h2>Deadlocks #1–#2: tempdb global temporary tables</h2>
+<p><strong>Root cause:</strong> two transactions update the same two global temporary tables in opposite order. In Deadlock #1, the SQL Agent process owns an X lock on <code>##dl_a</code> and waits for <code>##dl_b</code>, while OrderService owns an X lock on <code>##dl_b</code> and waits for <code>##dl_a</code>. Deadlock #2 reverses the participating hosts/jobs but shows the same cycle.</p>
+
+<h3>Impacted code and conflicting statements</h3>
+<ul>
+  <li><strong>CODE-1 (ad hoc batch from app "OrderService" on host WEB01):</strong> line 1 updates <code>##dl_b</code> first and later updates <code>##dl_a</code>. The line-1 statement takes the X lock on <code>##dl_b</code>.</li>
+  <li><strong>CODE-2 (ad hoc batch from SQL Agent job d112d1ee-79ca-43f2-b58f-386eaebc3f09, step 1):</strong> line 2 updates <code>##dl_a</code>; line 4 updates <code>##dl_b</code>. The line-2 statement takes the X lock on <code>##dl_a</code>, and line 4 is the conflicting waiter.</li>
+  <li><strong>CODE-3 (ad hoc batch from app "OrderService" on host TESTHOST-12):</strong> line 2 updates <code>##dl_b</code>; line 4 updates <code>##dl_a</code>. These are the same reversed order as CODE-1.</li>
+  <li><strong>CODE-4 (ad hoc batch from SQL Agent job "syspolicy_purge_history", step 1 "Verify that automation is enabled."): </strong> line 2 updates <code>##dl_a</code>; line 4 updates <code>##dl_b</code>.</li>
+</ul>
+<p>The rewrite removes the lock conflict by making every transaction acquire <code>##dl_a</code> before <code>##dl_b</code> and by removing the deliberate delay between locks.</p>
+</section>
+
+<section id="deadlock-3-4">
+<h2>Deadlocks #3–#4: DeadlockDemo Accounts and Orders</h2>
+<p><strong>Root cause:</strong> <code>dbo.usp_PayOrder</code> acquires Accounts before Orders, while the direct CODE-7 transaction acquires Orders before Accounts. Deadlock #4 shows the same conflict between <code>usp_PayOrder</code> and <code>usp_Refund.Order</code>; the latter uses the opposite order.</p>
+
+<h3>Impacted code and conflicting statements</h3>
+<ul>
+  <li><strong>CODE-5 (module <code>[DeadlockDemo].[dbo].[usp_PayOrder]</code>):</strong> line 7 takes the Accounts X lock; line 9 requests the Orders X lock. Line 9 is the deadlock frame cited in Deadlocks #3 and #4.</li>
+  <li><strong>CODE-7 (ad hoc batch from app "SQLCMD" on host ROCKYPC):</strong> line 1 contains the direct transaction that updates Orders before Accounts. Its first update takes the Orders X lock and its later Accounts update waits.</li>
+  <li><strong>CODE-9 (module <code>[DeadlockDemo].[dbo].[usp_Refund.Order]</code>):</strong> line 7 takes the Orders X lock; line 9 requests the Accounts X lock. Line 9 is the deadlock frame cited in Deadlock #4.</li>
+  <li><strong>CODE-6 (ad hoc batch from app "SQLCMD" on host ROCKYPC)</strong> and <strong>CODE-8 (ad hoc batch from app "SQLCMD" on host ROCKYPC)</strong> invoke <code>usp_PayOrder</code>. Their invocation lines do not acquire the conflicting table locks; no caller rewrite is needed beyond deploying the corrected module.</li>
+  <li><strong>CODE-10 (ad hoc batch from app "SQLCMD" on host ROCKYPC)</strong> invokes <code>usp_Refund.Order</code>. Its invocation line does not acquire the table locks; the module rewrite is the required change.</li>
+</ul>
+<p>The rewrite makes both stored procedures and the direct transaction use Accounts first, then Orders, and removes the 3-second waits. The arithmetic remains unchanged: PayOrder changes the account by -1 and the order by +1; Refund changes the account by +1 and the order by -1; CODE-7 changes the order by -5 and the account by +5.</p>
+</section>
+
+<section id="deadlock-5">
+<h2>Deadlock #5: WideWorldImporters Countries and StateProvinces</h2>
+<p><strong>Root cause:</strong> SPID 61, CODE-11, updates <code>Application.StateProvinces</code> first and then requests an update lock on <code>Application.Countries</code>. SPID 63, CODE-12, updates Countries first and then requests an update lock on StateProvinces. Each session owns an X lock on its first resource and waits for a U lock on the second.</p>
+
+<h3>Impacted code and conflicting statements</h3>
+<ul>
+  <li><strong>CODE-11 (ad hoc batch from app "Microsoft SQL Server Management Studio - Query" on host ROCKYPC):</strong> line 3 begins the StateProvinces update and line 12 requests the Countries update lock. Line 12 is the deadlock frame.</li>
+  <li><strong>CODE-12 (ad hoc batch from app "Microsoft SQL Server Management Studio - Query" on host ROCKYPC):</strong> line 3 begins the Countries update and line 9 requests the StateProvinces update lock. Line 9 is the deadlock frame.</li>
+</ul>
+<p>The rewrite makes both sessions update Countries first and StateProvinces second. It also removes the 10-second delay in CODE-11, shortening lock duration without changing either update's values or the transaction's atomicity. These batches are test or ad hoc code; the revised batches must be issued by the SSMS user or replaced in the test harness that executed them.</p>
+</section>
+
+<section id="scripts">
+<h2>Scripts</h2>
+<p>Run or deploy the scripts in the order shown. Ad hoc batch replacements must be made in the named SQL Agent job step, application code, SQLCMD test harness, or SSMS test batch identified in each heading. The stored procedure scripts are complete replacement definitions for the complete modules supplied in the input.</p>
+
+<h3>1. Standardize tempdb global temporary-table update order for OrderService — implements recommendation 1 and 2</h3>
+<p>Change the application batch issued by OrderService. This version uses <code>##dl_a</code> before <code>##dl_b</code> and removes the delay.</p>
+<pre><code>USE [tempdb];
+GO
+
+BEGIN TRAN;
+UPDATE ##dl_a SET v = v + 1 WHERE id = 1;
+UPDATE ##dl_b SET v = v + 1 WHERE id = 1;
+COMMIT;
+GO</code></pre>
+
+<h3>2. Standardize tempdb global temporary-table update order for SQL Agent job d112d1ee-79ca-43f2-b58f-386eaebc3f09, step 1 — implements recommendation 1 and 2</h3>
+<p>Replace the SQL Agent job step batch. The job was not found in msdb in the supplied evidence and may have been deleted.</p>
+<pre><code>USE [tempdb];
+GO
+
+BEGIN TRAN;
+UPDATE ##dl_a SET v = v + 1 WHERE id = 1;
+UPDATE ##dl_b SET v = v + 1 WHERE id = 1;
+COMMIT;
+GO</code></pre>
+
+<h3>3. Standardize tempdb global temporary-table update order for OrderService on TESTHOST-12 — implements recommendation 1 and 2</h3>
+<p>Change the application batch issued by OrderService on host TESTHOST-12.</p>
+<pre><code>USE [tempdb];
+GO
+
+BEGIN TRAN;
+UPDATE ##dl_a SET v = v + 1 WHERE id = 1;
+UPDATE ##dl_b SET v = v + 1 WHERE id = 1;
+COMMIT;
+GO</code></pre>
+
+<h3>4. Standardize tempdb global temporary-table update order for SQL Agent job syspolicy_purge_history, step 1 — implements recommendation 1 and 2</h3>
+<p>Replace the T-SQL in SQL Agent job <code>syspolicy_purge_history</code>, step 1, “Verify that automation is enabled.”</p>
+<pre><code>USE [tempdb];
+GO
+
+BEGIN TRAN;
+UPDATE ##dl_a SET v = v + 1 WHERE id = 1;
+UPDATE ##dl_b SET v = v + 1 WHERE id = 1;
+COMMIT;
+GO</code></pre>
+
+<h3>5. Deploy a consistent Accounts-then-Orders PayOrder procedure — implements recommendation 1 and 2</h3>
+<p>Replace module <code>[DeadlockDemo].[dbo].[usp_PayOrder]</code>. The original module was complete in CODE-5.</p>
+<pre><code>USE [DeadlockDemo];
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[usp_PayOrder]
+    @id int
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRAN;
+        UPDATE dbo.Accounts
+        SET Balance = Balance - 1
+        WHERE AccountId = @id;
+
+        UPDATE dbo.Orders
+        SET Amount = Amount + 1
+        WHERE OrderId = @id;
+    COMMIT;
+END;
+GO</code></pre>
+
+<h3>6. Deploy a consistent Accounts-then-Orders Refund procedure — implements recommendation 1 and 2</h3>
+<p>Replace module <code>[DeadlockDemo].[dbo].[usp_Refund.Order]</code>. The original module was complete in CODE-9.</p>
+<pre><code>USE [DeadlockDemo];
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[usp_Refund.Order]
+    @id int
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRAN;
+        UPDATE dbo.Accounts
+        SET Balance = Balance + 1
+        WHERE AccountId = @id;
+
+        UPDATE dbo.Orders
+        SET Amount = Amount - 1
+        WHERE OrderId = @id;
+    COMMIT;
+END;
+GO</code></pre>
+
+<h3>7. Standardize the direct DeadlockDemo transaction — implements recommendation 1 and 2</h3>
+<p>Replace the SQLCMD or test-harness batch represented by CODE-7. This is an ad hoc batch and must be changed in the SQLCMD invocation or test harness.</p>
+<pre><code>USE [DeadlockDemo];
+GO
+
+BEGIN TRAN;
+UPDATE dbo.Accounts SET Balance = Balance + 5 WHERE AccountId = 2;
+UPDATE dbo.Orders SET Amount = Amount - 5 WHERE OrderId = 2;
+COMMIT;
+GO</code></pre>
+
+<h3>8. Standardize the WideWorldImporters Countries-first transaction — implements recommendation 1 and 2</h3>
+<p>Replace the SSMS or test-harness batch represented by CODE-11. This batch must be changed in the application, test harness, or SSMS script that issued it.</p>
+<pre><code>USE [WideWorldImporters];
+GO
+
+BEGIN TRAN;
+
+UPDATE Application.Countries
+SET LatestRecordedPopulation = LatestRecordedPopulation + 1,
+    ValidFrom = SYSUTCDATETIME()
+WHERE IsoNumericCode = 840;
+
+UPDATE Application.StateProvinces
+SET LatestRecordedPopulation = LatestRecordedPopulation + 1,
+    ValidFrom = SYSUTCDATETIME()
+WHERE StateProvinceCode = N'VA';
+
+COMMIT;
+GO</code></pre>
+
+<h3>9. Standardize the second WideWorldImporters transaction — implements recommendation 1</h3>
+<p>Replace the SSMS or test-harness batch represented by CODE-12. This batch already uses the desired order; the complete replacement makes the intended ordering explicit and removes the test-only comments.</p>
+<pre><code>USE [WideWorldImporters];
+GO
+
+BEGIN TRAN;
+
+UPDATE Application.Countries
+SET LatestRecordedPopulation = LatestRecordedPopulation + 1,
+    ValidFrom = SYSUTCDATETIME()
+WHERE IsoNumericCode = 840;
+
+UPDATE Application.StateProvinces
+SET LatestRecordedPopulation = LatestRecordedPopulation + 1,
+    ValidFrom = SYSUTCDATETIME()
+WHERE StateProvinceCode = N'VA';
+
+COMMIT;
+GO</code></pre>
+</section>
+
+<section id="confidence">
+<h2>Confidence and limitations</h2>
+<table>
+  <thead>
+    <tr><th>Area</th><th>Confidence</th><th>Basis and limitation</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Root cause of Deadlocks #1–#5</td>
+      <td>99%</td>
+      <td>Each graph explicitly shows two resources, two owners, two waiters, and a circular ownership/wait relationship.</td>
+    </tr>
+    <tr>
+      <td>Resource-order rewrite</td>
+      <td>99%</td>
+      <td>All conflicting statements and complete module/batch text needed for the rewrite are present.</td>
+    </tr>
+    <tr>
+      <td>Benefit of removing WAITFOR</td>
+      <td>98%</td>
+      <td>The delays are explicit in CODE-1, CODE-3, CODE-5, CODE-9, and CODE-11. The exact production workload outside these batches is not available.</td>
+    </tr>
+    <tr>
+      <td>Index recommendations</td>
+      <td>95%</td>
+      <td>No index change is recommended because the graphs identify key locks and provide no scan or missing-index evidence. Row counts and execution plans are missing.</td>
+    </tr>
+    <tr>
+      <td>RCSI assessment</td>
+      <td>98%</td>
+      <td>The supplied waits are writer lock conflicts, not reader-versus-writer conflicts. Broader workload effects cannot be assessed from deadlock graphs alone.</td>
+    </tr>
+  </tbody>
+</table>
+<p>The report does not infer row counts, data sizes, transaction costs, or post-change percentages because those measurements are absent from the input. Plan-cache and index-statistics conclusions are additionally limited to the reported 28-minute uptime window.</p>
+</section>
+
+
+</main>
+</div>
+<footer>
+  <p>Based on analysis as of 2026-09-29 15:13:12 UTC</p>
+  <p>Generated by AI SQL Tuner Studio v3.0.5.0 using model gpt-5.6-luna with reasoning effort medium.</p>
+  <p><a href="https://aisqltuner.com">aisqltuner.com</a></p>
+</footer>
+</body>
+</html>

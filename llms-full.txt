@@ -1,6 +1,6 @@
 # AI SQL Tuner Sample Reports (Full)
 
-> Last updated: 2026-09-27
+> Last updated: 2026-10-03
 > Base URL: https://reports.aisqltuner.com/
 > Scope: Public sample reports for AI-assisted SQL Server diagnostics and tuning.
 
@@ -78,7 +78,16 @@ Target audience:
   - Analyzes a recent deadlock scenario and its root-cause pattern.
   - Focuses on lock ordering, transaction discipline, and concurrency control.
 
-### 6) Locking and Blocking Analysis Report
+### 6) Deadlock Analysis Report
+
+- URL: https://reports.aisqltuner.com/deadlock-analysis-rockypc-2026-09-29.html
+- Type: Deadlock analysis
+- Workload context: RockyPC / later concurrent write workload
+- Summary:
+  - Captures a newer deadlock scenario for comparison against the 2026-09-27 case.
+  - Useful for tracking repeated lock-ordering patterns and remediation progress over time.
+
+### 7) Locking and Blocking Analysis Report
 
 - URL: https://reports.aisqltuner.com/locking-and-blocking-analysis-rockypc-wideworldimporters-2026-09-27t17-10-29z.html
 - Type: Locking and blocking analysis
@@ -87,7 +96,7 @@ Target audience:
   - Reviews blocking chains and lock contention in the WideWorldImporters workload.
   - Highlights the operational symptoms and likely cause path for sustained blocking.
 
-### 7) Query Tuning Report
+### 8) Query Tuning Report
 
 - URL: https://reports.aisqltuner.com/query-tuner-report-rockypc-sqlstorm-luna.html
 - Type: Query tuning
@@ -96,7 +105,7 @@ Target audience:
   - Reviews execution-shape issues and prioritized tuning actions for SQLStorm queries.
   - Designed to support plan review and query optimization work.
 
-### 8) Query Tuning Report
+### 9) Query Tuning Report
 
 - URL: https://reports.aisqltuner.com/query-tuner-rockypc-sqlstorm-queryhash-0x872c7773968c6aaf.html
 - Type: Query tuning
@@ -105,7 +114,7 @@ Target audience:
   - Focuses on a specific query hash with targeted tuning recommendations.
   - Useful for isolating execution-plan improvements for a repeated workload pattern.
 
-### 9) Index Tuning Analysis
+### 10) Index Tuning Analysis
 
 - URL: https://reports.aisqltuner.com/index-tuning-analysis-sqlstorm-rockypc-2026-09-09-haiku.html
 - Type: Index analysis
@@ -114,7 +123,7 @@ Target audience:
   - Analyzes missing or inefficient index patterns for SQLStorm.
   - Useful for comparing recommendations by model style and tuning philosophy.
 
-### 10) Index Tuning Report
+### 11) Index Tuning Report
 
 - URL: https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-09-08-gpt-5-6-sol.html
 - Type: Index tuning
@@ -123,7 +132,7 @@ Target audience:
   - Captures a GPT-5.6 Sol index strategy recommendation set.
   - Useful for comparing index-design guidance against later Luna and Haiku runs.
 
-### 11) Index Tuning Report
+### 12) Index Tuning Report
 
 - URL: https://reports.aisqltuner.com/index-tuning-report-rockypc-sqlstorm-2026-09-20-luna.html
 - Type: Index tuning
@@ -132,7 +141,7 @@ Target audience:
   - Records a later SQLStorm tuning pass with a more recent assessment.
   - Helps track recommendation drift and workload changes over time.
 
-### 12) Index Tuning Report
+### 13) Index Tuning Report
 
 - URL: https://reports.aisqltuner.com/index-tuning-report-rockypc-photocleanup-2026-07-30.html
 - Type: Index tuning
@@ -141,7 +150,7 @@ Target audience:
   - Covers a separate index-tuning scenario focused on the PhotoCleanup workload.
   - Useful for evaluating cross-workload tuning patterns beyond SQLStorm.
 
-### 13) Index Tuning Report
+### 14) Index Tuning Report
 
 - URL: https://reports.aisqltuner.com/index-tuning-report-rockypc-photo-cleanup-2026-09-22-09-24-55-utc.html
 - Type: Index tuning
