@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Locking and Blocking Analysis – VMEnt\SQL25 / ShopDemo – 2026-11-13 13:59:59 UTC</title>
+<meta name="description" content="Deterministic SQL Server locking and blocking analysis for VMEnt SQL25 and the ShopDemo database.">
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"Report",
+  "headline":"Locking and Blocking Analysis – VMEnt\\SQL25 / ShopDemo – 2026-11-13 13:59:59 UTC",
+  "about":"SQL Server locking and blocking analysis",
+  "datePublished":"2026-11-13T13:59:59Z",
+  "author":{"@type":"Organization","name":"AI SQL Tuner Studio"},
+  "softwareVersion":"3.5.2.0"
+}
+</script>
+<style>
+:root {
+  --bg:#FFFFFF;
+  --surface:#F6F8F9;
+  --code:#EFF7F7;
+  --text:#111827;
+  --muted:#6B7280;
+  --teal:#0B6E6E;
+  --border:#D9E2E5;
+  --warning:#8A5A00;
+  --danger:#A33A3A;
+  --success:#176B4D;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height:1.55;
+}
+a { color:var(--teal); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.layout { display:flex; min-height:100vh; }
+aside {
+  width:280px;
+  flex:0 0 280px;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  padding:28px 20px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow:auto;
+}
+aside h2 { font-size:1rem; margin:0 0 14px; color:var(--teal); }
+aside ul { list-style:none; padding:0; margin:0; }
+aside li { margin:8px 0; }
+aside a { font-size:.92rem; }
+main { max-width:1120px; width:100%; margin:0 auto; padding:44px 56px 24px; }
+header { border-bottom:3px solid var(--teal); padding-bottom:24px; margin-bottom:30px; }
+h1,h2,h3 { color:var(--teal); line-height:1.2; }
+h1 { font-size:2.15rem; margin:0 0 10px; }
+h2 { font-size:1.45rem; margin-top:42px; border-bottom:1px solid var(--border); padding-bottom:8px; }
+h3 { font-size:1.05rem; margin-top:25px; }
+.subtitle { color:var(--muted); margin:4px 0; }
+.badges { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+.badge { border:1px solid var(--border); border-radius:999px; padding:5px 11px; color:var(--teal); background:var(--surface); font-size:.85rem; }
+.card-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin:18px 0 24px; }
+.card { border:1px solid var(--border); border-left:4px solid var(--teal); padding:15px; background:var(--surface); border-radius:5px; }
+.card strong { display:block; font-size:1.35rem; color:var(--teal); }
+.card span { color:var(--muted); font-size:.88rem; }
+table { width:100%; border-collapse:collapse; margin:16px 0 22px; font-size:.93rem; }
+th,td { border:1px solid var(--border); padding:10px 11px; text-align:left; vertical-align:top; }
+th { background:var(--surface); color:var(--teal); }
+tr:nth-child(even) td { background:rgba(246,248,249,.45); }
+.callout { border-left:5px solid var(--teal); background:var(--code); padding:15px 18px; margin:18px 0; }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+code { font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace; font-size:.9em; }
+pre {
+  background:var(--code);
+  border:1px solid var(--border);
+  border-radius:5px;
+  padding:16px;
+  overflow:auto;
+  white-space:pre-wrap;
+  color:var(--text);
+}
+ol.priority > li { margin:18px 0; padding-left:5px; }
+ul { padding-left:23px; }
+svg { width:100%; height:auto; border:1px solid var(--border); background:var(--surface); border-radius:5px; }
+figure { margin:22px 0; }
+figcaption { color:var(--muted); font-size:.9rem; margin-top:7px; }
+.small { color:var(--muted); font-size:.9rem; }
+.risk-high { color:var(--danger); font-weight:600; }
+.risk-medium { color:var(--warning); font-weight:600; }
+.risk-low { color:var(--success); font-weight:600; }
+footer { border-top:1px solid var(--border); margin-top:48px; padding:22px 0 10px; color:var(--muted); font-size:.88rem; }
+@media (max-width: 850px) {
+  .layout { display:block; }
+  aside { width:auto; height:auto; position:relative; border-right:0; border-bottom:1px solid var(--border); }
+  main { padding:30px 22px; }
+  h1 { font-size:1.7rem; }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#0B1220;
+    --surface:#162032;
+    --code:#0F172A;
+    --text:#F3F4F6;
+    --muted:#9CA3AF;
+    --teal:#2DD4BF;
+    --border:#334155;
+    --warning:#F5C76A;
+    --danger:#F28B82;
+    --success:#70D6A7;
+  }
+  body { background:#0B1220; color:#F3F4F6; }
+  aside { background:#162032; }
+  th { background:#162032; }
+  tr:nth-child(even) td { background:rgba(22,32,50,.55); }
+  .badge { background:#162032; }
+  pre { background:#0F172A; color:#F3F4F6; }
+  svg { background:#162032; }
+}
+</style>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+/* Priority pills are inline badges only (<span class="priority p1">P1</span>). Models also use
+   "priority" as a block modifier (<div class="card priority">); scoping to span keeps those in the body font. */
+span.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+span.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+span.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+span.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<aside aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ul>
+    <li><a href="#executive-summary">Executive summary</a></li>
+    <li><a href="#environment">Environment and scope</a></li>
+    <li><a href="#blocking">Active blocking and tree</a></li>
+    <li><a href="#root-cause">Root-cause classification</a></li>
+    <li><a href="#recommendations">Prioritized recommendations</a></li>
+    <li><a href="#deadlocks">Deadlock history</a></li>
+    <li><a href="#impact">Impact metrics</a></li>
+    <li><a href="#scripts">Scripts</a></li>
+    <li><a href="#limitations">Evidence limitations</a></li>
+  </ul>
+</aside>
+
+<main>
+<header>
+  <h1>Locking and Blocking Analysis – VMEnt\SQL25 / ShopDemo – 2026-11-13 13:59:59 UTC</h1>
+  <p class="subtitle"><strong>Tuning goal:</strong> Locking and Blocking Analysis</p>
+  <p class="subtitle"><strong>Server:</strong> VMEnt\SQL25 &nbsp;|&nbsp; <strong>Version:</strong> SQL Server 2025 (17.0.1000.7), RTM &nbsp;|&nbsp; <strong>Database:</strong> ShopDemo</p>
+  <div class="badges">
+    <span class="badge">Enterprise Developer / Enterprise engine</span>
+    <span class="badge">Blocking active</span>
+    <span class="badge">RCSI OFF</span>
+    <span class="badge">Optimized Locking OFF</span>
+    <span class="badge">Deadlock capture: CAPTURED</span>
+  </div>
+</header>
+
+<section id="executive-summary">
+<h2>Executive summary</h2>
+<div class="callout danger">
+  <strong>Blocking is active.</strong> Session 102 is the top lead blocker: it owns an X object lock while an explicit transaction remains open during <code>WAITFOR DELAY '00:15:00';</code>. Session 103 is the principal downstream amplifier because it holds an X key lock on <code>Customers.PK_Customers</code> while its transaction waits on session 102.
+</div>
+<div class="card-grid">
+  <div class="card"><strong>5</strong><span>distinct blocked sessions: 101, 103, 104, 105, and 106</span></div>
+  <div class="card"><strong>10,296 ms</strong><span>longest reported waiter duration</span></div>
+  <div class="card"><strong>43,400 ms</strong><span>sum of the five reported waiter durations</span></div>
+  <div class="card"><strong>13 seconds</strong><span>longest open transaction duration shown: session 102</span></div>
+</div>
+<p>The highest-priority correction is to remove the deliberate delay from the transaction and commit or roll back immediately after the required work. Next, shorten the transaction scope in <code>dbo.usp_ShipOrder</code>, evaluate RCSI, and enable SQL Server 2025 optimized locking only after ADR is enabled and during a maintenance window.</p>
+<ol class="priority">
+  <li><strong>Immediate:</strong> stop holding the session 102 transaction across the 15-minute wait. Evidence: Active Blocking Chains identifies session 102 as <code>WAITFOR</code>; its batch contains <code>BEGIN TRANSACTION; EXEC dbo.usp_ApplyLateFees; WAITFOR DELAY '00:15:00';</code>; Lock Inventory shows session 102 with <code>Mode=X, Status=GRANT</code> at OBJECT level.</li>
+  <li><strong>Immediate:</strong> shorten and consistently order the transaction in <code>dbo.usp_ShipOrder</code>. Evidence: session 103 holds an X key lock on <code>Customers.PK_Customers</code>, waits on session 102, and blocks sessions 101, 104, and 105.</li>
+  <li><strong>High priority:</strong> enable RCSI after application testing to let ordinary read-committed readers use committed row versions. Evidence: RCSI is OFF; sessions 101 and 106 wait with <code>LCK_M_S</code> on a customer key.</li>
+  <li><strong>High priority:</strong> enable ADR and then optimized locking in a maintenance window. Evidence: SQL Server 2025 is available, ADR and optimized locking are OFF, and the inventory contains an OBJECT X lock plus transaction-held DML locks.</li>
+  <li><strong>Medium priority:</strong> add a covering access path for the customer balance query after confirming with the Index Tuning goal. Evidence: session 104 has a clustered scan reading 200,001 Orders rows, with 97% of statement cost in the scan; no missing-index candidate was emitted, so this is a manually inferred candidate rather than a captured recommendation.</li>
+</ol>
+</section>
+
+<section id="environment">
+<h2>Environment and scope</h2>
+<table>
+<tr><th>Property</th><th>Observed value</th><th>Interpretation</th></tr>
+<tr><td>Engine</td><td>SQL Server 2025, Enterprise engine, Enterprise Developer Edition</td><td>Online index operations and optimized locking capability are available.</td></tr>
+<tr><td>Observation period</td><td>Server uptime and database statistics cover approximately 2.4 days since 2026-11-11</td><td>Usage and plan-cache figures are a recent window, not a long-term baseline.</td></tr>
+<tr><td>Isolation configuration</td><td>RCSI OFF; snapshot isolation OFF</td><td>Read-committed readers acquire shared locks and can wait behind writers.</td></tr>
+<tr><td>ADR and optimized locking</td><td>ADR OFF; optimized locking OFF</td><td>Optimized locking cannot be enabled until ADR is enabled.</td></tr>
+<tr><td>Statistics</td><td>AutoUpdateStats ON; asynchronous update OFF; low-priority async wait OFF</td><td>Synchronous statistics refresh can prolong some compilations.</td></tr>
+<tr><td>TempDB</td><td>Version store 0.0 MB; no spilling queries; PAGELATCH_EX total 235 ms, maximum 4 ms</td><td>The snapshot is not consistent with TempDB contention masquerading as the current lock waits.</td></tr>
+</table>
+</section>
+
+<section id="blocking">
+<h2>Active blocking and blocking tree</h2>
+<p>The snapshot contains active <code>LCK_M_S</code>, <code>LCK_M_IX</code>, and <code>LCK_M_IS</code> waits. The relationships are:</p>
+
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1050 420" role="img" aria-labelledby="tree-title tree-desc">
+<title id="tree-title">Blocking tree for sessions 102, 103, 101, 104, 105, and 106</title>
+<desc id="tree-desc">Session 102 blocks session 103. Session 103 blocks sessions 101, 104, and 105. Session 101 blocks session 106.</desc>
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#2DD4BF"/></marker>
+</defs>
+<line x1="210" y1="90" x2="390" y2="90" stroke="#2DD4BF" stroke-width="3" marker-end="url(#arrow)"/>
+<line x1="570" y1="90" x2="735" y2="45" stroke="#2DD4BF" stroke-width="3" marker-end="url(#arrow)"/>
+<line x1="570" y1="90" x2="735" y2="140" stroke="#2DD4BF" stroke-width="3" marker-end="url(#arrow)"/>
+<line x1="570" y1="90" x2="735" y2="235" stroke="#2DD4BF" stroke-width="3" marker-end="url(#arrow)"/>
+<line x1="855" y1="45" x2="930" y2="45" stroke="#2DD4BF" stroke-width="3" marker-end="url(#arrow)"/>
+<g font-family="Arial, sans-serif" font-size="15" fill="#F3F4F6">
+<rect x="30" y="45" width="180" height="90" rx="6" fill="#A33A3A"/>
+<text x="45" y="72">Session 102</text><text x="45" y="95">WAITFOR; X object</text><text x="45" y="118">13 s transaction</text>
+<rect x="390" y="45" width="180" height="90" rx="6" fill="#8A5A00"/>
+<text x="405" y="72">Session 103</text><text x="405" y="95">UPDATE Orders</text><text x="405" y="118">10,299 ms elapsed</text>
+<rect x="735" y="0" width="120" height="90" rx="6" fill="#0B6E6E"/>
+<text x="750" y="28">Session 101</text><text x="750" y="50">SELECT Customer</text><text x="750" y="72">8,277 ms wait</text>
+<rect x="735" y="95" width="120" height="90" rx="6" fill="#0B6E6E"/>
+<text x="750" y="123">Session 104</text><text x="750" y="145">CustomerBalance</text><text x="750" y="167">8,276 ms wait</text>
+<rect x="735" y="190" width="120" height="90" rx="6" fill="#0B6E6E"/>
+<text x="750" y="218">Session 105</text><text x="750" y="240">INSERT Orders</text><text x="750" y="262">8,276 ms wait</text>
+<rect x="930" y="0" width="110" height="90" rx="6" fill="#0B6E6E"/>
+<text x="945" y="28">Session 106</text><text x="945" y="50">SELECT Customer</text><text x="945" y="72">8,275 ms wait</text>
+</g>
+</svg>
+<figcaption>Figure 1. Current blocking tree. Arrows indicate the blocker-to-waiter relationship reported in Active Blocking Chains; displayed wait durations are the snapshot values.</figcaption>
+</figure>
+
+<table>
+<tr><th>Session</th><th>Role</th><th>Wait or lock evidence</th><th>Most important SQL</th></tr>
+<tr><td>102</td><td>Top lead blocker</td><td>Transaction duration 13s; granted OBJECT X lock; status suspended on WAITFOR.</td><td><code>WAITFOR DELAY '00:15:00';</code> inside an open transaction after <code>EXEC dbo.usp_ApplyLateFees</code>.</td></tr>
+<tr><td>103</td><td>Downstream blocker and waiter</td><td>Waits on session 102; holds X on <code>Customers.PK_Customers</code>; blocks sessions 101, 104, and 105.</td><td><code>UPDATE dbo.Orders SET Status = 'Shipped' WHERE OrderId = @OrderId</code>.</td></tr>
+<tr><td>101</td><td>Waiter</td><td><code>LCK_M_S</code> on a Customers key for 8,275 ms; itself blocks session 106.</td><td><code>SELECT CustomerId, Name, Email, Region, LastOrderDate FROM dbo.Customers WHERE CustomerId = @CustomerId</code>.</td></tr>
+<tr><td>104</td><td>Waiter</td><td><code>LCK_M_IS</code> on an Orders OBJECT resource for 8,276 ms.</td><td>Customer balance aggregation over Orders.</td></tr>
+<tr><td>105</td><td>Waiter</td><td><code>LCK_M_IX</code> on an Orders OBJECT resource for 8,276 ms.</td><td>Single-row Orders INSERT.</td></tr>
+<tr><td>106</td><td>Waiter</td><td><code>LCK_M_S</code> on the same Customers key for 8,275 ms.</td><td>Same point lookup as session 101.</td></tr>
+</table>
+
+<div class="callout">
+  <strong>Important statement distinction:</strong> the compact statement for session 102 is the currently executing <code>WAITFOR</code>, but the batch context explains the cause: <code>BEGIN TRANSACTION; EXEC dbo.usp_ApplyLateFees; WAITFOR ...</code>. The compact statement for session 103 is the Orders update, while its batch context shows the transaction first updates Customers and commits only afterward.
+</div>
+</section>
+
+<section id="root-cause">
+<h2>Root-cause classification</h2>
+<table>
+<tr><th>Category</th><th>Assessment</th><th>Evidence and confidence</th></tr>
+<tr><td>Long-running transaction</td><td><strong>Confirmed; primary cause.</strong></td><td>Session 102 has a 13-second open transaction and deliberately waits for 15 minutes inside it. Lock Inventory shows a granted OBJECT X lock. High confidence.</td></tr>
+<tr><td>Open transaction with no activity</td><td><strong>Confirmed as transaction amplification.</strong></td><td>Session 102 is suspended on WAITFOR while its transaction remains open. It is not an idle session, but it is performing no useful database work during the delay. High confidence.</td></tr>
+<tr><td>Hotspot table or index</td><td><strong>Confirmed for Customers and Orders during this event.</strong></td><td>Session 103 holds X on Customers.PK_Customers; two customer point reads wait on the same key. Orders has OBJECT-level IX/IS waiters. High confidence.</td></tr>
+<tr><td>Lock escalation</td><td><strong>Possible, not proven.</strong></td><td>Lock Inventory reports a granted OBJECT X lock for session 102 and table escalation is TABLE for both Customers and Orders. The snapshot does not identify the locked object or provide an escalation event, so the OBJECT X lock may be directly acquired rather than escalated. Medium confidence.</td></tr>
+<tr><td>SERIALIZABLE or REPEATABLE READ misuse</td><td><strong>Not supported.</strong></td><td>All listed sessions use ReadCommitted. High confidence.</td></tr>
+<tr><td>Implicit transactions</td><td><strong>Not supported.</strong></td><td>The batches show explicit <code>BEGIN TRANSACTION</code> where applicable; no implicit-transaction setting is supplied. Medium confidence.</td></tr>
+<tr><td>Parameter sniffing causing large scans</td><td><strong>Not supported by the supplied plan.</strong></td><td>The point lookup estimates one row and uses a clustered seek. The Orders balance query scans, but no parameter-sensitive plan evidence is supplied. High confidence.</td></tr>
+<tr><td>Missing index causing lock amplification</td><td><strong>Likely secondary contributor for session 104.</strong></td><td>BlockerPlans shows a Clustered Index Scan on Orders reading 200,001 rows, 97% own statement cost, for predicates on CustomerId and Status. MissingIndexes reports no candidates, so confidence is medium rather than high.</td></tr>
+<tr><td>RBAR/cursor patterns</td><td><strong>Not supported.</strong></td><td>No cursor or row-by-row loop appears in the blocking statements. High confidence.</td></tr>
+<tr><td>TempDB contention masquerading as blocking</td><td><strong>Ruled out for this snapshot.</strong></td><td>Current waits are lock waits; version store is 0.0 MB, no spills are found, and PAGELATCH_EX totals only 235 ms with a 4 ms maximum. High confidence.</td></tr>
+</table>
+</section>
+
+<section id="impact">
+<h2>Impact metrics</h2>
+<table>
+<tr><th>Metric</th><th>Value</th><th>Basis</th></tr>
+<tr><td>Total sessions blocked</td><td>5 distinct sessions</td><td>Sessions 101, 103, 104, 105, and 106 appear as waiters. Session 103 appears as both waiter and blocker.</td></tr>
+<tr><td>Longest wait</td><td>10,296 ms</td><td>Session 103 waiting on session 102 with <code>LCK_M_IX</code>.</td></tr>
+<tr><td>Cumulative reported waiter duration</td><td>43,400 ms</td><td>8,275 + 10,296 + 8,277 + 8,276 + 8,276 ms across the five distinct waiter entries.</td></tr>
+<tr><td>Observed transaction durations</td><td>13s, 10s, and 8s</td><td>Sessions 102, 103, and 105 respectively in Long-Running Transactions.</td></tr>
+<tr><td>Business impact supported by input</td><td>Five sessions experienced lock waits, with the longest shown at 10.296 seconds.</td><td>The snapshot does not provide failed requests, throughput loss, user counts, or monetary impact.</td></tr>
+</table>
+</section>
+
+<section id="recommendations">
+<h2>Detailed prioritized recommendations</h2>
+<ol class="priority">
+<li>
+<h3>1. Remove the WAITFOR from the open transaction in session 102</h3>
+<p><strong>Fix:</strong> In the SQL Agent job step that executes <code>EXEC dbo.usp_ApplyLateFees</code>, commit or roll back immediately after the procedure completes. If a delay is required for orchestration, place it outside the transaction and outside the database session that owns the locks.</p>
+<p><strong>Rationale:</strong> Active Blocking Chains identifies session 102 as a lead blocker with <code>WAITFOR DELAY '00:15:00';</code>. ActiveTransactions reports a 13-second transaction. Lock Inventory reports a granted OBJECT X lock for session 102. The wait is therefore directly holding locks while no useful database operation is executing.</p>
+<p><strong>Risk:</strong> Medium. Moving the delay outside the transaction changes the period during which the procedure's changes are protected as one unit, so the job's business semantics must preserve the required commit boundary.</p>
+<p><strong>Rollback:</strong> Restore the prior job-step transaction placement if the application requires the original atomic scope; do not restore the deliberate delay inside the transaction as a permanent design.</p>
+<p><strong>Confidence:</strong> High.</p>
+<p><strong>Expected blocking effect:</strong> Removes the session 102-to-103 lock wait and releases the root lock earlier, allowing the downstream chain to drain. A percentage is not estimated because the snapshot does not show the transaction's normal work duration or execution frequency.</p>
+</li>
+
+<li>
+<h3>2. Shorten and standardize the transaction in dbo.usp_ShipOrder</h3>
+<p><strong>Fix:</strong> Keep the two required updates in one short transaction, but ensure there is no work or delay between the Customer update and the Orders update, and commit immediately after the Orders update. Acquire resources in a consistent order across related procedures. The supplied module context is truncated, so only the complete visible statement shape can be prescribed.</p>
+<p><strong>Rationale:</strong> Session 103 begins a transaction, updates Customers, then updates Orders. It holds an X key lock on <code>Customers.PK_Customers</code> while waiting on session 102 and blocks the customer reads of sessions 101 and 106, as well as the Orders requests of sessions 104 and 105.</p>
+<p><strong>Risk:</strong> Medium. Changing transaction scope or resource order can affect atomicity and concurrency behavior.</p>
+<p><strong>Rollback:</strong> Restore the original <code>dbo.usp_ShipOrder</code> definition if application tests identify an atomicity regression; retain immediate commit and remove any nonessential work from the transaction.</p>
+<p><strong>Confidence:</strong> High for reducing lock duration; medium for eliminating all downstream blocking because session 102 remains the root cause.</p>
+<p><strong>Expected blocking effect:</strong> Reduces the duration of the Customers key X lock and the dependent waits for sessions 101, 104, 105, and 106. No percentage estimate is given because normal execution duration is not supplied.</p>
+</li>
+
+<li>
+<h3>3. Enable RCSI after application compatibility testing</h3>
+<p><strong>Fix:</strong> Enable read-committed snapshot isolation for ShopDemo after testing code that depends on locking read-committed semantics. RCSI causes ordinary read-committed readers to use the last committed row version rather than waiting for compatible committed data.</p>
+<p><strong>Rationale:</strong> RCSI is OFF. Sessions 101 and 106 issue single-row Customer reads and wait with <code>LCK_M_S</code> on a Customers key held X by session 103. RCSI directly addresses this reader-writer conflict. Snapshot isolation itself is also OFF, and the version store is currently 0.0 MB.</p>
+<p><strong>Risk:</strong> Medium. RCSI changes read consistency from lock-based read committed to statement-level versioned read committed and introduces version-store maintenance.</p>
+<p><strong>Rollback:</strong> The setting can be returned to OFF after active transactions drain and after application testing confirms the change is safe. Monitor the database version store after enabling.</p>
+<p><strong>Confidence:</strong> High for the two Customer reader waits; medium for the Orders OBJECT IS wait because the writer-side transaction and object lock still need correction.</p>
+<p><strong>Expected blocking effect:</strong> Removes compatible reader waits such as sessions 101 and 106 waiting for session 103's Customer key X lock. It does not remove writer-writer conflicts, schema locks, or the root transaction's X lock.</p>
+</li>
+
+<li>
+<h3>4. Enable ADR and optimized locking in a maintenance window</h3>
+<p><strong>Fix:</strong> On this SQL Server 2025 Enterprise engine, enable ADR first and optimized locking second. Optimized locking holds a transaction ID lock to the end of the transaction and releases row and page X locks as rows are modified, making lock escalation less likely. Its lock-after-qualification behavior can avoid U-lock acquisition for qualifying DML when RCSI is ON.</p>
+<p><strong>Rationale:</strong> DatabaseSettings reports ADR OFF and optimized locking OFF. Lock Inventory reports a granted OBJECT X lock for session 102, and session 103 holds transaction-scoped DML locks. The database uses TABLE lock escalation. These are evidence-supported conditions where optimized locking can reduce row/page lock retention and escalation pressure, but it cannot repair a transaction that deliberately waits for 15 minutes.</p>
+<p><strong>Important limitation:</strong> ADR must be enabled before optimized locking. Each statement needs no other active connections to the database and may wait for connections to disconnect, so run it in a maintenance window. ADR stores row versions, including RCSI and snapshot versions, in the persistent version store inside the database rather than TempDB; monitor database storage after enabling. Optimized locking does not prevent deadlocks in general.</p>
+<p><strong>Risk:</strong> Medium to high. ADR changes recovery and version-store behavior; optimized locking changes lock acquisition and retention behavior.</p>
+<p><strong>Rollback:</strong> The documented order is optimized locking OFF first, followed by ADR OFF. Validate application behavior and database growth before considering rollback.</p>
+<p><strong>Confidence:</strong> Medium. The lock inventory supports applicability, but the snapshot does not prove that the session 102 OBJECT X lock resulted from escalation.</p>
+<p><strong>Expected blocking effect:</strong> May reduce OBJECT/page/row lock amplification and some DML-to-DML conflicts. It will not remove the root cause of an open transaction containing WAITFOR, and it does not generally prevent deadlocks.</p>
+</li>
+
+<li>
+<h3>5. Add a covering index candidate for dbo.Orders after Index Tuning confirmation</h3>
+<p><strong>Fix:</strong> Evaluate a nonclustered index on <code>dbo.Orders(CustomerId, Status)</code> including <code>Total, LateFee</code> for <code>dbo.usp_CustomerBalance</code>. Confirm this candidate by running the Index Tuning goal for the specific schema and table before deployment.</p>
+<p><strong>Rationale:</strong> BlockerPlans shows session 104 scanning the clustered Orders index, reading 200,001 rows, with 97% of statement cost in the scan, for predicates on CustomerId and Status. Query Store shows the same query with 9,111 ms total duration and 1,306 logical reads. MissingIndexes has no recommendation, so this is a manually inferred candidate and not a guaranteed optimizer recommendation.</p>
+<p><strong>Estimated size:</strong> The input reports Orders at approximately 200,001 rows and the clustered index at 10.2 MB. Column widths, nullability, existing clustering-key width, compression, and fill factor are not supplied. Estimated new-index size is approximately <strong>2–8 MB</strong>, based on 200,001 rows, a two-column key, two included columns, the clustering key, and normal row/page overhead. This is a range estimate, not a measured size.</p>
+<p><strong>Risk:</strong> Medium. The index adds write maintenance to INSERT and UPDATE operations, including the high-contention Orders paths.</p>
+<p><strong>Rollback:</strong> Drop only the newly created named index after confirming no other workload depends on it; the expected reclaimed storage is approximately 2–8 MB.</p>
+<p><strong>Confidence:</strong> Medium.</p>
+<p><strong>Expected blocking effect:</strong> Reduces the scan duration and logical work for session 104, which can shorten its participation in the Orders OBJECT wait. It does not remove session 102's X lock or session 103's Customer key X lock. No percentage estimate is provided because actual selectivity and execution frequency are not supplied.</p>
+<p><strong>Net storage change if implemented:</strong> Approximately +2–8 MB, using the estimate above; no existing index is dropped or modified.</p>
+</li>
+
+<li>
+<h3>6. Enable asynchronous statistics updates and low-priority waiting</h3>
+<p><strong>Fix:</strong> Because AutoUpdateStats is ON while AutoUpdateStatsAsync and ASYNC_STATS_UPDATE_WAIT_AT_LOW_PRIORITY are OFF, enable both settings. This is a secondary mitigation for synchronous statistics-refresh compilation waits, not the primary fix for the current lock chain.</p>
+<p><strong>Rationale:</strong> Query Store contains statistics-manipulation queries for Orders, including StatMan queries with 1,128 logical reads. The supplied active blockers are not compile-lock waits, but asynchronous statistics updates reduce the chance that a synchronous refresh prolongs compilation and causes other callers to queue.</p>
+<p><strong>Risk:</strong> Low to medium. Statistics may remain temporarily stale while asynchronous updates complete.</p>
+<p><strong>Rollback:</strong> Return the two settings to OFF if workload testing shows unacceptable plan-quality or statistics-freshness effects.</p>
+<p><strong>Confidence:</strong> Medium for future compile-wait reduction; low as a fix for the current blocking event.</p>
+<p><strong>Expected blocking effect:</strong> No direct removal of the current LCK_M_S, LCK_M_IX, or LCK_M_IS waits is claimed. The expected benefit is reduced duration of future synchronous statistics refresh and compile-related waits.</p>
+</li>
+
+<li>
+<h3>7. Correct the recurring SalesDemo deadlock resource order</h3>
+<p><strong>Fix:</strong> The deadlock history is for SalesDemo rather than ShopDemo, but it shows a recurring application pattern: <code>usp_PayOrder</code> and <code>usp_RefundOrder</code> acquire Accounts and Orders resources in opposite orders. Standardize both procedures on one resource acquisition order and keep the transaction short. Add retry handling for deadlock victims.</p>
+<p><strong>Rationale:</strong> DeadlockHistory reports ten captured deadlocks. Repeated graphs show session 83/70 holding X on Accounts while waiting for Orders, while session 84/77 holds X on Orders while waiting for Accounts. Other graphs show <code>usp_PayOrder</code> waiting for S on an Orders page while <code>usp_RefundOrder</code> waits for X on an Accounts key.</p>
+<p><strong>Risk:</strong> Medium. Procedure ordering changes can affect transaction behavior and application retry requirements.</p>
+<p><strong>Rollback:</strong> Restore the prior procedure implementations if functional tests fail, while retaining deadlock retry handling.</p>
+<p><strong>Confidence:</strong> High for the recurring cross-resource cycle in SalesDemo; this is not evidence of the current ShopDemo blocking chain.</p>
+<p><strong>Expected blocking effect:</strong> Reduces the documented Accounts-versus-Orders deadlock cycle in SalesDemo. It does not directly alter the ShopDemo session 102/103 chain.</p>
+</li>
+</ol>
+
+<div class="callout">
+  <strong>Deadlock capture status:</strong> CAPTURED. The system_health session is running, so no recommendation to enable or restart deadlock capture is made. The history is short rolling and shows recurring deadlocks over the supplied period; if this recurrence continues and older events are being lost, a dedicated Extended Events event-file session with longer retention is appropriate.
+</div>
+</section>
+
+<section id="deadlocks">
+<h2>Deadlock history and long-term mitigation</h2>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" role="img" aria-labelledby="deadlock-title deadlock-desc">
+<title id="deadlock-title">Recurring SalesDemo deadlock cycle</title>
+<desc id="deadlock-desc">PayOrder holds an Accounts key and waits for Orders. RefundOrder holds an Orders key or page and waits for Accounts. The cycle leads to a deadlock victim.</desc>
+<defs>
+<marker id="darrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#F28B82"/></marker>
+</defs>
+<rect x="60" y="90" width="240" height="100" rx="7" fill="#0B6E6E"/>
+<text x="85" y="125" fill="#F3F4F6" font-family="Arial" font-size="18">usp_PayOrder</text>
+<text x="85" y="153" fill="#F3F4F6" font-family="Arial" font-size="15">holds Accounts X</text>
+<text x="85" y="177" fill="#F3F4F6" font-family="Arial" font-size="15">wants Orders</text>
+<rect x="660" y="90" width="240" height="100" rx="7" fill="#0B6E6E"/>
+<text x="685" y="125" fill="#F3F4F6" font-family="Arial" font-size="18">usp_RefundOrder</text>
+<text x="685" y="153" fill="#F3F4F6" font-family="Arial" font-size="15">holds Orders X/IX</text>
+<text x="685" y="177" fill="#F3F4F6" font-family="Arial" font-size="15">wants Accounts</text>
+<path d="M300 115 C430 20 530 20 660 115" fill="none" stroke="#F28B82" stroke-width="4" marker-end="url(#darrow)"/>
+<path d="M660 165 C530 260 430 260 300 165" fill="none" stroke="#F28B82" stroke-width="4" marker-end="url(#darrow)"/>
+<text x="380" y="43" fill="#F28B82" font-family="Arial" font-size="16">waits for Orders</text>
+<text x="390" y="253" fill="#F28B82" font-family="Arial" font-size="16">waits for Accounts</text>
+<text x="365" y="145" fill="#F3F4F6" font-family="Arial" font-size="17">deadlock cycle</text>
+</svg>
+<figcaption>Figure 2. Repeated SalesDemo deadlock pattern from Extended Events. The diagram is separate from the current ShopDemo blocking tree.</figcaption>
+</figure>
+<p>The deadlock capture is working. The repeated timestamps and repeated procedure/resource pattern justify standardizing resource order and adding bounded retry handling in the application. Optimized locking should not be described as a general deadlock-prevention mechanism; it may avoid certain lock patterns, but the application-level ordering defect remains.</p>
+</section>
+
+<section id="scripts">
+<h2>Scripts</h2>
+
+<h3>1. Enable ADR and optimized locking for ShopDemo</h3>
+<pre><code>USE [ShopDemo];
+GO
+
+ALTER DATABASE [ShopDemo]
+SET ACCELERATED_DATABASE_RECOVERY = ON;
+GO
+
+ALTER DATABASE [ShopDemo]
+SET OPTIMIZED_LOCKING = ON;
+GO</code></pre>
+<p class="small">Run only in a maintenance window. ADR must be enabled before optimized locking. The database must have no other active connections for each statement; the statements may wait until those connections disconnect.</p>
+
+<h3>2. Enable read-committed snapshot isolation for ShopDemo</h3>
+<pre><code>USE [ShopDemo];
+GO
+
+ALTER DATABASE [ShopDemo]
+SET READ_COMMITTED_SNAPSHOT ON
+WITH ROLLBACK IMMEDIATE;
+GO</code></pre>
+<p class="small">Test application semantics before production use. The rollback-immediate option terminates active transactions while changing the database option and therefore requires an approved maintenance window.</p>
+
+<h3>3. Enable asynchronous statistics updates and low-priority asynchronous statistics waits</h3>
+<pre><code>USE [ShopDemo];
+GO
+
+ALTER DATABASE [ShopDemo]
+SET AUTO_UPDATE_STATISTICS_ASYNC ON;
+GO
+
+ALTER DATABASE SCOPED CONFIGURATION
+SET ASYNC_STATS_UPDATE_WAIT_AT_LOW_PRIORITY = ON;
+GO</code></pre>
+
+<h3>4. Create the candidate covering index for the CustomerBalance query</h3>
+<pre><code>USE [ShopDemo];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Orders')
+      AND name = N'IX_Orders_CustomerId_Status_CoveringBalance'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Orders_CustomerId_Status_CoveringBalance]
+    ON [dbo].[Orders] ([CustomerId], [Status])
+    INCLUDE ([Total], [LateFee])
+    WITH (ONLINE = ON);
+END;
+GO</code></pre>
+<p class="small">Deploy only after confirming the candidate with the Index Tuning goal for dbo.Orders. Estimated size is approximately 2–8 MB for approximately 200,001 rows because exact column widths and compression details are not supplied.</p>
+</section>
+
+<section id="limitations">
+<h2>Evidence limitations</h2>
+<ul>
+  <li>The blocking snapshot is a point-in-time observation. It proves the reported waits existed at capture time but does not establish daily frequency.</li>
+  <li>The batch context for <code>dbo.usp_ShipOrder</code> and other modules is truncated. No unobserved procedure code or business rule has been invented.</li>
+  <li>MissingIndexes reports no candidates. The Orders covering index is therefore a reasoned candidate based on the supplied plan and should be validated before deployment.</li>
+  <li>The OBJECT resource for several waits has no object name in Lock Inventory. The report does not assert that every OBJECT-level wait is a confirmed lock escalation.</li>
+  <li>Deadlock history concerns SalesDemo, while the active blocking chain concerns ShopDemo. The historical deadlock recommendations are explicitly scoped to SalesDemo and are not presented as the cause of the ShopDemo event.</li>
+  <li>Query Store is available because Query Store queries and statistics appear in the input. No recommendation to enable Query Store is required for this report.</li>
+</ul>
+</section>
+
+<footer>
+  <p>Generated by AI SQL Tuner Studio v3.5.2.0 using model gpt-5.6-luna with reasoning effort medium.</p>
+  <p>Based on analysis as of 2026-11-13 13:59:59 UTC</p>
+  <p><a href="https://aisqltuner.com">aisqltuner.com</a></p>
+</footer>
+</main>
+</div>
+</body>
+</html>

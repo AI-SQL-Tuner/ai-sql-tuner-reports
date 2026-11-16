@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL Server Code Review – VMEnt\SQL25 / RetailOps – 2026-11-13</title>
+<meta name="description" content="Prioritized T-SQL code review for RetailOps on VMEnt\SQL25.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "SQL Server Code Review – VMEnt\\SQL25 / RetailOps – 2026-11-13",
+  "about": "T-SQL performance, locking, and code review",
+  "datePublished": "2026-11-13",
+  "author": {
+    "@type": "Organization",
+    "name": "AI SQL Tuner Studio"
+  }
+}
+</script>
+<style>
+:root {
+  --paper: #FFFFFF;
+  --sidebar: #F6F8F9;
+  --text: #111827;
+  --muted: #6B7280;
+  --teal: #0B6E6E;
+  --teal-soft: #EFF7F7;
+  --border: #D9E2E7;
+  --warning: #9A6700;
+  --critical: #A33A3A;
+  --success: #16704A;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.6;
+}
+a { color: var(--teal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 280px;
+  flex: 0 0 280px;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  padding: 28px 22px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.sidebar h2 { font-size: 1rem; margin-top: 0; color: var(--teal); }
+.sidebar ul { list-style: none; padding: 0; margin: 0; }
+.sidebar li { margin: 8px 0; }
+.sidebar a { font-size: .92rem; }
+.content { max-width: 1180px; width: 100%; padding: 44px 6vw 32px; }
+h1, h2, h3 { color: var(--teal); line-height: 1.25; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); margin: 0 0 10px; }
+h2 { font-size: 1.65rem; margin-top: 2.5rem; border-bottom: 2px solid var(--teal); padding-bottom: 6px; }
+h3 { font-size: 1.15rem; margin-top: 1.6rem; }
+.subtitle { color: var(--muted); font-size: 1.08rem; margin-top: 0; }
+.card {
+  border: 1px solid var(--border);
+  border-left: 5px solid var(--teal);
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin: 16px 0;
+  background: var(--paper);
+}
+.priority {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--teal);
+  background: var(--teal-soft);
+  border: 1px solid #B8DCDC;
+}
+table { width: 100%; border-collapse: collapse; margin: 16px 0 22px; font-size: .94rem; }
+th, td { text-align: left; vertical-align: top; border: 1px solid var(--border); padding: 10px 12px; }
+th { background: var(--sidebar); color: var(--teal); }
+code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: .9em;
+  background: var(--teal-soft);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+pre {
+  background: var(--teal-soft);
+  border: 1px solid #C7E2E2;
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  white-space: pre;
+  color: var(--text);
+}
+pre code { background: transparent; padding: 0; }
+.note { color: var(--muted); font-size: .94rem; }
+.risk-high { color: var(--critical); font-weight: 700; }
+.risk-medium { color: var(--warning); font-weight: 700; }
+.good { color: var(--success); font-weight: 700; }
+footer {
+  margin-top: 48px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: .9rem;
+}
+@media (max-width: 850px) {
+  .layout { display: block; }
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .content { padding: 28px 20px; }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #0B1220;
+    --sidebar: #162032;
+    --text: #F3F4F6;
+    --muted: #9CA3AF;
+    --teal: #2DD4BF;
+    --teal-soft: #0F172A;
+    --border: #26364D;
+    --warning: #FBBF24;
+    --critical: #F87171;
+    --success: #34D399;
+  }
+  body { background: #0B1220; color: #F3F4F6; }
+  .sidebar { background: #162032; }
+  th { background: #162032; }
+  pre, code { background: #0F172A; color: #F3F4F6; }
+  pre { border-color: #26364D; }
+  .card { background: #0B1220; }
+}
+</style>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+/* Priority pills are inline badges only (<span class="priority p1">P1</span>). Models also use
+   "priority" as a block modifier (<div class="card priority">); scoping to span keeps those in the body font. */
+span.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+span.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+span.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+span.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<aside class="sidebar" aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ul>
+    <li><a href="#executive-summary">Executive summary</a></li>
+    <li><a href="#scope">Scope and environment</a></li>
+    <li><a href="#recommendations">Detailed recommendations</a></li>
+    <li><a href="#object-findings">Object findings</a></li>
+    <li><a href="#index-review">Index and storage review</a></li>
+    <li><a href="#feature-review">SQL Server 2025 feature review</a></li>
+    <li><a href="#scripts">Scripts</a></li>
+    <li><a href="#confidence">Confidence and limitations</a></li>
+  </ul>
+</aside>
+
+<main class="content">
+<header>
+  <h1>SQL Server Code Review – VMEnt\SQL25 / RetailOps – 2026-11-13</h1>
+  <p class="subtitle">Tuning goal: Code Review</p>
+  <p><strong>Server:</strong> VMEnt\SQL25 &nbsp;|&nbsp; <strong>Database:</strong> RetailOps &nbsp;|&nbsp; <strong>Version:</strong> SQL Server 2025 RTM, 17.0.1000.7 &nbsp;|&nbsp; <strong>Edition:</strong> Enterprise Developer / Engine Edition Enterprise</p>
+</header>
+
+<section id="executive-summary">
+<h2>Executive summary</h2>
+<p>This review covers the 20 supplied, complete definitions: 19 stored procedures and one scalar-valued function. The objects were selected from 35 eligible objects ranked by Query Store total CPU over the last 30 days; the supplied objects are the highest-ranked portion of that list. No object was marked NOT INCLUDED or NOT AVAILABLE. Query Store is READ_WRITE and its workload figures cover the last 30 days, while index and plan statistics cover only the 2.4 days since the latest startup.</p>
+
+<ol>
+  <li>
+    <strong>Fix the two highest-impact non-sargable or conversion-sensitive lookups.</strong>
+    <span class="priority">P1</span>
+    <p><code>dbo.usp_FindCustomerByPhone</code> ranked first with 40.4 seconds CPU, 1,424,000 logical reads and approximately 4,000 calls. Its <code>nvarchar(20)</code> parameter is compared with the declared <code>varchar(20)</code> indexed column under the SQL collation <code>SQL_Latin1_General_CP1_CI_AS</code>; the column can be implicitly converted, preventing an efficient seek. <code>dbo.usp_GetCustomerOrderHistory</code> ranked second with 23.8 seconds CPU and 1,622,092 logical reads; <code>UPPER(c.Email)</code> is redundant under the database's case-insensitive collation and blocks a direct seek on <code>UX_Customers_Email</code>.</p>
+  </li>
+  <li>
+    <strong>Make the daily-sales date predicate seekable.</strong>
+    <span class="priority">P1</span>
+    <p><code>dbo.usp_GetDailySales</code> ranked third with 8.5 seconds CPU and 364,205 logical reads. Line 13 applies <code>DATEDIFF</code> to the indexed <code>Orders.OrderDate</code> column, making the predicate non-sargable. Rewriting it as a half-open range preserves the same date semantics and allows the existing date index to be considered.</p>
+  </li>
+  <li>
+    <strong>Replace the cursor and repeated scalar-function calls in loyalty recalculation.</strong>
+    <span class="priority">P1</span>
+    <p><code>dbo.usp_RecalcLoyaltyTiers</code> is ranked fifth and its most-executed cursor statement ran 100,004 times. Lines 9–24 process customers one at a time, and line 15 invokes <code>dbo.fn_CustomerSpend</code> per customer. A set-based aggregate and one update remove the row-by-row execution pattern, reduce repeated locking activity, and preserve the Bronze/Silver/Gold outcome.</p>
+  </li>
+  <li>
+    <strong>Close the concurrent update/insert race in cart-item creation.</strong>
+    <span class="priority">P2</span>
+    <p><code>dbo.usp_AddCartItem</code> performs an update followed by an insert without an explicit transaction or serialization protection. Concurrent calls for the same <code>(CartId, ProductId)</code> can both observe no updated row and race to insert. A short transaction using the existing clustered key and update/range locks makes the operation deterministic.</p>
+  </li>
+  <li>
+    <strong>Do not drop indexes solely from this short observation window.</strong>
+    <span class="priority">P2</span>
+    <p><code>IX_Orders_OrderDate</code> reports zero seeks, scans and lookups, but the usage window is only 2.4 days after restart/database startup. First apply the date-predicate correction and reassess over a representative workload. No index drop is included in the Scripts section.</p>
+  </li>
+</ol>
+
+<div class="card">
+<strong>Expected priority impact:</strong> The first five ranked objects account for 80.3% of the recorded CPU of the ranked objects, based on the supplied percentages: 46.7% + 27.4% + 9.8% + 5.4% + 4.0%. The estimate is workload attribution from Query Store and does not include dynamic SQL or called procedures outside the statement's containing module.
+</div>
+</section>
+
+<section id="scope">
+<h2>Scope and environment</h2>
+<table>
+<thead><tr><th>Area</th><th>Finding</th></tr></thead>
+<tbody>
+<tr><td>Objects reviewed</td><td>20 complete objects: 19 stored procedures and 1 scalar function.</td></tr>
+<tr><td>Objects not reviewed</td><td>None marked NOT INCLUDED or NOT AVAILABLE in the supplied input. The input states that only the highest-ranked objects were provided; 15 of the 35 eligible objects were not supplied for code review.</td></tr>
+<tr><td>Workload ranking</td><td>Query Store total CPU over the last 30 days, state READ_WRITE, capture mode AUTO.</td></tr>
+<tr><td>Server capabilities</td><td>SQL Server 2025, Enterprise engine capabilities, online index operations, compression, columnstore, CE feedback, DOP feedback and OPPO platform support.</td></tr>
+<tr><td>Statistics age</td><td>Index usage, operational statistics, missing-index statistics and plan cache cover only 2.4 days since restart/database startup.</td></tr>
+<tr><td>Collation</td><td>Database default is <code>SQL_Latin1_General_CP1_CI_AS</code>: case-insensitive, accent-sensitive SQL collation.</td></tr>
+</tbody>
+</table>
+<p>No deadlock graphs or blocking-chain data were supplied. Therefore, this review identifies locking risks visible in the code but does not claim that a deadlock or blocking incident occurred.</p>
+</section>
+
+<section id="recommendations">
+<h2>Detailed prioritized recommendations</h2>
+
+<article class="card">
+<h3>1. Correct the phone lookup parameter type</h3>
+<p><strong>Object:</strong> <code>dbo.usp_FindCustomerByPhone</code>, rank 1.</p>
+<p>Line 3 declares <code>@Phone nvarchar(20)</code>, while metadata declares <code>Customers.Phone varchar(20) NOT NULL</code> with index key <code>IX_Customers_Phone</code>. Under the SQL collation reported in the input, comparing the varchar column with an nvarchar parameter can apply <code>CONVERT_IMPLICIT</code> to the column and prevent a normal index seek. The index reports zero seeks and 2,000 scans during the 2.4-day usage window, which is consistent with this concern, although the counters alone do not prove every scan came from this procedure.</p>
+<p>Declare the parameter as <code>varchar(20)</code>. This returns the same rows for values representable in the column's varchar code page. If callers currently send characters that cannot be represented in that code page, conversion changes the lookup value and those characters cannot be preserved; that is a required behavioral consideration before deployment.</p>
+<p><strong>Confidence:</strong> High, 95%, because both declared types, the SQL collation and the index are supplied.</p>
+</article>
+
+<article class="card">
+<h3>2. Remove redundant UPPER calls from the customer email lookup</h3>
+<p><strong>Object:</strong> <code>dbo.usp_GetCustomerOrderHistory</code>, rank 2.</p>
+<p>Line 10 applies <code>UPPER</code> to both <code>c.Email</code> and <code>@Email</code>. <code>Customers.Email</code> is <code>nvarchar(200) NOT NULL</code>, the parameter is the matching <code>nvarchar(200)</code>, and the database collation is case-insensitive. Therefore, removing <code>UPPER</code> from both sides returns the same rows while allowing the optimizer to use the existing unique index <code>UX_Customers_Email</code> directly.</p>
+<p>The query uses <code>SELECT TOP (20) *</code> at line 7. The output shape is therefore dependent on the table definition and may require lookups after finding the customer. No covering index is recommended because the supplied column metadata does not enumerate every column returned by <code>*</code>.</p>
+<p><strong>Confidence:</strong> High, 98%, based on the explicitly reported CI collation, matching parameter/column types and existing email index.</p>
+</article>
+
+<article class="card">
+<h3>3. Replace DATEDIFF on OrderDate with a half-open date range</h3>
+<p><strong>Object:</strong> <code>dbo.usp_GetDailySales</code>, rank 3.</p>
+<p>Line 13 uses <code>DATEDIFF(day, o.OrderDate, @ReportDate) = 0</code>. Applying the function to the <code>datetime2(0)</code> indexed column prevents a normal seek on <code>IX_Orders_OrderDate</code>. Use <code>o.OrderDate &gt;= @ReportDate AND o.OrderDate &lt; DATEADD(day, 1, @ReportDate)</code>. The date parameter is converted to the column's datetime2 type as a value, not by applying a conversion to the column, and the half-open range includes exactly the same calendar date.</p>
+<p>The procedure currently reports 8.5 seconds CPU, 3.8 seconds duration and 364,205 logical reads over approximately 40 calls. The supplied index reports zero seeks and zero scans during the 2.4-day usage window; after this rewrite, reassess whether it is used before considering any index change.</p>
+<p><strong>Confidence:</strong> High, 95%, for the sargability defect; exact runtime improvement is not estimated because execution plans and selectivity were not supplied.</p>
+</article>
+
+<article class="card">
+<h3>4. Replace cursor-based loyalty recalculation with a set-based update</h3>
+<p><strong>Object:</strong> <code>dbo.usp_RecalcLoyaltyTiers</code>, rank 5.</p>
+<p>Lines 9–24 declare, open, fetch and close a cursor. Line 15 calls the scalar function for every customer, and the supplied workload says the most-executed cursor statement ran 100,004 times. This creates repeated function execution, repeated order/order-line access and repeated customer updates. The replacement aggregates eligible customer spend once and updates all customers in the region in one statement.</p>
+<p>The new statement retains the function's date boundaries from lines 11–12, excludes Cancelled orders as in line 13, assigns zero spend to customers without qualifying orders, and preserves the existing tier thresholds from lines 17–19. The one-statement update is atomic, but it can hold update locks for the duration of the set operation; this is generally preferable to 100,000 repeated operations, but execution should be scheduled with the normal workload in mind.</p>
+<p><strong>Confidence:</strong> High, 93%, for eliminating the row-by-row pattern and preserving the shown logic. Exact duration reduction is unknown because plans, customer distribution and order selectivity were not supplied.</p>
+</article>
+
+<article class="card">
+<h3>5. Serialize the cart update/insert operation</h3>
+<p><strong>Object:</strong> <code>dbo.usp_AddCartItem</code>, rank 10.</p>
+<p>Lines 6–7 update an existing row and insert if <code>@@ROWCOUNT = 0</code>. Without a transaction and serialization, two concurrent executions for the same cart/product can both reach the insert path. The existing clustered primary key on <code>CartItems(CartId, ProductId)</code> prevents duplicate committed keys but can still produce a duplicate-key error under the race.</p>
+<p>A short <code>TRY/CATCH</code> transaction with <code>UPDLOCK, HOLDLOCK</code> protects the key/range while the update and possible insert complete. This increases lock duration only for this short operation and removes the race visible in the code. The supplied workload is approximately 8,000 calls and 24,015 logical reads, so the issue is operationally relevant even though its recorded CPU is low.</p>
+<p><strong>Confidence:</strong> High, 90%, for the race condition. The exact blocking impact is unknown because no blocking-chain data was supplied.</p>
+</article>
+
+<article class="card">
+<h3>6. Preserve the existing useful access paths</h3>
+<p><code>dbo.usp_GetLatestOrder</code> uses <code>Orders.CustomerId</code> and orders by <code>OrderDate DESC</code>; the existing <code>IX_Orders_CustomerId</code> has <code>OrderDate, Status</code> included and reports 55,000 seeks with no lookups. <code>dbo.usp_ListRecentReviews</code> is covered by <code>IX_ProductReviews_ProductId</code>, which includes <code>Rating, CreatedAt</code> and reports 4,000 seeks. Shipment lookup procedures also have matching indexes. These are positive findings; no redundant replacement indexes are recommended.</p>
+</article>
+</section>
+
+<section id="object-findings">
+<h2>Object findings</h2>
+<table>
+<thead><tr><th>Rank</th><th>Object</th><th>Workload</th><th>Finding</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code>dbo.usp_FindCustomerByPhone</code></td><td>40.4 s CPU; 1,424,000 reads; ~4,000 calls</td><td class="risk-high">nvarchar-to-varchar comparison can convert the indexed column.</td></tr>
+<tr><td>2</td><td><code>dbo.usp_GetCustomerOrderHistory</code></td><td>23.8 s CPU; 1,622,092 reads; ~2,000 calls</td><td class="risk-high">UPPER on CI email column prevents a direct seek.</td></tr>
+<tr><td>3</td><td><code>dbo.usp_GetDailySales</code></td><td>8.5 s CPU; 364,205 reads; ~40 calls</td><td class="risk-high">DATEDIFF on indexed OrderDate is non-sargable.</td></tr>
+<tr><td>4</td><td><code>dbo.fn_CustomerSpend</code></td><td>4.7 s CPU; 1,861,714 reads; ~100,000 calls</td><td class="risk-medium">Scalar function is heavily called, primarily through loyalty recalculation.</td></tr>
+<tr><td>5</td><td><code>dbo.usp_RecalcLoyaltyTiers</code></td><td>3.4 s CPU; 780,314 reads; cursor statement 100,004 executions</td><td class="risk-high">Row-by-row cursor and scalar-function invocation.</td></tr>
+<tr><td>6–20</td><td>Remaining supplied procedures</td><td>0.1–2.5 s CPU each, as reported</td><td>No higher-confidence code defect requiring a replacement definition was identified from the supplied metadata.</td></tr>
+</tbody>
+</table>
+<p>The remaining reviewed procedures include category and region aggregation, latest-order retrieval, product/category retrieval, review retrieval, login and page-view writes, cart creation/retrieval, order and order-line retrieval, shipment retrieval/tracking and customer email retrieval. Their parameters match the named column types where metadata is available, and no dynamic SQL, catch-all predicates, query hints or explicit transactions were present in their signals.</p>
+</section>
+
+<section id="index-review">
+<h2>Index and storage review</h2>
+<table>
+<thead><tr><th>Index</th><th>Reported usage and size</th><th>Recommendation</th></tr></thead>
+<tbody>
+<tr><td><code>IX_Orders_OrderDate</code></td><td>1,000,000-row table; 0 seeks, 0 scans, 0 lookups; 15.5 MB</td><td>Do not drop yet. The current DATEDIFF predicate explains why it may not be chosen. Reassess after recommendation 3 over a representative workload.</td></tr>
+<tr><td><code>IX_Customers_Phone</code></td><td>100,000-row table; 0 seeks, 2,000 scans; 2.7 MB</td><td>Retain. Correct the parameter type first so this existing index can be used.</td></tr>
+<tr><td><code>IX_Customers_Email</code> / <code>UX_Customers_Email</code></td><td>100,000-row table; 2,000 seeks, 1,000 scans; 6.2 MB</td><td>Retain. Removing UPPER should improve its eligibility for direct seeks.</td></tr>
+<tr><td><code>IX_Orders_CustomerId</code></td><td>1,000,000-row table; 55,000 seeks, 20 scans, no lookups; 31.6 MB</td><td>Retain. It supports customer order access and includes OrderDate and Status.</td></tr>
+<tr><td><code>IX_ProductReviews_ProductId</code></td><td>40,570-row table; 4,000 seeks; 1.6 MB</td><td>Retain. It covers the recent-review procedure's named output columns.</td></tr>
+</tbody>
+</table>
+<p><strong>Storage impact of this review's index recommendations:</strong> none. No index is added, modified or dropped in the recommended scripts. Therefore estimated new storage is 0 MB, reclaimed storage is 0 MB, and net storage change is 0 MB. This is deliberate because the input does not provide execution plans, missing-index candidates, column distribution, or a workload window long enough to justify a physical-design change.</p>
+</section>
+
+<section id="feature-review">
+<h2>SQL Server 2025 feature review</h2>
+<ul>
+<li><strong>Dynamic SQL and optimized sp_executesql:</strong> None of the reviewed objects calls dynamic SQL. The input does not provide the sp_executesql compilation-settings section, so no compilation-storm conclusion is made and no configuration change is recommended.</li>
+<li><strong>Cardinality estimation feedback:</strong> The input does not provide CE_FEEDBACK state, compatibility level or Query Store settings for this database. The reviewed modules have no query hints according to their Signals lines, so there is no hard-coded CE-model hint to assess. CE feedback is not presented as active or available for this database based on the supplied evidence.</li>
+<li><strong>Degree of parallelism feedback:</strong> The input states that SQL Server 2025 supports DOP feedback, but it does not provide the database's DOP_FEEDBACK state, compatibility level or Query Store readiness. No reviewed module has an OPTION clause or MAXDOP hint. DOP feedback is therefore not claimed to be active.</li>
+<li><strong>Optional parameter plan optimization:</strong> No reviewed object has a confirmed catch-all predicate. The Signals lines report <code>CatchAllPredicates=No</code> for every supplied object. OPPO is not relevant to the shown code, and no compatibility-level or database-scoped configuration change is recommended.</li>
+</ul>
+</section>
+
+<section id="scripts">
+<h2>Scripts</h2>
+
+<h3>1. Make the phone lookup use the varchar phone index</h3>
+<pre><code>USE [RetailOps];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_FindCustomerByPhone
+    @Phone varchar(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT CustomerId,
+           FirstName,
+           LastName,
+           Email,
+           Phone,
+           Region,
+           LoyaltyTier
+    FROM dbo.Customers
+    WHERE Phone = @Phone;
+END;
+GO</code></pre>
+
+<h3>2. Remove redundant case normalization from customer order history</h3>
+<pre><code>USE [RetailOps];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_GetCustomerOrderHistory
+    @Email nvarchar(200)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT TOP (20) *
+    FROM dbo.Customers AS c
+    JOIN dbo.Orders AS o
+        ON o.CustomerId = c.CustomerId
+    WHERE c.Email = @Email
+    ORDER BY o.OrderDate DESC;
+END;
+GO</code></pre>
+
+<h3>3. Make the daily sales date filter sargable</h3>
+<pre><code>USE [RetailOps];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_GetDailySales
+    @ReportDate date
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT p.Category,
+           COUNT(DISTINCT o.OrderId) AS Orders,
+           SUM(ol.Quantity * ol.UnitPrice) AS Revenue
+    FROM dbo.Orders AS o
+    JOIN dbo.OrderLines AS ol
+        ON ol.OrderId = o.OrderId
+    JOIN dbo.Products AS p
+        ON p.ProductId = ol.ProductId
+    WHERE o.OrderDate &gt;= @ReportDate
+      AND o.OrderDate &lt; DATEADD(day, 1, @ReportDate)
+      AND o.Status &lt;&gt; 'Cancelled'
+    GROUP BY p.Category
+    ORDER BY Revenue DESC;
+END;
+GO</code></pre>
+
+<h3>4. Replace cursor-based loyalty recalculation with one set-based update</h3>
+<pre><code>USE [RetailOps];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_RecalcLoyaltyTiers
+    @Region varchar(20),
+    @AsOf date
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH Spend AS
+    (
+        SELECT o.CustomerId,
+               SUM(ol.Quantity * ol.UnitPrice) AS Spend
+        FROM dbo.Customers AS rc
+        JOIN dbo.Orders AS o
+            ON o.CustomerId = rc.CustomerId
+        JOIN dbo.OrderLines AS ol
+            ON ol.OrderId = o.OrderId
+        WHERE rc.Region = @Region
+          AND o.OrderDate &gt;= DATEADD(year, -1, @AsOf)
+          AND o.OrderDate &lt; @AsOf
+          AND o.Status &lt;&gt; 'Cancelled'
+        GROUP BY o.CustomerId
+    )
+    UPDATE c
+       SET LoyaltyTier =
+           CASE
+               WHEN ISNULL(s.Spend, 0) &gt;= 12500 THEN 'Gold'
+               WHEN ISNULL(s.Spend, 0) &gt;= 9500 THEN 'Silver'
+               ELSE 'Bronze'
+           END
+    FROM dbo.Customers AS c
+    LEFT JOIN Spend AS s
+        ON s.CustomerId = c.CustomerId
+    WHERE c.Region = @Region;
+END;
+GO</code></pre>
+
+<h3>5. Serialize concurrent cart-item update/insert operations</h3>
+<pre><code>USE [RetailOps];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_AddCartItem
+    @CartId int,
+    @ProductId int,
+    @Quantity int
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        UPDATE ci WITH (UPDLOCK, HOLDLOCK)
+           SET Quantity = Quantity + @Quantity
+        FROM dbo.CartItems AS ci
+        WHERE ci.CartId = @CartId
+          AND ci.ProductId = @ProductId;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            INSERT dbo.CartItems
+                (CartId, ProductId, Quantity)
+            VALUES
+                (@CartId, @ProductId, @Quantity);
+        END;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() &lt;&gt; 0
+            ROLLBACK TRANSACTION;
+
+        THROW;
+    END CATCH;
+END;
+GO</code></pre>
+</section>
+
+<section id="confidence">
+<h2>Confidence and limitations</h2>
+<ul>
+<li><strong>Overall code-review confidence:</strong> High, approximately 92%, for the identified type-conversion, CI-collation, non-sargable predicate, cursor and concurrency patterns because the complete definitions and relevant column metadata were supplied.</li>
+<li><strong>Performance-improvement confidence:</strong> Moderate, approximately 80%, because the workload ranking and logical reads are supplied but estimated and actual execution plans, row counts by predicate, wait statistics and runtime parameter distributions are not.</li>
+<li><strong>Locking/deadlock confidence:</strong> Moderate for the cart race, approximately 90% for the code-level race, but low for any claim about observed blocking or deadlocks because no blocking chains or deadlock graphs were supplied.</li>
+<li><strong>Index recommendation confidence:</strong> Conservative. No new index is prescribed because the short 2.4-day usage window and lack of plans/selectivity data do not support a reliable size or benefit estimate. Existing index sizes and row counts are reported above only for the supplied structures.</li>
+<li><strong>Scope limitation:</strong> The input states that 35 objects were eligible, but only the highest-ranked 20 were provided for code review. The 15 not supplied are not reviewed and no code changes are recommended for them.</li>
+</ul>
+</section>
+
+<footer>
+<p>Generated by AI SQL Tuner Studio v3.5.2.0 using model gpt-5.6-luna with reasoning effort medium.</p>
+<p><a href="https://aisqltuner.com">aisqltuner.com</a></p>
+<p>Based on analysis as of 2026-11-13 14:03:13 UTC</p>
+</footer>
+</main>
+</div>
+</body>
+</html>

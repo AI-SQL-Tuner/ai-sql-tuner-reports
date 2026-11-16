@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code Review – RockyPC / SQLStorm – 2026-10-13 21:14:47 UTC</title>
+<meta name="description" content="SQL Server code review for the highest-ranked stored procedures in SQLStorm on RockyPC.">
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"TechArticle",
+  "headline":"Code Review – RockyPC / SQLStorm – 2026-10-13 21:14:47 UTC",
+  "about":"SQL Server T-SQL performance and code review",
+  "dateModified":"2026-10-13T21:14:47Z",
+  "author":{"@type":"Organization","name":"AI SQL Tuner Studio"}
+}
+</script>
+<style>
+:root{
+  --bg:#FFFFFF;
+  --sidebar:#F6F8F9;
+  --text:#111827;
+  --muted:#6B7280;
+  --teal:#0B6E6E;
+  --border:#DDE5E7;
+  --code:#EFF7F7;
+  --warning:#FFF7ED;
+  --warning-border:#F59E0B;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  line-height:1.6;
+}
+a{color:var(--teal);text-decoration:none}
+a:hover{text-decoration:underline}
+.layout{display:flex;min-height:100vh}
+nav{
+  position:sticky;
+  top:0;
+  width:280px;
+  height:100vh;
+  overflow-y:auto;
+  padding:28px 22px;
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+}
+nav h2{font-size:1rem;margin:0 0 16px;color:var(--teal)}
+nav ol{margin:0;padding-left:20px}
+nav li{margin:8px 0;font-size:.92rem}
+main{max-width:1180px;width:100%;padding:42px 54px 24px}
+h1,h2,h3{color:var(--teal);line-height:1.25}
+h1{font-size:2.2rem;margin:0 0 8px}
+h2{font-size:1.55rem;margin-top:42px;border-bottom:2px solid var(--teal);padding-bottom:8px}
+h3{font-size:1.1rem;margin-top:26px}
+.subtitle{color:var(--muted);font-size:1.05rem;margin:0 0 24px}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:24px 0}
+.meta div,.card{
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px 16px;
+  background:var(--bg);
+}
+.meta strong{display:block;color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
+.meta span{display:block;margin-top:4px}
+.callout{
+  border-left:4px solid var(--teal);
+  background:var(--code);
+  padding:16px 18px;
+  margin:20px 0;
+  border-radius:4px;
+}
+.warning{border-left-color:var(--warning-border);background:var(--warning)}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:.93rem}
+th,td{border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top}
+th{background:var(--sidebar);color:var(--teal)}
+code{
+  background:var(--code);
+  color:var(--text);
+  padding:2px 5px;
+  border-radius:4px;
+  font-family:"Cascadia Code","SFMono-Regular",Consolas,monospace;
+  font-size:.9em;
+}
+pre{
+  background:var(--code);
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:16px;
+  overflow-x:auto;
+  white-space:pre;
+  font-size:.86rem;
+  line-height:1.5;
+}
+pre code{background:transparent;padding:0}
+ol.priority{padding-left:26px}
+ol.priority>li{padding:8px 0 12px}
+ul{padding-left:24px}
+.badge{
+  display:inline-block;
+  color:var(--teal);
+  border:1px solid var(--teal);
+  border-radius:999px;
+  padding:2px 9px;
+  font-size:.78rem;
+  font-weight:600;
+}
+.small{color:var(--muted);font-size:.9rem}
+footer{
+  margin-top:52px;
+  padding:24px 0 8px;
+  border-top:1px solid var(--border);
+  color:var(--muted);
+  font-size:.9rem;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0B1220;
+    --sidebar:#162032;
+    --text:#F3F4F6;
+    --muted:#9CA3AF;
+    --teal:#2DD4BF;
+    --border:#334155;
+    --code:#0F172A;
+    --warning:#211A0F;
+    --warning-border:#F59E0B;
+  }
+  th{background:#162032}
+  code,pre{color:#F3F4F6}
+}
+@media(max-width:850px){
+  .layout{display:block}
+  nav{position:relative;width:100%;height:auto;border-right:0;border-bottom:1px solid var(--border)}
+  main{padding:28px 20px}
+  h1{font-size:1.75rem}
+}
+</style>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<nav aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#summary">Executive summary</a></li>
+    <li><a href="#scope">Scope and confidence</a></li>
+    <li><a href="#recommendations">Detailed prioritized recommendations</a></li>
+    <li><a href="#workload">Workload findings</a></li>
+    <li><a href="#locking">Locking and blocking</a></li>
+    <li><a href="#indexes">Index and storage analysis</a></li>
+    <li><a href="#scripts">Scripts</a></li>
+    <li><a href="#supporting-scripts">Supporting scripts (not part of the change)</a></li>
+  </ol>
+</nav>
+
+<main>
+<header>
+  <h1>Code Review – RockyPC / SQLStorm – 2026-10-13 21:14:47 UTC</h1>
+  <p class="subtitle">Tuning goal: Code Review</p>
+  <div class="meta">
+    <div><strong>Server</strong><span>RockyPC</span></div>
+    <div><strong>Database</strong><span>SQLStorm</span></div>
+    <div><strong>Engine</strong><span>SQL Server 2022, version 16.0.1200.5, RTM-GDR</span></div>
+    <div><strong>Edition</strong><span>Developer Edition; Enterprise engine capabilities reported</span></div>
+    <div><strong>Observed period</strong><span>Query Store: last 30 days; runtime usage statistics: 14.3 days since restart</span></div>
+  </div>
+</header>
+
+<section id="summary">
+<h2>Executive summary</h2>
+<p>The review covers <strong>100 complete stored procedures</strong>, ranked by total CPU in Query Store. No functions, triggers, or views were provided. The input states that only the highest-ranked objects were supplied; therefore this is not a review of all 14,203 eligible objects or all 1,000 objects with recorded workload.</p>
+
+<ol class="priority">
+<li><strong>Correct the repeated row-multiplication pattern before adding broad indexing.</strong> Many procedures independently join several one-to-many tables before aggregating. Examples include <code>dbo.sp01122</code> lines 16–21, <code>dbo.sp00612</code> lines 16–20, and <code>dbo.sp02525</code> lines 15–19. This can multiply posts, comments, votes, and badges and can both inflate results and create large hash/sort workloads.</li>
+<li><strong>Prioritize the first ten procedures by workload.</strong> The highest-cost procedure, <code>dbo.sp00442</code>, recorded 19,845.9 seconds CPU, 42,030,210 logical reads, and 9 executions. <code>dbo.sp00333</code> recorded 92,013,682 logical reads and 17,785.0 seconds CPU. <code>dbo.sp00902</code> recorded the highest listed logical reads among the first ten at 128,516,553. These procedures repeatedly scan and aggregate the large <code>Posts</code>, <code>Votes</code>, <code>Comments</code>, and <code>PostHistory</code> tables.</li>
+<li><strong>Remove non-sargable tag searches from the hot path.</strong> The pattern <code>Tags LIKE '%' + TagName + '%'</code> appears in numerous procedures, including <code>dbo.sp00442</code> lines 38–49, <code>dbo.sp00333</code> lines 23–35, and <code>dbo.sp01034</code> lines 26–37. A normal index on the existing <code>Tags</code> text cannot seek this leading-wildcard predicate.</li>
+<li><strong>Add targeted foreign-key and date-supporting indexes after checking the full index inventory.</strong> The supplied index report is not a complete inventory, so the scripts below use new names guarded by existence checks. Estimated net storage is approximately <strong>132–434 MB</strong>, based on the supplied row counts and stated width assumptions.</li>
+<li><strong>Investigate logical correctness, not only runtime.</strong> Several procedures join unrelated entities with predicates such as <code>ON 1 = 1</code>, comparisons between user IDs and post IDs, or cross-entity thresholds. Examples include <code>dbo.sp00333</code> line 69, <code>dbo.sp00612</code> line 55, <code>dbo.sp01986</code> line 87, and <code>dbo.sp01270</code> line 47.</li>
+</ol>
+
+<div class="callout">
+<strong>Overall confidence: 0.93 for identifying structural performance anti-patterns; 0.78 for the ranking of individual fixes.</strong>
+The input contains workload totals and object text but no actual execution plans, wait statistics, blocking chains, deadlock graphs, missing-index DMV output, column definitions, or complete index inventory. Exact improvement percentages therefore cannot be stated.
+</div>
+</section>
+
+<section id="scope">
+<h2>Scope and confidence</h2>
+<table>
+<thead><tr><th>Object type</th><th>Reviewed</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>Stored procedures</td><td>100</td><td>All supplied definitions are labelled complete.</td></tr>
+<tr><td>Functions</td><td>0</td><td>None supplied.</td></tr>
+<tr><td>Triggers</td><td>0</td><td>None supplied.</td></tr>
+<tr><td>Views</td><td>0</td><td>None supplied.</td></tr>
+<tr><td>Not included / not available</td><td>0 supplied objects</td><td>No supplied object was labelled NOT INCLUDED or NOT AVAILABLE.</td></tr>
+</tbody>
+</table>
+<p>The object-selection rule says that Query Store workload ranking covers 1,000 of 14,203 eligible objects, while the input supplies the highest-ranked 100 procedures. The other 14,103 eligible objects were not reviewed. Query Store excludes infrequent or insignificant-cost queries under AUTO capture, and module cost does not include dynamic SQL or called procedures; the supplied procedures are marked <code>DynamicSQL=No</code>.</p>
+<p>Runtime index statistics cover only the 14.3-day period since the 2026-09-29 10:45:10 server start. No objects were marked encrypted or inaccessible, and no omitted definition is being used as the basis for a code change.</p>
+</section>
+
+<section id="recommendations">
+<h2>Detailed prioritized recommendations</h2>
+
+<h3>1. Rewrite multi-fact aggregations to aggregate each child table independently</h3>
+<p><span class="badge">Critical</span> <strong>Confidence: 0.98</strong></p>
+<p>The most damaging repeated pattern is joining several independent one-to-many relationships and aggregating afterward. In <code>dbo.sp01122</code>, users are joined to posts, comments, and votes at lines 16–20, then counts and sums are calculated at lines 12–14. A user with multiple posts, comments, and votes can produce a many-way fanout. The procedure recorded 3,254,152,055 logical reads, 2,120.3 seconds CPU, and 2,116.4 seconds duration over 7 executions.</p>
+<p>The same risk appears in <code>dbo.sp00612</code> lines 16–20, <code>dbo.sp02525</code> lines 15–19, <code>dbo.sp01924</code> lines 15–19 and 43–46, and <code>dbo.sp02602</code> lines 17–20. These are not merely indexing problems: a covering index may make an incorrect or inflated aggregation faster without making it correct.</p>
+<p>Use separate aggregates keyed by the parent ID, then join the aggregate results. For example, the design should use independent inline aggregates for posts, comments, votes, and badges rather than joining all four detail sets together. Because these procedures are complete definitions and their intended result semantics are not documented, no replacement definition is supplied here; changing them without a result-set contract could alter output semantics.</p>
+
+<h3>2. Eliminate accidental Cartesian products and unrelated joins</h3>
+<p><span class="badge">Critical</span> <strong>Confidence: 0.99</strong></p>
+<ul>
+<li><code>dbo.sp00333</code> line 69 uses <code>LEFT JOIN TopTags TT ON 1 = 1</code>, multiplying every qualifying user by every top tag.</li>
+<li><code>dbo.sp00902</code> line 71 joins every ranked user to every tag with a positive count through <code>TPC.PostCount &gt; 0</code>.</li>
+<li><code>dbo.sp00584</code> line 60 joins post-link summaries with <code>ups.TotalPosts &gt; 0</code>, unrelated to the post or user key.</li>
+<li><code>dbo.sp01968</code> line 54 uses <code>ts.PostCount &gt; 10</code>, again creating a broad multiplication.</li>
+<li><code>dbo.sp01986</code> line 85 uses <code>us.PostCount &gt; 5</code> instead of a relationship to a tag.</li>
+<li><code>dbo.sp01270</code> line 47 joins users to ranked posts through <code>us.UserId = rp.PostId</code>, which compares different entity identifiers.</li>
+</ul>
+<p>These predicates should be replaced by the intended relationship, typically a user-to-post owner key, a post-to-tag bridge key, or a deliberately selected single row. This is a semantic correction and should be tested against expected row counts before deployment.</p>
+
+<h3>3. Replace leading-wildcard tag matching with a normalized bridge</h3>
+<p><span class="badge">Critical</span> <strong>Confidence: 0.97</strong></p>
+<p>The expression <code>Posts.Tags LIKE '%' + Tags.TagName + '%'</code> is non-sargable and can require scanning the 246,672-row <code>dbo.Posts</code> table for each tag. It appears in <code>dbo.sp00442</code> lines 38–49, <code>dbo.sp00333</code> lines 23–35, <code>dbo.sp01034</code> lines 26–37, and many other ranked procedures. The existing <code>IX_Posts_Question_TagScan</code> has key <code>PostTypeId</code> and includes <code>CreationDate</code>, <code>Title</code>, and <code>Tags</code>; its 10.5 MB size does not make the leading-wildcard predicate seekable.</p>
+<p>The durable design is a post/tag bridge table with one row per post-tag pair and an index on <code>(TagName, PostId)</code>. No such table was provided, so no executable bridge-table script is included. Do not replace the current text predicate with a normal index and expect a seek.</p>
+<p>Short-term, reduce the number of repeated tag scans by materializing one tag-count result per procedure execution or by precomputing tag statistics. Longer-term, migrate the data representation and revise the affected procedures.</p>
+
+<h3>4. Parameterize or centralize all report dates</h3>
+<p><span class="badge">High</span> <strong>Confidence: 0.99</strong></p>
+<p>Many procedures use a hard-coded date such as <code>'2024-10-01 12:34:56'</code>. Examples include <code>dbo.sp00333</code> line 48, <code>dbo.sp01034</code> line 22, <code>dbo.sp00902</code> line 13, and <code>dbo.sp01214</code> line 21. Others use <code>GETDATE()</code>, such as <code>dbo.sp00817</code> line 38. This creates inconsistent reporting windows and can produce stale or non-repeatable business results.</p>
+<p>Where the procedure contract permits it, expose a typed date parameter and use a single local boundary value. The reviewed procedures have no parameters, so adding parameters would change their public contract; this should be treated as an application/report contract change rather than a blind code replacement.</p>
+
+<h3>5. Fix repeated correlated scans for latest history, comments, and votes</h3>
+<p><span class="badge">High</span> <strong>Confidence: 0.94</strong></p>
+<p><code>dbo.sp00605</code> lines 74–81 uses a correlated <code>MAX(CreationDate)</code> lookup into <code>PostHistory</code> for each post. Similar patterns occur in <code>dbo.sp00098</code> lines 47–51, <code>dbo.sp00472</code> lines 44–49, <code>dbo.sp01351</code> lines 18–23, and <code>dbo.sp02398</code> lines 73–75. A windowed result or <code>OUTER APPLY</code> with a supporting index is generally more predictable, especially when the parent set is large.</p>
+<p>For comment and vote counts, pre-aggregate by <code>PostId</code> once rather than executing one correlated count per output row. This applies to <code>dbo.sp02525</code> lines 33–41 and <code>dbo.sp02194</code> lines 20–32.</p>
+
+<h3>6. Correct aggregate fanout caused by joining votes, comments, badges, and posts</h3>
+<p><span class="badge">High</span> <strong>Confidence: 0.96</strong></p>
+<p>Several procedures use <code>COUNT(DISTINCT ...)</code> to conceal fanout while leaving ordinary sums incorrect. For example, <code>dbo.sp00929</code> lines 15–18 joins posts and votes before calculating <code>SUM(v.BountyAmount)</code> and vote totals. <code>dbo.sp00817</code> lines 13–16 joins votes and posts directly, causing each vote to repeat across the user's posts. <code>dbo.sp02099</code> lines 15–20 joins four child sources before aggregation.</p>
+<p>Separate the post, vote, comment, and badge summaries first. Use <code>COUNT(DISTINCT)</code> only when distinctness is part of the business rule, not as a general repair for duplicated rows.</p>
+
+<h3>7. Correct entity-key mismatches and name-based joins</h3>
+<p><span class="badge">High</span> <strong>Confidence: 0.99</strong></p>
+<ul>
+<li><code>dbo.sp01293</code> line 77 joins user activity to post history using <code>UA.DisplayName = RP.UserDisplayName</code>; display names are not stable keys.</li>
+<li><code>dbo.sp01986</code> line 87 joins <code>us.UserId = rpa.PostId</code>.</li>
+<li><code>dbo.sp01586</code> line 77 joins users and posts by display name.</li>
+<li><code>dbo.sp00823</code> line 67 compares <code>RP.OwnerName</code> with a string conversion of <code>UA.UserId</code>.</li>
+<li><code>dbo.sp01153</code> line 71 joins a user to a post using <code>us.UserId = pp.PostId</code>.</li>
+</ul>
+<p>Use the actual numeric foreign-key relationship, such as <code>OwnerUserId</code>, <code>UserId</code>, or <code>PostId</code>. These issues can return empty, duplicated, or unrelated results and should be corrected before performance tuning.</p>
+
+<h3>8. Add targeted supporting indexes</h3>
+<p><span class="badge">High</span> <strong>Confidence: 0.84</strong></p>
+<p>The supplied usage report shows substantial scans on the clustered indexes for <code>PostHistory</code> (369 scans, 820.3 MB), <code>Posts</code> (1,270 scans, 400.3 MB), and <code>Comments</code> (596 scans, 78.1 MB). The scripts section adds indexes for the most common join and latest-row access paths. Indexes should be created after checking the complete index inventory because the supplied report lists only the largest indexes.</p>
+
+<h3>9. Avoid relying on current Query Store percentages as an absolute workload forecast</h3>
+<p><span class="badge">Medium</span> <strong>Confidence: 0.99</strong></p>
+<p>The ranking is appropriate for triage because it is based on total CPU over the last 30 days, but Query Store AUTO capture excludes infrequent or insignificant-cost statements. Dynamic SQL and called procedures are not attributed to the containing module. The first ten procedures therefore deserve priority within the supplied set, but their recorded totals are not the entire server workload.</p>
+
+<h3>10. Review data types and implicit conversions in close-reason joins</h3>
+<p><span class="badge">Medium</span> <strong>Confidence: 0.91</strong></p>
+<p><code>dbo.sp00927</code> line 45 converts <code>PostHistory.Comment</code> to <code>INT</code>; <code>dbo.sp01586</code> line 44 does the same; <code>dbo.sp00823</code> line 30 converts a numeric reason ID to <code>VARCHAR</code>. These expressions can prevent efficient access and can fail if the text is not numeric. The input does not provide column data types or data-quality statistics, so no computed-column or schema-change script is recommended.</p>
+</section>
+
+<section id="workload">
+<h2>Workload findings</h2>
+<table>
+<thead><tr><th>Rank</th><th>Procedure</th><th>CPU</th><th>Duration</th><th>Logical reads</th><th>Executions</th><th>Primary concern</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code>dbo.sp00442</code></td><td>19,845.9 s</td><td>2,701.1 s</td><td>42,030,210</td><td>9</td><td>Repeated post/vote aggregation and leading-wildcard tag matching at lines 17–20 and 38–49.</td></tr>
+<tr><td>2</td><td><code>dbo.sp00333</code></td><td>17,785.0 s</td><td>2,700.6 s</td><td>92,013,682</td><td>9</td><td>Cartesian top-tag join at line 69 and non-sargable tag search at line 30.</td></tr>
+<tr><td>3</td><td><code>dbo.sp01034</code></td><td>16,506.5 s</td><td>2,100.6 s</td><td>81,844,215</td><td>7</td><td>Repeated tag scan and title-to-tag wildcard join at lines 26–37 and 62–65.</td></tr>
+<tr><td>4</td><td><code>dbo.sp00902</code></td><td>16,276.9 s</td><td>2,101.7 s</td><td>128,516,553</td><td>7</td><td>Broad tag multiplication at line 71 plus full user/post aggregation.</td></tr>
+<tr><td>5</td><td><code>dbo.sp00817</code></td><td>15,807.9 s</td><td>2,100.7 s</td><td>80,203,383</td><td>7</td><td>Votes and posts joined at user level at lines 13–16, causing fanout.</td></tr>
+<tr><td>6</td><td><code>dbo.sp00978</code></td><td>15,648.5 s</td><td>2,100.8 s</td><td>76,432,447</td><td>7</td><td>Broad tag join at line 58 and an <code>IN</code> subquery at line 56.</td></tr>
+<tr><td>7</td><td><code>dbo.sp00929</code></td><td>15,404.5 s</td><td>2,101.6 s</td><td>75,279,947</td><td>7</td><td>Post/vote fanout and repeated tag subquery at lines 33–58.</td></tr>
+<tr><td>8</td><td><code>dbo.sp01293</code></td><td>15,090.4 s</td><td>2,100.3 s</td><td>84,695,345</td><td>7</td><td>Multi-fact aggregation and display-name join at lines 16–23 and 77.</td></tr>
+<tr><td>9</td><td><code>dbo.sp00584</code></td><td>14,806.1 s</td><td>2,100.4 s</td><td>51,320,883</td><td>7</td><td>Unrelated post-link join at line 60 and closed-post join by accepted-answer user at line 62.</td></tr>
+<tr><td>10</td><td><code>dbo.sp00992</code></td><td>14,221.0 s</td><td>2,055.0 s</td><td>47,361,118</td><td>7</td><td>Broad tag join at line 63 and full badge aggregation at lines 39–46.</td></tr>
+</tbody>
+</table>
+<p>The workload figures above are quoted directly from the input. No execution plans were supplied, so a before/after operator-cost comparison cannot be produced without inventing plan data.</p>
+</section>
+
+<section id="locking">
+<h2>Locking and blocking</h2>
+<p><strong>Confidence: 0.72.</strong> No deadlock graph, blocking-chain data, wait statistics, transaction log information, or isolation-level configuration was supplied. Consequently, no actual blocker, waiter, session ID, wait time, or deadlock relationship can be identified.</p>
+<p>The reviewed procedures declare no explicit transactions, and the input marks all reviewed procedures with <code>Transactions=No</code>. They are therefore primarily read workloads. Nevertheless, the long scans and aggregations can hold shared locks for substantial portions of execution under the default read-committed behavior and can be delayed by writers. The recorded durations include values such as 2,701.1 seconds for <code>dbo.sp00442</code> and 2,116.4 seconds for <code>dbo.sp01122</code>; these are total Query Store duration, not proof that a single execution held locks for that entire period.</p>
+<p>First reduce scan duration through the query and index changes. Enabling read-committed snapshot isolation can reduce reader/writer blocking, but the input does not provide tempdb capacity, version-store usage, database options, or a maintenance window. It is therefore not included as an automatic change script.</p>
+</section>
+
+<section id="indexes">
+<h2>Index and storage analysis</h2>
+<p>The largest supplied tables are <code>dbo.Votes</code> with 926,084 rows, <code>dbo.PostHistory</code> with 847,593 rows, <code>dbo.Badges</code> with 439,352 rows, <code>dbo.Comments</code> with 351,440 rows, <code>dbo.Users</code> with 267,193 rows, and <code>dbo.Posts</code> with 246,672 rows.</p>
+<table>
+<thead><tr><th>Recommendation</th><th>Access path</th><th>Estimated size after build</th><th>Basis and assumptions</th></tr></thead>
+<tbody>
+<tr>
+<td>Create <code>IX_Posts_OwnerUserId_CreationDate_Review</code></td>
+<td><code>Posts(OwnerUserId, CreationDate DESC)</code> including <code>Id, PostTypeId, Score, ViewCount</code></td>
+<td>8–24 MB</td>
+<td>Estimate for 246,672 rows. Assumes 4-byte owner/type/score/view columns, 8-byte date, 4-byte clustering key, row/page overhead, and PAGE compression.</td>
+</tr>
+<tr>
+<td>Create <code>IX_Votes_PostId_VoteType_User_Review</code></td>
+<td><code>Votes(PostId, VoteTypeId)</code> including <code>UserId, BountyAmount, CreationDate</code></td>
+<td>24–60 MB</td>
+<td>Estimate for 926,084 rows. Exact numeric/date widths were not supplied; range assumes 4–8 byte numeric/date storage plus row/page overhead and PAGE compression.</td>
+</tr>
+<tr>
+<td>Create <code>IX_Comments_PostId_CreationDate_Review</code></td>
+<td><code>Comments(PostId, CreationDate)</code> including <code>Id, UserId</code></td>
+<td>8–24 MB</td>
+<td>Estimate for 351,440 rows. Assumes 4-byte identifiers, 8-byte date, clustering key width, and PAGE compression.</td>
+</tr>
+<tr>
+<td>Create <code>IX_PostHistory_PostId_CreationDate_Review</code></td>
+<td><code>PostHistory(PostId, CreationDate DESC)</code> including <code>Id, PostHistoryTypeId, UserId</code></td>
+<td>20–50 MB</td>
+<td>Estimate for 847,593 rows. Comment text is intentionally not included because its width was not supplied and could make the index substantially larger.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total estimated net storage increase: 60–158 MB before compression variance, or approximately 132–434 MB using the broader conservative ranges above.</strong> The first range is the sum of the row-width assumptions; the second is the recommended deployment range accounting for unknown variable-length columns, page density, and existing row-size variation. No index is recommended for dropping: the supplied report shows active seeks on the listed nonclustered indexes, including 405 seeks on <code>IX_Votes_PostId_VoteType</code>, 181 seeks on <code>IX_Posts_OwnerUserId_Cover</code>, and 166 seeks on <code>IX_Badges_UserId_Id</code>.</p>
+<p>Existing sizes quoted from the input include 820.3 MB for the clustered <code>PostHistory</code> index, 400.3 MB for the clustered <code>Posts</code> index, 78.1 MB for the clustered <code>Comments</code> index, 11.8 MB for the clustered <code>Votes</code> index, 10.5 MB for <code>IX_Posts_Question_TagScan</code>, and 9.8 MB for <code>IX_Votes_PostId_VoteType</code>. No modification or drop is proposed, so there is no before/after size or reclaimed-space figure for an existing index.</p>
+</section>
+
+<section id="scripts">
+<h2>Scripts</h2>
+
+<h3>1. Add post-owner and creation-date coverage for user/post ranking queries</h3>
+<pre><code>USE [SQLStorm];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Posts')
+      AND name = N'IX_Posts_OwnerUserId_CreationDate_Review'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Posts_OwnerUserId_CreationDate_Review
+    ON dbo.Posts (OwnerUserId, CreationDate DESC)
+    INCLUDE (Id, PostTypeId, Score, ViewCount)
+    WITH (DATA_COMPRESSION = PAGE, ONLINE = ON, SORT_IN_TEMPDB = ON);
+END;
+GO</code></pre>
+
+<h3>2. Add post, vote-type, user, bounty, and date coverage for vote aggregations</h3>
+<pre><code>USE [SQLStorm];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Votes')
+      AND name = N'IX_Votes_PostId_VoteType_User_Review'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Votes_PostId_VoteType_User_Review
+    ON dbo.Votes (PostId, VoteTypeId)
+    INCLUDE (UserId, BountyAmount, CreationDate)
+    WITH (DATA_COMPRESSION = PAGE, ONLINE = ON, SORT_IN_TEMPDB = ON);
+END;
+GO</code></pre>
+
+<h3>3. Add post and creation-date coverage for comment counts and latest comments</h3>
+<pre><code>USE [SQLStorm];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Comments')
+      AND name = N'IX_Comments_PostId_CreationDate_Review'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Comments_PostId_CreationDate_Review
+    ON dbo.Comments (PostId, CreationDate DESC)
+    INCLUDE (Id, UserId)
+    WITH (DATA_COMPRESSION = PAGE, ONLINE = ON, SORT_IN_TEMPDB = ON);
+END;
+GO</code></pre>
+
+<h3>4. Add post-history and creation-date coverage for latest-history lookups</h3>
+<pre><code>USE [SQLStorm];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.PostHistory')
+      AND name = N'IX_PostHistory_PostId_CreationDate_Review'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_PostHistory_PostId_CreationDate_Review
+    ON dbo.PostHistory (PostId, CreationDate DESC)
+    INCLUDE (Id, PostHistoryTypeId, UserId)
+    WITH (DATA_COMPRESSION = PAGE, ONLINE = ON, SORT_IN_TEMPDB = ON);
+END;
+GO</code></pre>
+</section>
+
+<section id="supporting-scripts">
+<h2>Supporting scripts (not part of the change)</h2>
+<p>No supporting scripts are included. The input does not provide execution plans, blocking chains, deadlock graphs, wait statistics, or a complete index inventory, and diagnostic scripts are intentionally excluded from the change scripts section.</p>
+</section>
+
+
+</main>
+</div>
+<footer>
+  <p>Generated by AI SQL Tuner Studio v3.1.0.0 using model gpt-5.6-luna with reasoning effort medium.</p>
+  <p><a href="https://aisqltuner.com">aisqltuner.com</a></p>
+  <p>Based on analysis as of 2026-10-13 21:14:47 UTC</p>
+</footer>
+</body>
+</html>

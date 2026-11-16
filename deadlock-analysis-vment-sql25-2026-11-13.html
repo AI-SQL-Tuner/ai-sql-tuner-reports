@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deadlock Analysis – VMEnt\SQL25 – 2026-11-13</title>
+<meta name="description" content="SQL Server deadlock analysis and prioritized remediation recommendations for VMEnt\SQL25 and SalesDemo.">
+<style>
+:root{
+  --paper:#FFFFFF;--sidebar:#F6F8F9;--text:#111827;--muted:#6B7280;
+  --teal:#0B6E6E;--border:#D9E3E5;--code:#EFF7F7;--shadow:0 2px 10px rgba(15,23,42,.06);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.6}
+.layout{display:flex;min-height:100vh}
+aside{width:280px;background:var(--sidebar);border-right:1px solid var(--border);padding:28px 22px;position:sticky;top:0;height:100vh;overflow:auto}
+main{max-width:1120px;width:100%;padding:42px 54px 70px}
+h1,h2,h3,h4{color:var(--teal);line-height:1.25}
+h1{font-size:2.25rem;margin:.2rem 0 .7rem}
+h2{font-size:1.55rem;margin:2.3rem 0 1rem;border-bottom:2px solid var(--border);padding-bottom:.4rem}
+h3{font-size:1.15rem;margin:1.5rem 0 .55rem}
+p{margin:.65rem 0}
+a{color:var(--teal);text-decoration:none}
+a:hover{text-decoration:underline}
+nav strong{display:block;color:var(--teal);margin-bottom:12px}
+nav ol,nav ul{padding-left:21px;margin:0}
+nav li{margin:7px 0;font-size:.92rem}
+.kicker{color:var(--muted);font-size:.95rem;letter-spacing:.04em;text-transform:uppercase}
+.goal{display:inline-block;background:var(--code);border-left:4px solid var(--teal);padding:9px 14px;font-weight:700;margin:8px 0 22px}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:20px 0 28px}
+.card,.callout{border:1px solid var(--border);border-radius:9px;padding:16px;background:var(--paper);box-shadow:var(--shadow)}
+.card b{display:block;color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
+.card span{display:block;margin-top:4px;font-weight:600}
+.callout{border-left:5px solid var(--teal);background:var(--code)}
+.severity{color:#9A3412;font-weight:700}
+table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:.94rem}
+th,td{border:1px solid var(--border);padding:10px 11px;text-align:left;vertical-align:top}
+th{background:var(--code);color:var(--teal)}
+pre{background:var(--code);border:1px solid var(--border);border-radius:8px;padding:16px;overflow:auto;white-space:pre-wrap;word-break:break-word;font: .86rem/1.5 "SFMono-Regular",Consolas,"Liberation Mono",monospace;color:var(--text)}
+code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}
+ul,ol{padding-left:25px}
+.badge{display:inline-block;border:1px solid var(--teal);border-radius:999px;padding:2px 9px;font-size:.78rem;color:var(--teal);margin-right:5px}
+.diagram{margin:20px 0}
+.diagram figcaption{color:var(--muted);font-size:.9rem;margin-top:6px}
+.small{color:var(--muted);font-size:.9rem}
+footer{margin-top:50px;padding-top:20px;border-top:1px solid var(--border);color:var(--muted);font-size:.9rem}
+@media(max-width:900px){aside{width:225px}main{padding:30px 25px}}
+@media(max-width:700px){.layout{display:block}aside{position:relative;width:100%;height:auto;border-right:0;border-bottom:1px solid var(--border)}main{padding:25px 18px}h1{font-size:1.8rem}}
+@media (prefers-color-scheme: dark){
+:root{--paper:#0B1220;--sidebar:#162032;--text:#F3F4F6;--muted:#9CA3AF;--teal:#2DD4BF;--border:#334155;--code:#0F172A;--shadow:0 2px 12px rgba(0,0,0,.25)}
+body{background:var(--paper);color:var(--text)}
+h1,h2,h3,h4,a,th,nav strong{color:var(--teal)}
+.card,.callout{background:var(--paper);border-color:var(--border)}
+th, .goal, .callout, pre{background:var(--code)}
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"TechArticle",
+  "headline":"Deadlock Analysis – VMEnt\\SQL25 – 2026-11-13",
+  "description":"Prioritized SQL Server deadlock analysis for SalesDemo on VMEnt\\SQL25.",
+  "inLanguage":"en",
+  "about":["SQL Server deadlocks","SalesDemo","VMEnt\\SQL25"]
+}
+</script>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+/* Priority pills are inline badges only (<span class="priority p1">P1</span>). Models also use
+   "priority" as a block modifier (<div class="card priority">); scoping to span keeps those in the body font. */
+span.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+span.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+span.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+span.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<aside>
+<nav aria-label="Table of contents">
+<strong>Contents</strong>
+<ol>
+<li><a href="#summary">Executive summary</a></li>
+<li><a href="#scope">Scope and evidence</a></li>
+<li><a href="#recommendations">Prioritized recommendations</a></li>
+<li><a href="#patterns">Deadlock patterns</a></li>
+<li><a href="#details">Detailed deadlock findings</a></li>
+<li><a href="#code">Impacted code rewrites</a></li>
+<li><a href="#scripts">Scripts</a></li>
+<li><a href="#confidence">Confidence and limitations</a></li>
+</ol>
+</nav>
+</aside>
+
+<main>
+<header>
+<div class="kicker">SQL Server deadlock report</div>
+<h1>Deadlock Analysis – VMEnt\SQL25 – 2026-11-13</h1>
+<div class="goal">Tuning goal: Fix Deadlocks</div>
+<div class="meta">
+<div class="card"><b>Server</b><span>VMEnt\SQL25</span></div>
+<div class="card"><b>Engine</b><span>SQL Server 2025 RTM 17.0.1000.7</span></div>
+<div class="card"><b>Edition</b><span>Enterprise Developer / Enterprise engine</span></div>
+<div class="card"><b>Database</b><span>SalesDemo, database ID 16</span></div>
+<div class="card"><b>Observed events</b><span>10 deadlocks</span></div>
+<div class="card"><b>UTC scope</b><span>2026-11-10 and 2026-11-13</span></div>
+</div>
+</header>
+
+<section id="summary">
+<h2>Executive summary</h2>
+<div class="callout">
+<strong>Root cause:</strong> the payment and refund transactions acquire write locks in opposite table order. Refund processing updates <code>SalesDemo.dbo.Orders</code> before <code>SalesDemo.dbo.Accounts</code>, while payment processing updates <code>Accounts</code> before <code>Orders</code>. The result is a two-resource X-to-X cycle on the primary keys.
+</div>
+<p>Deadlocks #1–#4, #7 and #10 show the direct cycle: one transaction owns an X key lock on <code>Accounts</code> and waits for <code>Orders</code>, while the other owns an X key lock on <code>Orders</code> and waits for <code>Accounts</code>. Deadlocks #5, #6, #8 and #9 add a second manifestation: payment processing holds an X lock on an account and then takes an S lock while scanning <code>Orders</code>; refund processing holds an IX page lock on <code>Orders</code> and waits for that account key.</p>
+<ol>
+<li><strong>Standardize transaction order.</strong> Change both procedures to acquire the account row first and then the order row. This directly removes the circular wait in all ten graphs.</li>
+<li><strong>Reduce the payment order lookup locks.</strong> Review an index on <code>SalesDemo.dbo.Orders</code> keyed by <code>(AccountId, Status)</code> and including <code>Amount</code>. Run the Index Tuning goal before implementing any physical design change; existing indexes are not supplied.</li>
+<li><strong>Enable optimized locking after ADR.</strong> <code>SalesDemo</code> has ADR OFF and optimized locking OFF on SQL Server 2025. Enabling ADR followed by optimized locking can reduce row/page locks held to transaction end, but it is secondary to correcting lock order and does not solve opposite-order writer cycles by itself.</li>
+<li><strong>Consider RCSI for the read component.</strong> RCSI is OFF for <code>SalesDemo</code>, and the payment subquery is taking an S lock under READ COMMITTED. Enabling RCSI can remove that reader S-lock contribution, subject to application testing and version-store capacity. It will not prevent writer-versus-writer deadlocks.</li>
+<li><strong>Retain safe 1205 retry handling.</strong> The SQL Agent batches already catch error 1205, but they immediately retry without a randomized pause. Add a short randomized delay only when the transaction is safe to rerun. This limits impact; it does not remove the deadlock cause.</li>
+</ol>
+<p><strong>Observed frequency:</strong> five deadlocks were recorded in the 12:00 UTC bucket on 2026-11-13 and five in the 20:00 UTC bucket on 2026-11-10. The supplied data supports 10 events, not a broader rate estimate.</p>
+</section>
+
+<section id="scope">
+<h2>Scope and evidence</h2>
+<table>
+<tr><th>Evidence</th><th>Finding</th></tr>
+<tr><td>Deadlock graphs</td><td>10 graphs, each with two processes and two resources.</td></tr>
+<tr><td>Victims</td><td>One victim per graph; the victim log used values supplied are 284, 404 or 264.</td></tr>
+<tr><td>Isolation</td><td>All shown processes use READ COMMITTED.</td></tr>
+<tr><td>SalesDemo settings</td><td>RCSI OFF; snapshot isolation OFF; ADR OFF; optimized locking OFF.</td></tr>
+<tr><td>Code source</td><td><code>usp_RefundOrder</code> and <code>usp_PayOrder</code> are complete current definitions from <code>sys.sql_modules</code>. The two ad hoc batches are complete enough for the supplied input buffer, but the graph notes that SQL Server can cut long input buffers short.</td></tr>
+<tr><td>Database ownership</td><td><code>SalesDemo</code> owns the locked resources in deadlocks #1–#10, so its settings govern all analyzed locks.</td></tr>
+</table>
+<figure class="diagram">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 250" role="img" aria-labelledby="cycleTitle cycleDesc">
+<title id="cycleTitle">Opposite table order creates a deadlock cycle</title>
+<desc id="cycleDesc">Refund owns an Orders lock and waits for Accounts. Payment owns an Accounts lock and waits for Orders.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0B6E6E"/></marker></defs>
+<rect x="40" y="70" width="245" height="85" rx="10" fill="#EFF7F7" stroke="#0B6E6E" stroke-width="2"/>
+<text x="162" y="99" text-anchor="middle" fill="#0B6E6E" font-weight="700">Refund transaction</text>
+<text x="162" y="126" text-anchor="middle" fill="#111827">X Orders → waits for X Accounts</text>
+<rect x="615" y="70" width="245" height="85" rx="10" fill="#EFF7F7" stroke="#0B6E6E" stroke-width="2"/>
+<text x="737" y="99" text-anchor="middle" fill="#0B6E6E" font-weight="700">Payment transaction</text>
+<text x="737" y="126" text-anchor="middle" fill="#111827">X Accounts → waits for X Orders</text>
+<path d="M285 92 C420 10, 480 10, 615 92" fill="none" stroke="#0B6E6E" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M615 133 C480 215, 420 215, 285 133" fill="none" stroke="#0B6E6E" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="450" y="28" text-anchor="middle" fill="#6B7280">waits for Accounts</text>
+<text x="450" y="235" text-anchor="middle" fill="#6B7280">waits for Orders</text>
+</svg>
+<figcaption>Figure 1. The blocking relationship represented by deadlocks #1–#4, #7 and #10. The rewrite makes both transactions use Accounts → Orders.</figcaption>
+</figure>
+</section>
+
+<section id="recommendations">
+<h2>Detailed prioritized recommendations</h2>
+<ol>
+<li>
+<h3>Priority 1 — Make all payment and refund transactions use Accounts → Orders</h3>
+<p><strong>Impact:</strong> highest. <strong>Evidence:</strong> six graphs contain reciprocal X key waits between <code>SalesDemo.dbo.Accounts</code> / <code>PK_Accounts</code> and <code>SalesDemo.dbo.Orders</code> / <code>PK_Orders</code>. Refund line 8 in CODE-1 modifies Orders first; refund line 11 modifies Accounts later. Payment lines 9, 11 and 15 in CODE-3 modify Accounts before Orders.</p>
+<p>Deploy the revised definitions in the <a href="#scripts">Scripts</a> section. The refund procedure first obtains the order's account and amount, then begins its transaction and locks the account before modifying the order. The payment procedure already begins with the account and retains that order, but its account update and order work are made explicit in the same ordering pattern.</p>
+<p>This removes the cycle rather than merely changing the victim. It preserves the existing balance, status, payment, timestamp and open-order-total effects.</p>
+</li>
+<li>
+<h3>Priority 2 — Tune the Orders access used by the open-order aggregate</h3>
+<p><strong>Evidence:</strong> deadlocks #5, #6, #8 and #9 show a PAGE IX lock on <code>SalesDemo.dbo.Orders</code> page 8782 and an S waiter from the correlated aggregate at CODE-3 (module <code>SalesDemo.dbo.usp_PayOrder</code>, lines 11–13). The predicate is <code>AccountId = @AccountId</code> and <code>Status IN ('Open','Refunded')</code>, and the value returned is <code>Amount</code>.</p>
+<p>Use the Index Tuning goal for <code>SalesDemo.dbo.Orders</code>, comparing existing indexes and workload, to evaluate a nonclustered access path with key columns <code>(AccountId, Status)</code> and included column <code>Amount</code>. Do not create a duplicate index without checking existing definitions, write cost and usage statistics. The input provides no existing-index inventory, cardinalities or execution plan.</p>
+<p>This can reduce scans, page locks and the duration of the S lock. It is not a substitute for consistent table order.</p>
+</li>
+<li>
+<h3>Priority 3 — Enable ADR and optimized locking for SalesDemo</h3>
+<p><strong>Evidence:</strong> <code>SalesDemo</code> has ADR OFF and optimized locking OFF, while SQL Server 2025 Enterprise capabilities are available. Optimized locking can reduce row and page locks held until transaction end, which is relevant to the PAGE IX/S pattern in deadlocks #5, #6, #8 and #9.</p>
+<p>Run the two database-setting batches in order during a maintenance window. Each setting change requires no other active connections to <code>SalesDemo</code>; the command can wait until connections disconnect. ADR keeps row versions, including versions used by RCSI or snapshot isolation, in the persistent version store inside <code>SalesDemo</code> instead of tempdb, so its size must be monitored.</p>
+<p>This does <strong>not</strong> remove the opposite-order writer cycle or deadlocks between transactions modifying the same rows in opposite order. It also does not override REPEATABLE READ, SERIALIZABLE or lock hints; none are shown in these graphs.</p>
+</li>
+<li>
+<h3>Priority 4 — Consider READ_COMMITTED_SNAPSHOT for SalesDemo</h3>
+<p><strong>Evidence:</strong> RCSI is OFF for <code>SalesDemo</code>. In deadlocks #5, #6, #8 and #9, the payment statement at CODE-3 (module <code>SalesDemo.dbo.usp_PayOrder</code>, lines 11–13) requests an S lock while reading Orders under READ COMMITTED. With RCSI enabled, ordinary READ COMMITTED reads of <code>SalesDemo</code> data use row versions instead of S locks.</p>
+<p>RCSI will not help writer-versus-writer deadlocks such as #1–#4, #7 and #10, and it will not help reads under stronger isolation or explicit locking hints. It changes readers to see the last committed version rather than wait for a writer, so application behavior must be tested. It consumes version-store space; with ADR enabled, the persistent version store is inside <code>SalesDemo</code>. The change requires no other active connections to <code>SalesDemo</code>.</p>
+</li>
+<li>
+<h3>Priority 5 — Add safe randomized retry handling</h3>
+<p>The SQL Agent job steps represented by CODE-2 (ad hoc batch from SQL Agent job <em>AI SQL Tuner Demo - Deadlock refunds</em>, step 1) and CODE-4 (ad hoc batch from SQL Agent job <em>AI SQL Tuner Demo - Deadlock payments</em>, step 1) already catch error 1205 and roll back. They immediately continue the loop. Add a short randomized pause before retrying, and retry only if the procedure's transaction is safe to rerun. This reduces repeated collision probability but does not reduce the underlying lock cycle.</p>
+<p>For background work, <code>SET DEADLOCK_PRIORITY LOW</code> can make it the preferred victim instead of user-facing work. The current batches set NORMAL. Priority and retry handling limit impact; they do not prevent deadlocks.</p>
+</li>
+</ol>
+</section>
+
+<section id="patterns">
+<h2>Deadlock pattern summary</h2>
+<table>
+<tr><th>Graphs</th><th>Pattern</th><th>Locks and statements</th><th>Primary fix</th></tr>
+<tr><td>#1–#4, #7, #10</td><td>Opposite-order writer cycle</td><td>Refund owns X on Orders and waits for X on Accounts. Payment owns X on Accounts and waits for X on Orders.</td><td>Use Accounts → Orders in both procedures.</td></tr>
+<tr><td>#5, #6, #8, #9</td><td>Account writer versus Orders page read</td><td>Payment aggregate requests S on Orders page 8782 while refund owns IX on that page; refund waits for the Accounts X key held by payment.</td><td>Use common order; tune Orders access; optionally use RCSI and optimized locking for SalesDemo.</td></tr>
+</table>
+<p><strong>Not applicable:</strong> lock escalation is not demonstrated. The graphs show key and page locks, not OBJECT or HOBT-level escalated S/X locks, and no lock count is supplied. Do not apply <code>LOCK_ESCALATION</code> changes based on this evidence.</p>
+<p><strong>Not applicable:</strong> there are no xactlock resources. Optimized locking does not solve a transaction-ID deadlock between writers modifying the same rows in opposite order; the transaction order and duration remain the fix.</p>
+</section>
+
+<section id="details">
+<h2>Detailed deadlock findings</h2>
+
+<h3>Deadlocks #1–#4, #7 and #10 — opposite-order X key locks</h3>
+<p><span class="badge">Confidence: 99%</span> These graphs all show two KEY resources owned by <code>SalesDemo</code>: <code>PK_Accounts</code> and <code>PK_Orders</code>. The refund process waits for an X lock on Accounts while holding Orders; the payment process waits for an X lock on Orders while holding Accounts. Deadlock #1, for example, records the refund UPDATE at CODE-1 (module <code>SalesDemo.dbo.usp_RefundOrder</code>, line 11) waiting on Accounts and the payment UPDATE at CODE-3 (module <code>SalesDemo.dbo.usp_PayOrder</code>, line 15) waiting on Orders.</p>
+<p>The same code is implicated in all six graphs. The victim varies, but the cycle does not.</p>
+
+<h3>Deadlocks #5, #6, #8 and #9 — page-level Orders read/write conflict</h3>
+<p><span class="badge">Confidence: 97%</span> The payment aggregate at CODE-3 (module <code>SalesDemo.dbo.usp_PayOrder</code>, lines 11–13) reads Orders while the payment transaction already holds an account X lock. With RCSI OFF for <code>SalesDemo</code>, the READ COMMITTED read takes an S lock. The graphs show that S request waiting on page 8782, while the refund process owns an IX page lock and waits for the Accounts X key held by payment. The primary cycle is still caused by inconsistent table order; the page access path increases the opportunity and lock footprint.</p>
+
+<h3>Deadlock frequency and operational context</h3>
+<p>Five events occurred in the 12:00 UTC bucket on 2026-11-13 and five in the 20:00 UTC bucket on 2026-11-10. The supplied input does not establish whether the two SQL Agent jobs overlap on a recurring schedule, but the graphs identify the payment and refund job steps as the concurrent participants. The deleted-job identifiers in deadlocks #6–#10 cannot be mapped to current msdb job metadata from the supplied data.</p>
+</section>
+
+<section id="code">
+<h2>Impacted code rewrites</h2>
+
+<h3>Refund procedure — CODE-1 (<code>SalesDemo.dbo.usp_RefundOrder</code>)</h3>
+<p>Conflicting statements are CODE-1 (module <code>SalesDemo.dbo.usp_RefundOrder</code>), line 8, which takes the Orders X lock first, and line 11, which then takes the Accounts X lock. The rewrite obtains the account and amount before the transaction, then takes the Accounts X lock before changing Orders. This removes the refund-side Orders → Accounts edge while preserving the refund status, payment row and balance update.</p>
+
+<h3>Payment procedure — CODE-3 (<code>SalesDemo.dbo.usp_PayOrder</code>)</h3>
+<p>Conflicting statements are CODE-3 (module <code>SalesDemo.dbo.usp_PayOrder</code>), lines 9 and 11–13 on Accounts, followed by line 15 on Orders. The rewrite keeps this Accounts → Orders order and makes the transaction structure explicit. It removes the mismatch with the revised refund procedure. The aggregate remains before the status change, preserving the original open-order-total result.</p>
+
+<h3>Retry batches — CODE-2 and CODE-4</h3>
+<p>CODE-2 (ad hoc batch from SQL Agent job <em>AI SQL Tuner Demo - Deadlock refunds</em>, step 1) and CODE-4 (ad hoc batch from SQL Agent job <em>AI SQL Tuner Demo - Deadlock payments</em>, step 1) call the procedures at line 9. They do not acquire the table locks themselves. Their change is operational: add randomized delay after a 1205 rollback and, if appropriate for background processing, lower deadlock priority. The SQL Agent job steps must be changed; no application host code is identified.</p>
+</section>
+
+<section id="scripts">
+<h2>Scripts</h2>
+
+<h3>Replace usp_RefundOrder with consistent Accounts → Orders locking order</h3>
+<pre><code>USE [SalesDemo];
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[usp_RefundOrder]
+    @OrderId int
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @AccountId int,
+            @Amount decimal(12,2);
+
+    SELECT
+        @AccountId = AccountId,
+        @Amount = Amount
+    FROM dbo.Orders
+    WHERE OrderId = @OrderId;
+
+    BEGIN TRANSACTION;
+
+        UPDATE dbo.Accounts
+        SET Balance = Balance + @Amount,
+            UpdatedAt = SYSDATETIME()
+        WHERE AccountId = @AccountId;
+
+        UPDATE dbo.Orders
+        SET Status = 'Refunded',
+            UpdatedAt = SYSDATETIME()
+        WHERE OrderId = @OrderId;
+
+        INSERT dbo.Payments
+            (OrderId, Amount, Kind, CreatedAt)
+        VALUES
+            (@OrderId, -@Amount, 'Refund', SYSDATETIME());
+
+    COMMIT;
+END;
+GO</code></pre>
+
+<h3>Replace usp_PayOrder with the same Accounts → Orders locking order</h3>
+<pre><code>USE [SalesDemo];
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[usp_PayOrder]
+    @OrderId int
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @AccountId int,
+            @Amount decimal(12,2);
+
+    SELECT
+        @AccountId = AccountId,
+        @Amount = Amount
+    FROM dbo.Orders
+    WHERE OrderId = @OrderId;
+
+    BEGIN TRANSACTION;
+
+        UPDATE dbo.Accounts
+        SET Balance = Balance - @Amount,
+            UpdatedAt = SYSDATETIME()
+        WHERE AccountId = @AccountId;
+
+        -- Keep the account page's open-order total current.
+        UPDATE dbo.Accounts
+        SET OpenOrderTotal =
+        (
+            SELECT SUM(o.Amount)
+            FROM dbo.Orders AS o
+            WHERE o.AccountId = @AccountId
+              AND o.Status IN ('Open', 'Refunded')
+        )
+        WHERE AccountId = @AccountId;
+
+        INSERT dbo.Payments
+            (OrderId, Amount, Kind, CreatedAt)
+        VALUES
+            (@OrderId, @Amount, 'Payment', SYSDATETIME());
+
+        UPDATE dbo.Orders
+        SET Status = 'Paid',
+            UpdatedAt = SYSDATETIME()
+        WHERE OrderId = @OrderId;
+
+    COMMIT;
+END;
+GO</code></pre>
+
+<h3>Enable ADR and optimized locking for SalesDemo</h3>
+<pre><code>USE [SalesDemo];
+GO
+
+ALTER DATABASE [SalesDemo]
+SET ACCELERATED_DATABASE_RECOVERY = ON;
+GO
+
+ALTER DATABASE [SalesDemo]
+SET OPTIMIZED_LOCKING = ON;
+GO</code></pre>
+<p>Run this during a maintenance window with no other active connections to <code>SalesDemo</code>. ADR must be enabled before optimized locking. This is supported by the reported SQL Server 2025 Enterprise engine. Monitor the persistent version store inside <code>SalesDemo</code>. If rollback is ever required, disable optimized locking before disabling ADR.</p>
+
+<h3>Enable READ_COMMITTED_SNAPSHOT for SalesDemo</h3>
+<pre><code>USE [SalesDemo];
+GO
+
+ALTER DATABASE [SalesDemo]
+SET READ_COMMITTED_SNAPSHOT ON;
+GO</code></pre>
+<p>This implements the RCSI recommendation for the S-lock component in deadlocks #5, #6, #8 and #9. Test application behavior because READ COMMITTED readers will see the last committed version rather than wait for a writer. The change requires no other active connections to <code>SalesDemo</code> and uses version-store space.</p>
+
+<h3>Retry the refund SQL Agent step with a randomized delay after error 1205</h3>
+<pre><code>USE [SalesDemo];
+GO
+
+SET NOCOUNT ON;
+SET DEADLOCK_PRIORITY LOW;
+EXECUTE AS USER = N'svc_refunds';
+
+DECLARE @i int = 0,
+        @victims int = 0,
+        @OrderId int,
+        @stop datetime2 = DATEADD(second, 90, SYSDATETIME());
+
+WHILE @victims &lt; 4 AND SYSDATETIME() &lt; @stop
+BEGIN
+    SET @OrderId = 49998 + @i % 3;
+
+    BEGIN TRY
+        EXEC dbo.usp_RefundOrder @OrderId = @OrderId;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() &lt;&gt; 0
+            ROLLBACK;
+
+        IF ERROR_NUMBER() = 1205
+        BEGIN
+            SET @victims += 1;
+            WAITFOR DELAY '00:00:00.250';
+        END
+        ELSE
+            THROW;
+    END CATCH;
+
+    SET @i += 1;
+END;
+
+REVERT;
+PRINT CONCAT(@i, ' calls, ', @victims, ' deadlock victims');</code></pre>
+<p>This complete batch must replace the refund SQL Agent job step. The delay is intentionally short and fixed in this example; the SQL Agent step can use a randomized delay policy if the job implementation supports it. Retry only because this procedure is assumed to be safe to rerun after rollback.</p>
+
+<h3>Retry the payment SQL Agent step with a randomized delay after error 1205</h3>
+<pre><code>USE [SalesDemo];
+GO
+
+SET NOCOUNT ON;
+SET DEADLOCK_PRIORITY LOW;
+EXECUTE AS USER = N'svc_orders';
+
+DECLARE @i int = 0,
+        @victims int = 0,
+        @OrderId int,
+        @stop datetime2 = DATEADD(second, 90, SYSDATETIME());
+
+WHILE @victims &lt; 4 AND SYSDATETIME() &lt; @stop
+BEGIN
+    SET @OrderId = 49998 + @i % 3;
+
+    BEGIN TRY
+        EXEC dbo.usp_PayOrder @OrderId = @OrderId;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() &lt;&gt; 0
+            ROLLBACK;
+
+        IF ERROR_NUMBER() = 1205
+        BEGIN
+            SET @victims += 1;
+            WAITFOR DELAY '00:00:00.250';
+        END
+        ELSE
+            THROW;
+    END CATCH;
+
+    SET @i += 1;
+END;
+
+REVERT;
+PRINT CONCAT(@i, ' calls, ', @victims, ' deadlock victims');</code></pre>
+<p>This complete batch must replace the payment SQL Agent job step. The retry and priority changes reduce impact only; the procedure rewrites remain the prevention mechanism.</p>
+</section>
+
+<section id="confidence">
+<h2>Confidence and limitations</h2>
+<ul>
+<li><strong>Root-cause confidence: 99%.</strong> The same two procedures and the same two primary-key resources recur across all ten graphs, with reciprocal X waits explicitly shown.</li>
+<li><strong>Page-lock contributing-factor confidence: 97%.</strong> Four graphs explicitly show an S waiter on Orders page 8782 and an IX owner on that page, but no execution plans or existing-index definitions were supplied.</li>
+<li><strong>Index recommendation confidence: 85%.</strong> The key and filter columns are directly visible in the correlated subquery, but existing indexes, data distribution and plan shape are unavailable.</li>
+<li><strong>RCSI applicability confidence: 90%.</strong> RCSI is OFF for SalesDemo and the graph shows an S lock under READ COMMITTED. RCSI is secondary and cannot solve writer-versus-writer cycles.</li>
+<li><strong>Optimized-locking applicability confidence: 85%.</strong> SalesDemo has ADR OFF and optimized locking OFF on SQL Server 2025, and page locks are present. The setting is not a replacement for consistent transaction order.</li>
+<li>No row counts, table sizes, execution plans, index inventory, lock counts, job schedules or workload duration beyond the supplied timestamps are available. Cost, percentage improvement and deadlock-rate reduction estimates would therefore be unsupported and are not stated.</li>
+</ul>
+</section>
+
+<footer>
+<p>Based on analysis as of 2026-11-13 13:55:54 UTC</p>
+<p>Generated by AI SQL Tuner Studio v3.5.2.0 using model gpt-5.6-luna with reasoning effort medium.</p>
+<p><a href="https://aisqltuner.com">aisqltuner.com</a></p>
+</footer>
+</main>
+</div>
+</body>
+</html>

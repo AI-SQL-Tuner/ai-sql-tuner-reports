@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Query Tuning Report – VMEnt\SQL25 / ForumDemo – 0xE91FED510A31399B</title>
+<meta name="description" content="SQL Server query tuning report for ForumDemo query hash 0xE91FED510A31399B.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Query Tuning Report – VMEnt\\SQL25 / ForumDemo – 0xE91FED510A31399B",
+  "about": "SQL Server query-level performance tuning",
+  "softwareVersion": "SQL Server 2025 RTM 17.0.1000.7",
+  "keywords": ["SQL Server", "query tuning", "execution plan", "index tuning", "ForumDemo"]
+}
+</script>
+<style>
+:root {
+  --bg: #FFFFFF;
+  --sidebar: #F6F8F9;
+  --text: #111827;
+  --muted: #6B7280;
+  --teal: #0B6E6E;
+  --teal-soft: #EFF7F7;
+  --border: #D9E2E5;
+  --warning: #92400E;
+  --warning-bg: #FFF7ED;
+  --good: #166534;
+  --good-bg: #F0FDF4;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.6;
+}
+.layout { display: flex; min-height: 100vh; }
+aside {
+  width: 280px;
+  flex: 0 0 280px;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  padding: 28px 22px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+aside h2 { font-size: 1rem; margin-top: 0; color: var(--teal); }
+aside ul { list-style: none; padding: 0; margin: 0; }
+aside li { margin: 8px 0; }
+aside a { color: var(--teal); text-decoration: none; font-size: .92rem; }
+aside a:hover { text-decoration: underline; }
+main { max-width: 1180px; width: 100%; padding: 42px 52px 24px; }
+h1, h2, h3, h4 { color: var(--teal); line-height: 1.25; }
+h1 { font-size: 2.05rem; margin: 0 0 8px; }
+h2 { font-size: 1.45rem; margin-top: 42px; border-bottom: 2px solid var(--teal); padding-bottom: 7px; }
+h3 { font-size: 1.08rem; margin-top: 26px; }
+p { max-width: 1000px; }
+.subtitle { color: var(--muted); font-size: 1.08rem; margin-top: 0; }
+.meta { color: var(--muted); font-size: .92rem; }
+.card, .callout {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 18px 20px;
+  margin: 16px 0;
+  background: var(--bg);
+}
+.callout { border-left: 5px solid var(--teal); background: var(--teal-soft); }
+.warning { border-left-color: var(--warning); background: var(--warning-bg); }
+.good { border-left-color: var(--good); background: var(--good-bg); }
+table { border-collapse: collapse; width: 100%; margin: 16px 0 24px; font-size: .92rem; }
+th, td { border: 1px solid var(--border); padding: 9px 10px; vertical-align: top; text-align: left; }
+th { background: var(--teal-soft); color: var(--teal); }
+ol, ul { padding-left: 26px; }
+li { margin: 7px 0; }
+code {
+  background: var(--teal-soft);
+  color: var(--text);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: .9em;
+}
+pre {
+  background: var(--teal-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  white-space: pre;
+  line-height: 1.45;
+}
+pre code { background: transparent; padding: 0; }
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: .78rem;
+  font-weight: 700;
+  background: var(--teal-soft);
+  color: var(--teal);
+}
+.evidence { color: var(--muted); font-size: .9rem; }
+.priority { font-weight: 700; color: var(--teal); }
+footer {
+  border-top: 1px solid var(--border);
+  margin-top: 48px;
+  padding: 22px 0 8px;
+  color: var(--muted);
+  font-size: .9rem;
+}
+footer a { color: var(--teal); }
+@media (max-width: 850px) {
+  .layout { display: block; }
+  aside { width: 100%; height: auto; position: relative; border-right: 0; border-bottom: 1px solid var(--border); }
+  main { padding: 28px 20px; }
+  h1 { font-size: 1.65rem; }
+  table { display: block; overflow-x: auto; }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0B1220;
+    --sidebar: #162032;
+    --text: #F3F4F6;
+    --muted: #9CA3AF;
+    --teal: #2DD4BF;
+    --teal-soft: #0F172A;
+    --border: #334155;
+    --warning: #FDBA74;
+    --warning-bg: #271A0D;
+    --good: #86EFAC;
+    --good-bg: #0B2417;
+  }
+  body { background: #0B1220; color: #F3F4F6; }
+  aside { background: #162032; }
+  pre, code { background: #0F172A; color: #F3F4F6; }
+  th { background: #0F172A; }
+}
+</style>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+/* Priority pills are inline badges only (<span class="priority p1">P1</span>). Models also use
+   "priority" as a block modifier (<div class="card priority">); scoping to span keeps those in the body font. */
+span.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+span.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+span.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+span.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<aside aria-label="Table of contents">
+  <h2>Contents</h2>
+  <ul>
+    <li><a href="#executive-summary">Executive summary</a></li>
+    <li><a href="#scope">Scope and environment</a></li>
+    <li><a href="#plan-analysis">Execution plan analysis</a></li>
+    <li><a href="#recommendations">Prioritized recommendations</a></li>
+    <li><a href="#indexes">Index recommendations</a></li>
+    <li><a href="#statistics">Statistics and configuration</a></li>
+    <li><a href="#query-store">Actual and Query Store evidence</a></li>
+    <li><a href="#plan-comparison">Before/after plan comparison</a></li>
+    <li><a href="#scripts">Scripts</a></li>
+    <li><a href="#supporting-scripts">Supporting scripts</a></li>
+    <li><a href="#validation">Validation</a></li>
+  </ul>
+</aside>
+
+<main>
+<header>
+  <h1>Query Tuning Report – VMEnt\SQL25 / ForumDemo – 0xE91FED510A31399B</h1>
+  <p class="subtitle">Tuning goal: Query Tuner — reduce logical reads, repeated work, and elapsed time while preserving exactly the same result set and ordering.</p>
+  <p class="meta"><strong>Server:</strong> VMEnt\SQL25 &nbsp;|&nbsp; <strong>Database:</strong> ForumDemo &nbsp;|&nbsp; <strong>Engine:</strong> SQL Server 2025 RTM 17.0.1000.7, Enterprise Developer Edition &nbsp;|&nbsp; <strong>Query hash:</strong> 0xE91FED510A31399B</p>
+</header>
+
+<section id="executive-summary">
+<h2>Executive summary</h2>
+<div class="callout">
+  <strong>Primary bottleneck:</strong> the estimated plan has a correlated subquery that scans dbo.Votes repeatedly. Operator 30 has an estimated 738,571 rows per execution, reads 945,284 rows, and is estimated to execute 87 times. Its own estimated cost is 91.4432, while the parent hash join is estimated at 334.3632, or 76% of the statement cost.
+</div>
+<p>The estimated statement cost is <strong>441.17</strong>, which is <strong>critical</strong> under the supplied thresholds. These are optimizer estimates, not measurements. Query Store provides the only runtime measurements: one execution took <strong>2,955.85 ms</strong>, used <strong>9,957.31 ms CPU</strong>, performed <strong>505,869 logical reads</strong>, returned 25 rows, and ran at runtime DOP 4.</p>
+<ol>
+  <li><span class="priority">Rewrite the three correlated aggregates into set-based aggregates.</span> This is the highest-impact change because it prevents the Votes scan from being repeated for each qualifying user and prevents repeated Posts lookups.</li>
+  <li><span class="priority">Add a covering Votes index on <code>(PostId, VoteTypeId)</code>.</span> This is supported by the plan's 96.44% missing-index impact and the DMV's 99.42% average user impact.</li>
+  <li><span class="priority">Replace non-sargable year predicates with half-open datetime ranges.</span> This removes the conversion warning on Comments and makes CreationDate searchable by an index.</li>
+  <li><span class="priority">Add supporting indexes only after applying the rewrite or confirming the workload needs them.</span> Candidate indexes for Posts and Comments can reduce scans and lookups, but their benefit is less certain than the Votes index because the rewritten query changes the access pattern.</li>
+  <li><span class="priority">Do not force a plan or add a MAXDOP hint at this stage.</span> CE feedback and DOP feedback are eligible but have not yet persisted feedback. A user hint would prevent CE feedback, and a MAXDOP hint would make the query ineligible for DOP feedback.</li>
+</ol>
+<p><strong>Confidence:</strong> high for the Votes bottleneck and set-based rewrite; medium-high for the Votes index; medium for the optional Posts and Comments indexes because their final value depends on the post-rewrite plan.</p>
+</section>
+
+<section id="scope">
+<h2>Scope and environment</h2>
+<table>
+<tr><th>Item</th><th>Finding</th></tr>
+<tr><td>Statement</td><td>One SELECT statement; estimated plan compiled with CE model 160 and FULL optimization.</td></tr>
+<tr><td>Estimated cost</td><td>441.1700, critical. This is an estimate, not elapsed time.</td></tr>
+<tr><td>Estimated result</td><td>TOP (25); the underlying pre-row-goal estimate is 86.8367 rows.</td></tr>
+<tr><td>Parallelism</td><td>Estimated parallel plan, estimated available DOP 2 in the plan, server MAXDOP 4, effective database MAXDOP 4. Query Store reports runtime DOP 4.</td></tr>
+<tr><td>SET options</td><td>ANSI_NULLS ON, ANSI_PADDING ON, ANSI_WARNINGS ON, ARITHABORT OFF, CONCAT_NULL_YIELDS_NULL ON, NUMERIC_ROUNDABORT OFF, QUOTED_IDENTIFIER ON.</td></tr>
+<tr><td>Parameters and variables</td><td>None. Literal values 20000, 2 and 2020 are embedded in the statement. Parameter sensitivity and local-variable density are therefore not applicable.</td></tr>
+<tr><td>Plan cache and actual plan</td><td>No last actual plan is available. LAST_QUERY_PLAN_STATS is OFF and the query has not run since its plan left cache.</td></tr>
+</table>
+<p>The supplied index, missing-index, usage, and plan-cache statistics cover approximately 2.4 days since the latest database startup. They should not be treated as lifetime workload statistics.</p>
+</section>
+
+<section id="plan-analysis">
+<h2>Execution plan analysis</h2>
+<h3>1. Repeated Votes scan — highest estimated impact</h3>
+<p>The plan evaluates the upvote subquery once for each estimated qualifying user. The inner side scans the clustered Votes index, applies <code>VoteTypeId = 2</code>, and then hashes against qualifying answer IDs. This is the dominant estimated work.</p>
+<ul>
+  <li><strong>Operator 30:</strong> clustered index scan on <code>dbo.Votes.PK__Votes__3214EC07006169CE</code>; estimated 738,571 qualifying rows per execution, 945,284 rows read, 87 estimated executions, estimated own cost 91.4432.</li>
+  <li><strong>Operator 24:</strong> hash match estimated own cost 334.3632, 76% of statement cost. This is the costliest logical branch, not a measured elapsed-time percentage.</li>
+  <li><strong>Existing index evidence:</strong> <code>IX_Votes_VoteTypeId</code> has zero seeks and 6,400 updates in the observed period, while the clustered Votes index has 120 scans. The single-column VoteTypeId index is not solving the PostId lookup/join pattern.</li>
+</ul>
+
+<h3>2. Non-sargable date predicates</h3>
+<p>The Posts predicates use <code>YEAR(a.CreationDate) = 2020</code>, represented in the plan as <code>datepart(year, CreationDate) = 2020</code>. The Comments predicate explicitly converts the table column with <code>CONVERT(varchar(4), c.CreationDate, 112) = '2020'</code>.</p>
+<ul>
+  <li>Posts operator 11 scans 246,672 rows and estimates 11,339.9 matches. The date expression is a residual predicate rather than a range seek.</li>
+  <li>Comments operator 44 applies the conversion to the table column after clustered lookups. The plan warning is <strong>Plan-affecting conversion: Cardinality Estimate</strong>.</li>
+  <li>The conversion is on <code>dbo.Comments.CreationDate</code>, a <code>datetime NOT NULL</code> column. This is materially different from converting a literal or parameter; converting the column can prevent an efficient seek and distort estimates.</li>
+</ul>
+
+<h3>3. Repeated Posts lookup work</h3>
+<p>Each qualifying user's Posts access first seeks <code>IX_Posts_OwnerUserId</code>, estimated at 7.0746 rows per execution, and then performs clustered lookups to evaluate PostTypeId and CreationDate. Operators 20, 29 and 41 each show an estimated 613.335 executions and an estimated 0.214409 rows per execution.</p>
+<p>This is an inefficient consequence of the query's repeated subqueries and the existing index containing only <code>OwnerUserId</code>. The rewrite removes most of this repeated access. A covering Posts index should be considered only if the post-rewrite plan still scans or performs substantial lookups.</p>
+
+<h3>4. Users scan</h3>
+<p>Operator 13 scans the clustered Users index, reading all estimated 267,193 rows and estimating 415 qualifying rows after Reputation and the bitmap semi-join. The scan is not the principal bottleneck: its estimated subtree cost is 1.58349, compared with 427.914 for the upvote branch. A new Reputation index is not a priority for this statement.</p>
+
+<h3>5. Comments access and lookups</h3>
+<p>The existing <code>IX_Comments_PostId</code> is used for estimated 9.96565 rows per execution and approximately 130.719 rebinds, followed by clustered lookups with the date conversion residual predicate. Operator 44 has an estimated own cost of 4.04975. This is materially smaller than the Votes branch but should improve after replacing the year conversion and, if necessary, adding <code>(PostId, CreationDate)</code>.</p>
+
+<h3>6. Memory, spills and missing predicates</h3>
+<p>The estimated plan reports no spill warning, no missing join predicate, and no hash bailout warning. Estimated serial required memory is 2,088 KB and desired memory is 3,688 KB; granted and used memory are not known because this is an estimated plan. The TopN Sort has estimated 25 output rows and a pre-row-goal input estimate of 86.8367 rows.</p>
+</section>
+
+<section id="recommendations">
+<h2>Detailed prioritized recommendations</h2>
+<ol>
+  <li>
+    <h3>Rewrite the correlated subqueries as set-based aggregates</h3>
+    <p>Build the 2020 answer set once, aggregate votes once, and aggregate 2020 comments once. This preserves the original semantics: votes are filtered only by VoteTypeId and answer PostId, while comments are filtered by their 2020 CreationDate and answer PostId.</p>
+    <p><strong>Evidence:</strong> the current plan repeats the Votes clustered scan 87 times and estimates 505,869 logical reads in the measured Query Store execution. The rewrite directly targets this repeated work.</p>
+    <p><strong>Expected benefit:</strong> high, but the exact improvement must be measured. It should reduce repeated scans and may change the plan to hash or merge aggregates over each base table once.</p>
+  </li>
+  <li>
+    <h3>Add the Votes join-supporting index</h3>
+    <p>Create a nonclustered index on <code>dbo.Votes(PostId, VoteTypeId)</code>. It supports the join from answer IDs to votes and the VoteTypeId filter. The clustered key <code>Id</code> is implicitly present as the row locator for a nonclustered index, but it is not needed by the count.</p>
+    <p><strong>Evidence:</strong> the plan reports a missing-index candidate with equality columns PostId and VoteTypeId and 96.44% estimated statement-cost impact. The DMV reports average user impact 99.42 and 80 seeks/scans. Existing <code>IX_Votes_VoteTypeId</code> has zero seeks.</p>
+    <p><strong>Estimated size:</strong> approximately 15–30 MB after creation. Basis: 945,284 rows, approximately 4-byte PostId plus 2-byte VoteTypeId, the implicit 4-byte clustered key, row/page overhead, and PAGE compression. The input does not provide a missing-index storage estimate, so this is a range rather than a measured size.</p>
+    <p><strong>Risk:</strong> additional insert/update/delete maintenance. Votes has 6,400 updates on each listed index during the 2.4-day observation period; the new index adds one more write target and requires statistics and index maintenance. Validate before retaining it.</p>
+  </li>
+  <li>
+    <h3>Use half-open date ranges</h3>
+    <p>For a datetime year, use a predicate equivalent to <code>CreationDate &gt;= '20200101' AND CreationDate &lt; '20210101'</code>. This is a non-executable illustrative fragment outside the Scripts section.</p>
+    <p><strong>Evidence:</strong> Posts uses <code>datepart(year, CreationDate)</code>; Comments has the explicit plan-affecting conversion on the table column. Both CreationDate columns are datetime, and the Comments date column is NOT NULL.</p>
+    <p><strong>Expected benefit:</strong> improved selectivity and seekability when a suitable leading index is available; it also removes the conversion warning. It does not by itself guarantee a seek on the current indexes.</p>
+  </li>
+  <li>
+    <h3>Evaluate a Posts covering access path after the rewrite</h3>
+    <p>If the rewritten query still scans Posts or performs repeated lookups, create <code>(PostTypeId, CreationDate, OwnerUserId)</code> including <code>Id</code>. This matches the fixed post type and date range and supplies the answer owner and answer ID.</p>
+    <p><strong>Evidence:</strong> the current plan scans 246,672 Posts rows and the existing owner-only index estimates 7.0746 rows per user followed by clustered lookups. The plan already uses a user-created statistic named <code>ST_Posts_PostType_Creation_Owner</code>, but that statistic is not an index.</p>
+    <p><strong>Estimated size:</strong> approximately 20–40 MB. Basis: 246,672 rows, key widths of approximately 2 bytes for smallint PostTypeId, 8 bytes for datetime CreationDate and 4 bytes for OwnerUserId, included 4-byte Id, clustering-key overhead, and PAGE compression. Exact column metadata and candidate size are not supplied, so this is a range.</p>
+    <p><strong>Risk:</strong> Posts has 19,200 clustered-index updates in the observed period; the new index will add write and maintenance work. Because the existing <code>IX_Posts_OwnerUserId</code> has 16,120 seeks and only 3.3 MB size, do not drop or replace it based on this query alone.</p>
+  </li>
+  <li>
+    <h3>Evaluate a Comments date-covering index after the rewrite</h3>
+    <p>If the post-rewrite plan still performs many lookups, create <code>(PostId, CreationDate)</code>. This supports answer-to-comment joins and the 2020 date range without converting the Comments column.</p>
+    <p><strong>Evidence:</strong> the existing <code>IX_Comments_PostId</code> has 32,000 seeks but operator 44 still performs clustered lookups with the date conversion. Comments has 365,839 rows, 4,800 updates in the observed period, and the existing index is only 5.1 MB.</p>
+    <p><strong>Estimated size:</strong> approximately 8–18 MB. Basis: 365,839 rows, 4-byte PostId, 8-byte datetime CreationDate, implicit clustered key, row/page overhead, and PAGE compression. Exact candidate size is not reported.</p>
+    <p><strong>Risk:</strong> additional maintenance for 4,800 observed Comments updates. Retain the existing PostId index unless broader usage confirms that the new composite index makes it redundant; this report does not contain enough workload evidence to recommend dropping it.</p>
+  </li>
+</ol>
+</section>
+
+<section id="indexes">
+<h2>Index recommendations and storage impact</h2>
+<table>
+<tr><th>Index</th><th>Purpose</th><th>Estimated size</th><th>Evidence and impact</th><th>Write/maintenance risk</th></tr>
+<tr><td><code>dbo.Votes(PostId, VoteTypeId)</code></td><td>Join answer PostIds to VoteTypeId 2 votes.</td><td>15–30 MB estimated; 945,284 rows; PAGE-compressed assumption.</td><td>Plan impact 96.44%; DMV average user impact 99.42; 80 DMV seeks/scans.</td><td>Votes indexes show 6,400 updates during the observation period; adds one write target.</td></tr>
+<tr><td><code>dbo.Posts(PostTypeId, CreationDate, OwnerUserId) INCLUDE (Id)</code></td><td>Range-filter and cover 2020 answers.</td><td>20–40 MB estimated; 246,672 rows; PAGE-compressed assumption.</td><td>Current scan reads 246,672 rows; owner-only index causes lookup work.</td><td>Posts clustered index shows 19,200 updates; apply only if post-rewrite plan validates the benefit.</td></tr>
+<tr><td><code>dbo.Comments(PostId, CreationDate)</code></td><td>Join comments by PostId and seek the date range.</td><td>8–18 MB estimated; 365,839 rows; PAGE-compressed assumption.</td><td>Existing PostId index has 32,000 seeks but date filtering occurs in clustered lookups.</td><td>Comments indexes show 4,800 updates; do not drop the existing index without broader evidence.</td></tr>
+</table>
+<p><strong>Estimated net storage change:</strong> approximately 43–88 MB if all three indexes are created. This is an estimate based on supplied row counts and the stated key-width/compression assumptions; it is not a measured storage result. No index drop is recommended, so no storage reclamation is claimed.</p>
+</section>
+
+<section id="statistics">
+<h2>Statistics and configuration findings</h2>
+<div class="callout warning">
+  <strong>Automatic statistics are disabled.</strong> The database metadata reports AUTO_CREATE_STATISTICS, AUTO_UPDATE_STATISTICS and AUTO_UPDATE_STATISTICS_ASYNC disabled. This is a configuration risk because new or changed data can remain unrepresented in statistics.
+</div>
+<p>The plan's statistics do not show evidence that a refresh alone caused the bottleneck. Statistics used by the plan were generally updated on 2026-10-30. The relevant modifications are 1.4% of Votes rows, 2.7% of Comments rows and 0% of Posts and Users rows. The sample rates are 71.3% for Votes, 16.0% for Comments and 37.5% for Posts. Low sample rate alone is not sufficient evidence of a bad estimate.</p>
+<ul>
+  <li><strong>Votes:</strong> <code>IX_Votes_VoteTypeId</code> has 12,800 modifications against 932,484 rows, or 1.4%, sampled 71.3%. No update is prioritized solely from these figures.</li>
+  <li><strong>Comments:</strong> <code>ST_Comments_Post_Creation</code> and <code>IX_Comments_PostId</code> have 9,600 modifications against 356,239 rows, or 2.7%, sampled 16.0%. The plan's explicit conversion is the stronger issue; refresh statistics after the rewrite/index changes if estimates remain inaccurate.</li>
+  <li><strong>Posts:</strong> plan-used statistics have 0 modifications since update. The scan is caused primarily by predicate shape and access-path choice, not demonstrably stale statistics.</li>
+</ul>
+<p>CE feedback is available because CE_FEEDBACK is ON, compatibility level is 160, and Query Store is READ_WRITE. CE feedback for expressions is ON. However, query_id 50 has no CE feedback row and no Query Store hint; no CE adjustment has yet been reported. DOP feedback is also ON and eligible, but no persisted DOP feedback exists.</p>
+<p>The estimated plan is parallel because its cost is far above the cost threshold of 5 and no serial restriction is reported. It uses parallel operators with effective MAXDOP 4. This is not a T-SQL UDF restriction, MAXDOP 1 restriction, or nonparallelizable intrinsic-function restriction. Query Store measured runtime DOP was 4, matching the effective limit.</p>
+</section>
+
+<section id="query-store">
+<h2>Actual and Query Store evidence</h2>
+<div class="card">
+  <p><span class="badge">Measured</span> Query Store query_id 50, context_settings_id 1, plan_id 48:</p>
+  <ul>
+    <li>Executions: 1</li>
+    <li>Average duration: 2,955.85 ms</li>
+    <li>Average CPU: 9,957.31 ms</li>
+    <li>Logical reads: 505,869</li>
+    <li>Rows returned: 25</li>
+    <li>Runtime DOP: 4</li>
+    <li>Query Store plan hash: 0x3AFBC4216AD80719, the same shape as the estimated plan</li>
+  </ul>
+</div>
+<p>There is no last actual plan section with operator actuals, so no estimate-divergence starting operator can be identified and no actual-versus-estimated row error can be calculated. The available measured Query Store plan has the same shape as the estimated plan, confirming that the measured execution used the same plan shape, but not proving that every operator's actual row count matched its estimate.</p>
+<p>Query Store has only one SET-options context and one plan. The context matches the Studio estimated-plan SET options, so there is no evidence here that the application received a different SET-options plan.</p>
+<p>Do not add a forced plan or query hint as the first response. A user query hint or user Query Store hint would make CE feedback ineligible. A MAXDOP hint would also make DOP feedback ineligible. Neither feature has currently persisted a correction, so structural query and index changes are preferable.</p>
+</section>
+
+<section id="plan-comparison">
+<h2>Before/after plan comparison</h2>
+<table>
+<tr><th>Area</th><th>Current estimated/measured evidence</th><th>Expected optimized shape</th></tr>
+<tr><td>Answer discovery</td><td>Posts clustered scan reads 246,672 estimated rows; repeated owner seeks and lookups occur for the correlated subqueries.</td><td>One range-filtered AnswerPosts input, preferably using the optional Posts composite index if the optimizer selects it.</td></tr>
+<tr><td>Upvotes</td><td>Votes clustered scan estimated 738,571 rows per execution, 87 executions; parent hash branch estimated cost 427.914.</td><td>One aggregate over Votes joined to AnswerPosts, with a seek or efficient ordered/hash access through <code>(PostId, VoteTypeId)</code>.</td></tr>
+<tr><td>Comments</td><td>PostId seeks feed clustered lookups; CreationDate is converted in the residual predicate.</td><td>Half-open datetime range; optional <code>(PostId, CreationDate)</code> access path avoids the column conversion and lookup residual.</td></tr>
+<tr><td>Runtime</td><td>Query Store measured 2,955.85 ms, 9,957.31 ms CPU and 505,869 logical reads for one execution.</td><td>Expected to reduce repeated work, but no improvement percentage is asserted until the rewritten query is executed with the same workload.</td></tr>
+</table>
+<p>The optimized plan cannot be displayed as an actual plan because the input contains no post-change execution plan. The comparison above is a structural expectation, not a measured result.</p>
+</section>
+
+<section id="scripts">
+<h2>Scripts</h2>
+
+<h3>Create the high-priority Votes covering index</h3>
+<pre><code>USE [ForumDemo];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Votes')
+      AND name = N'IX_Votes_PostId_VoteTypeId'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Votes_PostId_VoteTypeId]
+    ON [dbo].[Votes] ([PostId], [VoteTypeId])
+    WITH (DATA_COMPRESSION = PAGE);
+END;
+GO</code></pre>
+
+<h3>Create the optional Posts access index for the rewritten query</h3>
+<pre><code>USE [ForumDemo];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Posts')
+      AND name = N'IX_Posts_PostType_Creation_Owner'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Posts_PostType_Creation_Owner]
+    ON [dbo].[Posts] ([PostTypeId], [CreationDate], [OwnerUserId])
+    INCLUDE ([Id])
+    WITH (DATA_COMPRESSION = PAGE);
+END;
+GO</code></pre>
+
+<h3>Create the optional Comments date-covering index</h3>
+<pre><code>USE [ForumDemo];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Comments')
+      AND name = N'IX_Comments_PostId_CreationDate'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Comments_PostId_CreationDate]
+    ON [dbo].[Comments] ([PostId], [CreationDate])
+    WITH (DATA_COMPRESSION = PAGE);
+END;
+GO</code></pre>
+
+<h3>Rewritten query — set-based answer, vote and comment aggregates</h3>
+<pre><code>USE [ForumDemo];
+GO
+
+WITH AnswerPosts AS
+(
+    SELECT
+        a.Id,
+        a.OwnerUserId
+    FROM dbo.Posts AS a
+    WHERE a.PostTypeId = 2
+      AND a.CreationDate &gt;= '20200101'
+      AND a.CreationDate &lt; '20210101'
+),
+AnswerCounts AS
+(
+    SELECT
+        ap.OwnerUserId,
+        COUNT(*) AS Answers2020
+    FROM AnswerPosts AS ap
+    GROUP BY ap.OwnerUserId
+),
+UpvoteCounts AS
+(
+    SELECT
+        ap.OwnerUserId,
+        COUNT(*) AS Upvotes2020
+    FROM AnswerPosts AS ap
+    INNER JOIN dbo.Votes AS v
+        ON v.PostId = ap.Id
+       AND v.VoteTypeId = 2
+    GROUP BY ap.OwnerUserId
+),
+CommentCounts AS
+(
+    SELECT
+        ap.OwnerUserId,
+        COUNT(*) AS Comments2020
+    FROM AnswerPosts AS ap
+    INNER JOIN dbo.Comments AS c
+        ON c.PostId = ap.Id
+       AND c.CreationDate &gt;= '20200101'
+       AND c.CreationDate &lt; '20210101'
+    GROUP BY ap.OwnerUserId
+)
+SELECT TOP (25)
+    u.Id,
+    u.DisplayName,
+    u.Reputation,
+    ac.Answers2020,
+    ISNULL(uc.Upvotes2020, 0) AS Upvotes2020,
+    ISNULL(cc.Comments2020, 0) AS Comments2020
+FROM dbo.Users AS u
+INNER JOIN AnswerCounts AS ac
+    ON ac.OwnerUserId = u.Id
+LEFT JOIN UpvoteCounts AS uc
+    ON uc.OwnerUserId = u.Id
+LEFT JOIN CommentCounts AS cc
+    ON cc.OwnerUserId = u.Id
+WHERE u.Reputation &gt;= 20000
+ORDER BY
+    ISNULL(uc.Upvotes2020, 0) DESC,
+    ac.Answers2020 DESC,
+    u.Id;
+GO</code></pre>
+</section>
+
+<section id="supporting-scripts">
+<h2>Supporting scripts (not part of the change)</h2>
+<p>No supporting executable scripts are included. Validation should be performed with the application's existing parameterization and SET options, using the standard measurement process described below.</p>
+</section>
+
+<section id="validation">
+<h2>Validation and rollout guidance</h2>
+<ul>
+  <li>Capture the original query's result count and a deterministic checksum of all returned columns before applying changes.</li>
+  <li>Run the original and rewritten query with the same SET options as the application: especially ANSI_NULLS, ANSI_WARNINGS, QUOTED_IDENTIFIER, ARITHABORT and CONCAT_NULL_YIELDS_NULL.</li>
+  <li>Use <code>SET STATISTICS IO ON</code> and <code>SET STATISTICS TIME ON</code> during controlled testing. Compare logical reads, CPU time, elapsed time, returned-row count and result checksum.</li>
+  <li>Apply the high-priority Votes index first, then test the rewritten query. Apply the Posts and Comments indexes only if the post-change plan and measurements show that their scans or lookups remain material.</li>
+  <li>Inspect the actual execution plan after each change for spills, residual predicates, scan counts, lookup counts and actual-to-estimated rows. The current report cannot assess those actual operator values because the last actual plan is unavailable.</li>
+  <li>Allow Query Store to observe repeated executions before considering plan management. Avoid forcing a plan or adding MAXDOP hints while CE feedback and DOP feedback remain eligible.</li>
+</ul>
+</section>
+
+<footer>
+  <p>Based on analysis as of 2026-11-13 13:49:12 UTC</p>
+  <p>Generated by AI SQL Tuner Studio v3.5.2.0 using model gpt-5.6-luna with reasoning effort medium.</p>
+  <p><a href="https://aisqltuner.com">aisqltuner.com</a></p>
+</footer>
+</main>
+</div>
+</body>
+</html>
