@@ -116,4 +116,34 @@
     <lastmod>2026-11-09</lastmod>
   </url>
 
+  <url>
+    <loc>https://reports.aisqltuner.com/server-health-report-vment-sql25-2026-11-13v2.html</loc>
+    <lastmod>2026-11-13</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/sql-server-code-review-vment-sql25-retailops-2026-11-13.html</loc>
+    <lastmod>2026-11-13</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/deadlock-analysis-vment-sql25-2026-11-13.html</loc>
+    <lastmod>2026-11-13</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/locking-and-blocking-analysis-vment-sql25-shopdemo-2026-11-13-13-59-59-utc.html</loc>
+    <lastmod>2026-11-13</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/query-tuning-report-vment-sql25-forumdemo-0xe91fed510a31399b.html</loc>
+    <lastmod>2026-11-13</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/index-tuning-report-vment-sql25-forumdemo-2026-11-13.html</loc>
+    <lastmod>2026-11-13</lastmod>
+  </url>
+
 </urlset>
