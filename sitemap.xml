@@ -3,12 +3,12 @@
 
   <url>
     <loc>https://reports.aisqltuner.com/</loc>
-    <lastmod>2026-10-03</lastmod>
+    <lastmod>2026-11-20</lastmod>
   </url>
 
   <url>
     <loc>https://reports.aisqltuner.com/index.html</loc>
-    <lastmod>2026-10-03</lastmod>
+    <lastmod>2026-11-20</lastmod>
   </url>
 
   <url>
@@ -119,6 +119,11 @@
   <url>
     <loc>https://reports.aisqltuner.com/server-health-report-vment-sql25-2026-11-13v2.html</loc>
     <lastmod>2026-11-13</lastmod>
+  </url>
+
+  <url>
+    <loc>https://reports.aisqltuner.com/sql-server-tuning-assessment-vment-sql25-2026-11-19.html</loc>
+    <lastmod>2026-11-19</lastmod>
   </url>
 
   <url>

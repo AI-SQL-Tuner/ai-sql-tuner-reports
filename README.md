@@ -39,6 +39,7 @@ Curated sample reports currently available on the main site:
 - SQL Server Health Check Report - RockyPC - 2026-09-27: https://reports.aisqltuner.com/server-health-report-rockypc-2026-09-27.html
 - SQL Server Health Check Report - RockyPC - 2026-10-16: https://reports.aisqltuner.com/informe-de-salud-del-servidor-rockypc-2026-10-16.html
 - SQL Server Health Check Report - VMENT / SQL25 - 2026-11-13 v2: https://reports.aisqltuner.com/server-health-report-vment-sql25-2026-11-13v2.html
+- SQL Server Tuning Assessment - VMENT / SQL25 - 2026-11-19: https://reports.aisqltuner.com/sql-server-tuning-assessment-vment-sql25-2026-11-19.html
 - SQL Server Code Review - RockyPC / SQLStorm - 2026-09-20 (Luna): https://reports.aisqltuner.com/sql-server-code-review-rockypc-sqlstorm-2026-09-20-luna.html
 - SQL Server Code Review - RockyPC / SQLStorm - 2026-09-27 17:05:17 UTC: https://reports.aisqltuner.com/code-review-rockypc-sqlstorm-2026-09-27-17-05-17-utc.html
 - SQL Server Code Review - RockyPC / SQLStorm (Highest Impact) - 2026-10-13: https://reports.aisqltuner.com/code-review-rockypc-sqlstorm-highest-impact-2026-10-13-21-14-47-utc.html

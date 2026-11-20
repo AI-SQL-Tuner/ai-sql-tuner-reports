@@ -1,6 +1,6 @@
 # AI SQL Tuner Sample Reports (Full)
 
-> Last updated: 2026-10-03
+> Last updated: 2026-11-20
 > Base URL: https://reports.aisqltuner.com/
 > Scope: Public sample reports for AI-assisted SQL Server diagnostics and tuning.
 
@@ -50,6 +50,15 @@ Target audience:
 - Summary:
   - Captures a more recent health snapshot using the same reporting format.
   - Good for comparing a current-state posture to the earlier 2026-09-20 run.
+
+### 2.1) SQL Server Tuning Assessment (Comprehensive Assessment)
+
+- URL: https://reports.aisqltuner.com/sql-server-tuning-assessment-vment-sql25-2026-11-19.html
+- Type: Comprehensive server tuning assessment
+- Workload context: VMENT / SQL25
+- Summary:
+  - Provides a broader assessment that consolidates server health and tuning signals into a single report.
+  - Useful for full-environment review and prioritizing follow-up remediation across configuration and workload findings.
 
 ### 3) SQL Code Review Report
 

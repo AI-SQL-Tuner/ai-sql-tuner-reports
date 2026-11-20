@@ -1,0 +1,1504 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL Server Tuning Assessment – VMEnt\SQL25 – 2026-11-19</title>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Report","headline":"SQL Server Tuning Assessment – VMEnt\\SQL25 – 2026-11-19","datePublished":"2026-11-19","about":{"@type":"SoftwareApplication","name":"SQL Server 2025"}}
+</script>
+<style>
+:root{color-scheme:light dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#FFFFFF;color:#111827;font:16px/1.58 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:#0B6E6E}
+a:hover{text-decoration-thickness:2px}
+.layout{display:grid;grid-template-columns:15rem minmax(0,1fr);max-width:1600px;margin:auto}
+nav{background:#F6F8F9;padding:2rem 1.2rem;position:sticky;top:0;height:100vh;overflow:auto}
+nav strong{display:block;color:#0B6E6E;margin-bottom:1rem}
+nav a{display:block;padding:.32rem 0;text-decoration:none}
+main{padding:2.5rem clamp(1.2rem,4vw,4rem);max-width:1100px;min-width:0}
+h1,h2,h3{color:#0B6E6E;line-height:1.25}
+h1{font-size:2rem;margin:.2rem 0}
+h2{font-size:1.45rem;margin:2.6rem 0 .7rem;border-bottom:1px solid #d8e8e8;padding-bottom:.4rem}
+h3{font-size:1.08rem;margin:1.6rem 0 .55rem}
+p,li{max-width:85ch}
+li{margin:.35rem 0}
+.subtitle,.meta,figcaption,footer{color:#6B7280}
+.subtitle{font-size:1.1rem;margin:.5rem 0}
+.meta{margin-bottom:2rem}
+.lead{font-size:1.1rem}
+table{border-collapse:collapse;width:100%;font-size:.92rem;margin:1rem 0 1.5rem}
+th,td{text-align:left;vertical-align:top;border-bottom:1px solid #d8e8e8;padding:.68rem .5rem}
+th{color:#0B6E6E}
+.table-wrap{overflow-x:auto}
+pre{background:#EFF7F7;color:#111827;border:1px solid #d8e8e8;border-radius:6px;padding:1rem;overflow:auto;line-height:1.45;font-size:.83rem}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+:not(pre)>code{background:#EFF7F7;padding:.1em .3em;border-radius:3px}
+details{border-left:3px solid #0B6E6E;padding:.2rem 1rem;margin:1rem 0}
+summary{color:#0B6E6E;cursor:pointer;font-weight:600}
+figure{margin:1.4rem 0}
+svg{display:block;max-width:100%;height:auto}
+footer{border-top:1px solid #d8e8e8;margin-top:3rem;padding:1.5rem clamp(1.2rem,4vw,4rem) 2rem}
+@media(max-width:850px){.layout{display:block}nav{position:static;height:auto;padding:1rem 1.2rem}nav a{display:inline-block;margin-right:1rem}main{padding:1.3rem}}
+@media(prefers-color-scheme:dark){
+ body{background:#0B1220;color:#F3F4F6}
+ nav{background:#162032}
+ h1,h2,h3,th,nav strong,summary,a{color:#2DD4BF}
+ .subtitle,.meta,figcaption,footer{color:#9CA3AF}
+ pre,:not(pre)>code{background:#0F172A;color:#F3F4F6}
+ pre,th,td,h2,footer{border-color:#334155}
+ details{border-color:#2DD4BF}
+}
+</style>
+<style data-source="report-theme">:root {
+  --bg: #F6F5F1; --surface: #EDEBE4; --ink: #11161C; --ink-2: #2A3340;
+  --ink-3: #5B6776; --accent: #0B6E6E; --accent-2: #14A5A5;
+  --success: #4F8A52; --warning: #C6892B; --danger: #B54848;
+  --rule: #D9D6CD; --code-bg: #EDEBE4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E1116; --surface: #161B22; --ink: #E6E9EE; --ink-2: #C2C8D1;
+    --ink-3: #8A95A4; --accent: #14A5A5; --accent-2: #1FC4C4;
+    --success: #5BBE60; --warning: #E0A33A; --danger: #E07A7A;
+    --rule: #232A33; --code-bg: #161B22;
+  }
+}
+body { margin:0; padding:32px; font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.55; font-size:14px; }
+h1,h2,h3,h4 { color:var(--ink); letter-spacing:-0.01em; }
+h1 { margin:0 0 4px; font-size:26px; }
+h2 { margin:32px 0 8px; padding-bottom:6px; font-size:18px; border-bottom:1px solid var(--rule); }
+h3 { margin:20px 0 6px; font-size:15px; color:var(--ink-2); }
+p,li { color:var(--ink-2); }
+a { color:var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+code,pre { font-family:Consolas,"Cascadia Mono",monospace; background:var(--code-bg); color:var(--ink); border:1px solid var(--rule); border-radius:4px; }
+code { padding:1px 5px; font-size:12.5px; }
+pre { padding:12px 14px; overflow-x:auto; font-size:12.5px; white-space:pre; }
+table { width:100%; margin:12px 0; border-collapse:collapse; }
+th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+th { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); background:var(--surface); }
+.callout { margin:12px 0; padding:12px 14px; border-left:3px solid var(--accent); border-radius:6px; background:var(--surface); }
+.callout.warning { border-left-color:var(--warning); }
+.callout.danger  { border-left-color:var(--danger); }
+.callout.success { border-left-color:var(--success); }
+/* Priority pills are inline badges only (<span class="priority p1">P1</span>). Models also use
+   "priority" as a block modifier (<div class="card priority">); scoping to span keeps those in the body font. */
+span.priority { padding:2px 7px; border-radius:3px; font-family:Consolas,monospace; font-size:11px; font-weight:700; }
+span.priority.p1 { background:rgba(181,72,72,0.18); color:var(--danger); }
+span.priority.p2 { background:rgba(198,137,43,0.18); color:var(--warning); }
+span.priority.p3 { background:var(--surface); color:var(--ink-3); }
+.meta { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 24px; }
+.meta .pill { padding:2px 8px; border:1px solid var(--rule); border-radius:999px; background:var(--surface); color:var(--ink-3); font-family:Consolas,monospace; font-size:11px; }
+</style></head>
+<body>
+<div class="layout">
+<nav aria-label="Table of contents">
+<strong>Contents</strong>
+<a href="#executive-summary">Executive summary</a>
+<a href="#action-plan">Detailed prioritized recommendations</a>
+<a href="#server-health">Server health</a>
+<a href="#locking">Locking and blocking</a>
+<a href="#deadlocks">Deadlocks</a>
+<a href="#retail-indexes">RetailOps indexes</a>
+<a href="#retail-code">RetailOps code</a>
+<a href="#forum-indexes">ForumDemo indexes</a>
+<a href="#forum-code">ForumDemo code</a>
+<a href="#sales-indexes">SalesDemo indexes</a>
+<a href="#sales-code">SalesDemo code</a>
+<a href="#shop-code">ShopDemo code</a>
+<a href="#limitations">Limitations</a>
+<a href="#scripts">Scripts</a>
+</nav>
+<main>
+<header>
+<h1>SQL Server Tuning Assessment – VMEnt\SQL25 – 2026-11-19</h1>
+<p class="subtitle">Tuning goal: Improve server reliability, remove blocking and deadlocks, and speed up the busiest database work.</p>
+<p class="meta">Server: VMEnt\SQL25 (connection: VMEnt,51433) · SQL Server 2025, build 17.0.1000.7 · Enterprise Developer Edition · Databases examined in depth: RetailOps, ForumDemo, SalesDemo and ShopDemo.</p>
+</header>
+
+<section id="executive-summary">
+<h2>Executive summary</h2>
+<p class="lead"><strong>Overall health: Needs attention.</strong> The server had no observed memory pressure, but missing recovery checks, an active blocking chain and repeated deadlocks create substantial reliability risk.</p>
+<ol>
+<li>Clear the ShopDemo blocking chain and remove the deliberate pause inside its open transaction so customer and order work can proceed.</li>
+<li>Establish and test backups, then check every listed database for damage so a failure can be recovered safely.</li>
+<li>Correct the two SalesDemo payment procedures that access the same tables in conflicting order, reducing recurring transaction failures.</li>
+<li>Update the server to an approved current build after testing, reducing avoidable stability and security risk.</li>
+<li>Correct the busiest inefficient lookups and inaccurate ForumDemo calculations to improve speed and prevent wrong results.</li>
+</ol>
+<p>Checks covered server resources and maintenance, active blocking, captured deadlocks, database indexes and selected procedure definitions.</p>
+</section>
+
+<section id="action-plan">
+<h2>Detailed prioritized recommendations</h2>
+<p>Carry out operational changes under the normal change process. Script headings below identify the matching change batches; “None” means the available information does not support an executable change batch.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Priority</th><th>Action</th><th>Why it matters</th><th>Database</th><th>Effort</th><th>Risk</th><th>Script heading</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Stop the current blocking job through controlled job handling; remove its deliberate pause while a transaction is open.</td><td>Several waiting jobs were delayed for about five minutes. Confirm rollback and intended job behavior before changing it.</td><td>ShopDemo</td><td>Medium</td><td>High</td><td>None</td></tr>
+<tr><td>2</td><td>Create, schedule and restore-test missing backups, including system databases; set a log-backup schedule where required.</td><td>Many databases lack a recorded full backup, putting recovery at risk.</td><td>Instance-wide</td><td>Medium</td><td>High</td><td>None</td></tr>
+<tr><td>3</td><td>Check all listed databases for damage and schedule recurring checks.</td><td>No completed check was recorded for the listed user databases.</td><td>Instance-wide</td><td>Medium</td><td>Low</td><td>Check listed databases for damage</td></tr>
+<tr><td>4</td><td>Rework both payment procedures to touch accounts before changing orders; test business and failure behavior before deployment.</td><td>Five captured deadlocks show the same conflicting sequence.</td><td>SalesDemo</td><td>High</td><td>High</td><td>Align payment table access; Align refund table access</td></tr>
+<tr><td>5</td><td>Make the shipping procedure roll back cleanly when an update fails.</td><td>An error can otherwise leave locks in place and extend the ShopDemo queue.</td><td>ShopDemo</td><td>Low</td><td>Medium</td><td>Make shipping failures release the transaction</td></tr>
+<tr><td>6</td><td>Test and install a current approved SQL Server update.</td><td>The installed build is the initial release; later servicing was identified.</td><td>Instance-wide</td><td>Medium</td><td>Medium</td><td>None</td></tr>
+<tr><td>7</td><td>Correct two procedures that multiply counts or match the wrong person to a post.</td><td>They can return wrong business figures. Confirm intended output before replacement.</td><td>ForumDemo</td><td>Medium</td><td>Medium</td><td>Correct user and post counts; Correct post counts and badge selection</td></tr>
+<tr><td>8</td><td>Remove the artificial pause between updates in one procedure.</td><td>It holds locks longer than needed.</td><td>ForumDemo</td><td>Low</td><td>Medium</td><td>Remove the pause between table updates</td></tr>
+<tr><td>9</td><td>Restore automatic information updates used to choose efficient searches.</td><td>Disabled settings in three databases can lead to slower choices as data changes.</td><td>ForumDemo, SQLStormOltp, tpch10</td><td>Low</td><td>Low</td><td>Restore automatic search information</td></tr>
+<tr><td>10</td><td>Add one account-and-status search path for the repeated order-total calculation.</td><td>It can replace repeated broad reads, but adds work to frequent order changes.</td><td>SalesDemo</td><td>Low</td><td>Medium</td><td>Speed up account order totals</td></tr>
+<tr><td>11</td><td>Add a targeted search path for customer balances.</td><td>The current balance calculation reads far more orders than it needs; it is not the cause of the leading blocker.</td><td>ShopDemo</td><td>Low</td><td>Medium</td><td>Speed up customer balance reads</td></tr>
+<tr><td>12</td><td>Correct the phone-search parameter type and simplify the email comparison.</td><td>Existing search paths can then serve two busy lookups more efficiently.</td><td>RetailOps</td><td>Medium</td><td>Medium</td><td>Match the phone search to stored values; Simplify the email search</td></tr>
+<tr><td>13</td><td>Search daily sales by a start and end date instead of calculating a date for each order.</td><td>This allows the existing date search path to be used.</td><td>RetailOps</td><td>Low</td><td>Low</td><td>Speed up the daily sales date search</td></tr>
+<tr><td>14</td><td>Replace repeated per-customer loyalty calculations with one grouped update.</td><td>It avoids extensive repeated reads; schedule it away from busy updates.</td><td>RetailOps</td><td>Medium</td><td>Medium</td><td>Calculate loyalty tiers together</td></tr>
+<tr><td>15</td><td>Protect simultaneous additions of the same cart item.</td><td>The current sequence can produce a duplicate-key error under concurrent calls; this is possible, but was not seen during the assessment.</td><td>RetailOps</td><td>Low</td><td>Medium</td><td>Protect simultaneous cart additions</td></tr>
+<tr><td>16</td><td>Check existing relationships and restore trust only where the data is valid.</td><td>Untrusted relationships can prevent efficient searches; violations must be handled rather than hidden.</td><td>ForumDemo</td><td>Medium</td><td>Medium</td><td>Validate and restore trusted relationships</td></tr>
+<tr><td>17</td><td>Add a search path for counting votes on a post.</td><td>A repeatedly slow count currently reads many entries; extra index maintenance is the trade-off.</td><td>ForumDemo</td><td>Low</td><td>Medium</td><td>Speed up votes by post</td></tr>
+<tr><td>18</td><td>Add a targeted search path for overdue open orders.</td><td>It can reduce the work of the late-fee update, but qualifying rows still need updating.</td><td>ShopDemo</td><td>Low</td><td>Medium</td><td>Speed up overdue-order updates</td></tr>
+<tr><td>19</td><td>Use one captured time when placing an order.</td><td>Order and due dates then come from the same instant, including around midnight.</td><td>ShopDemo</td><td>Low</td><td>Low</td><td>Use one time when placing an order</td></tr>
+<tr><td>20</td><td>Set fixed transaction-log growth amounts after checking available disk space.</td><td>Growth time becomes more predictable; the chosen amounts are starting points, not measured demand.</td><td>ForumDemo, IndexTunerChallenge, SQLStormOltp, tpch10</td><td>Low</td><td>Low</td><td>Make transaction-log growth predictable</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="server-health">
+<h2>Server health</h2>
+<p><strong>Recovery readiness is the main server-wide concern.</strong> No completed damage check was recorded for the listed user databases. Ten listed databases, including system databases, have no recorded full backup; several databases configured for point-in-time recovery have no recorded log backup. Update the backup policy, verify restores, run the checks below and install a tested current build. Memory was checked over about an hour and showed no pressure. Network connections observed across the network were encrypted.</p>
+<ul>
+<li>Put full and, where required, log backups on a tested schedule; include the system databases.</li>
+<li>Run the database checks during a suitable maintenance window, investigate any errors, then schedule repeat checks.</li>
+<li>Test and apply the approved server update.</li>
+<li>Check disk capacity and use predictable transaction-log growth for the four identified databases.</li>
+</ul>
+<details><summary>Technical details</summary><ul>
+<li>Installed build: 17.0.1000.7, SQL Server 2025 Enterprise Developer. The currency check identified build 17.0.5065.9 as CU11; confirm the currently approved build before patching.</li>
+<li>No recorded full backup: master, model, msdb, BenchDeploy, IndexTunerChallenge, IndexTunerChallenge_bench_challenge, TunerBench, RubricArchive, SQLStormOltp_bench_sqlstorm-oltp and tpch10_bench_tpch10-realistic.</li>
+<li>BenchDeploy, TunerBench and RubricArchive use FULL recovery without recorded log backups. Backup history does not establish whether external backup systems hold usable copies.</li>
+<li>The server-health compilation counters are not used as a workload finding: the assessment’s own data collection was excluded.</li>
+</ul></details>
+</section>
+
+<section id="locking">
+<h2>Locking and blocking</h2>
+<p><strong>A ShopDemo job deliberately paused while keeping a transaction open, and five other jobs were waiting.</strong> The longest observed wait was about five minutes. The paused job held up shipping; the waiting shipping work then held up customer and order reads. End the current chain through controlled job handling, then remove the pause from inside the transaction. Improving balance reads and making shipping failures release their transaction address secondary exposure, not the original pause.</p>
+<ul>
+<li>Confirm the billing job’s rollback and retry behavior, then stop the current blocker through normal job control.</li>
+<li>Change the job step so any required delay occurs only after its transaction has finished.</li>
+<li>Deploy the shipping failure-handling change and the targeted balance search path after testing.</li>
+</ul>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 190" role="img" aria-labelledby="blocking-title blocking-desc">
+<title id="blocking-title">Observed ShopDemo blocking chain</title>
+<desc id="blocking-desc">A paused billing job blocks shipping. Shipping delays order placement, a balance read and a customer lookup; that lookup delays another customer lookup. The waiting work had been delayed for about five minutes.</desc>
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9" fill="#0B6E6E"/></marker></defs>
+<g fill="none" stroke="#0B6E6E" stroke-width="2" marker-end="url(#arrow)">
+<path d="M165 87H205"/><path d="M365 87H420"/><path d="M500 112V145"/><path d="M365 83L420 37"/>
+</g>
+<g fill="#EFF7F7" stroke="#0B6E6E"><rect x="5" y="55" width="160" height="65" rx="7"/><rect x="205" y="55" width="160" height="65" rx="7"/><rect x="420" y="55" width="265" height="65" rx="7"/><rect x="420" y="145" width="265" height="38" rx="7"/><rect x="420" y="5" width="265" height="38" rx="7"/></g>
+<g fill="#111827" font-family="system-ui,sans-serif" font-size="13"><text x="17" y="79">Billing job pauses</text><text x="17" y="100">inside transaction</text><text x="217" y="79">Shipping waits</text><text x="217" y="100">and holds customer work</text><text x="432" y="79">Customer lookups</text><text x="432" y="100">wait in a queue</text><text x="432" y="169">Customer balance read waits</text><text x="432" y="29">Order placement waits</text></g>
+</svg>
+<figcaption>Observed blocking relationships in ShopDemo. The waiting work had been delayed for about five minutes; the diagram omits connection identifiers.</figcaption>
+</figure>
+<details><summary>Technical details</summary><ul>
+<li>The lead batch runs <code>EXEC dbo.usp_ApplyLateFees</code>, then <code>WAITFOR DELAY '00:15:00'</code> before rolling back its open transaction. The job-step definition was not available for a safe replacement script.</li>
+<li>The downstream shipping statement updates <code>dbo.Orders</code> after updating <code>dbo.Customers</code>. The observed balance query scanned about 200,000 Orders rows.</li>
+<li>The observed waits were lock waits, not evidence of memory pressure. A table-level lock was present, but a lock-escalation event was not established.</li>
+</ul></details>
+</section>
+
+<section id="deadlocks">
+<h2>Deadlocks</h2>
+<p><strong>The captured SalesDemo deadlocks share one avoidable conflict.</strong> Payment work holds an account change while seeking order data; refund work changes an order before seeking the account. Each can wait for the other, forcing one transaction to fail. Five complete cases show this pattern. Test and deploy the two procedure changes together, and confirm callers can safely handle a failed transaction. An additional quick-read setting might reduce one reader-versus-writer conflict, but it does not replace the code fix and is not included in this change set.</p>
+<ul>
+<li>Test and deploy the paired payment and refund changes together, including checks for changed or missing orders and the required failure-handling behavior.</li>
+<li>Make job retries depend on proof that repeating a payment or refund cannot duplicate its business effect.</li>
+</ul>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 170" role="img" aria-labelledby="deadlock-title deadlock-desc">
+<title id="deadlock-title">Recurring SalesDemo deadlock</title>
+<desc id="deadlock-desc">The payment procedure changes an account and then waits for order data. The refund procedure changes an order and then waits for the same account. Their opposing waits form a cycle.</desc>
+<defs><marker id="dead-arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9" fill="#0B6E6E"/></marker></defs>
+<rect x="15" y="50" width="285" height="80" rx="8" fill="#EFF7F7" stroke="#0B6E6E"/>
+<rect x="400" y="50" width="285" height="80" rx="8" fill="#EFF7F7" stroke="#0B6E6E"/>
+<g fill="#111827" font-family="system-ui,sans-serif" font-size="14"><text x="28" y="76">Payment procedure</text><text x="28" y="101">Changes account; waits for order</text><text x="413" y="76">Refund procedure</text><text x="413" y="101">Changes order; waits for account</text></g>
+<path d="M300 70H400" stroke="#0B6E6E" stroke-width="2" marker-end="url(#dead-arrow)"/>
+<path d="M400 112H300" stroke="#0B6E6E" stroke-width="2" marker-end="url(#dead-arrow)"/>
+</svg>
+<figcaption>Five captured deadlocks followed this same two-procedure cycle. The arrows show what each procedure needs from the other.</figcaption>
+</figure>
+<details><summary>Technical details</summary><ul>
+<li>Resources in the complete graph are an <code>Orders</code> page and an <code>Accounts</code> key in SalesDemo. Payment requests a shared read on the order page; refund holds an intent lock there and requests the account key.</li>
+<li>The paired scripts chosen below follow the complete deadlock graphs rather than the alternative procedure rewrites. Test carefully: these definitions read the order before opening a transaction and do not add transaction error handling; changed or missing rows and failure behavior need application-level review before release.</li>
+<li>The observed cycle does not establish that the separate ShopDemo blocking chain is a deadlock.</li>
+</ul></details>
+</section>
+
+<section id="retail-indexes">
+<h2>RetailOps indexes</h2>
+<p><strong>Existing search paths are the best starting point.</strong> An index already exists for the suggested customer region search, and an existing order-date index can serve the daily report after its date condition is corrected. Three small indexes were fragmented, but the available evidence does not establish enough user-facing benefit to put a rebuild ahead of the code and recovery changes. The large order-lines table is a possible candidate for a separate reporting structure, but that added write and storage cost needs a measured test before deployment.</p>
+<details><summary>Technical details</summary><ul>
+<li><code>dbo.Customers</code> already has <code>IX_Customers_Region</code>; the server-wide missing-index suggestion overlaps it.</li>
+<li>The date rewrite can use <code>dbo.Orders.IX_Orders_OrderDate</code>. Its observed zero reads cover only the short post-restart interval and do not justify dropping it.</li>
+<li><code>dbo.OrderLines</code> has about 3 million rows. The proposed analytic index was estimated by the assessment at about 60–180 MB, based on four stored columns and unknown numeric widths; its net benefit was not measured.</li>
+</ul></details>
+</section>
+
+<section id="retail-code">
+<h2>RetailOps code</h2>
+<p><strong>Several busy procedures do more work than necessary, and one cart procedure has a concurrency risk.</strong> The phone lookup scans an existing search path because its input type differs from the stored value. The email lookup changes the indexed value before comparing it, although the database comparison is already case-insensitive. Daily sales calculates a date for each order instead of searching a date range. Loyalty updates repeat customer-by-customer work. Test the matching procedure replacements together with their callers.</p>
+<ul>
+<li>Match the phone input to its stored format and compare email directly.</li>
+<li>Use a start and end date for daily sales, then check its actual runtime with the existing date index.</li>
+<li>Calculate loyalty tiers as a group during a suitable quiet period.</li>
+<li>Make simultaneous additions of the same cart item safe.</li>
+</ul>
+<details><summary>Technical details</summary><ul>
+<li><code>Customers.Phone</code> is <code>varchar(20)</code>; <code>usp_FindCustomerByPhone</code> currently takes <code>nvarchar(20)</code>. Check whether callers send characters the stored format cannot represent.</li>
+<li><code>usp_GetCustomerOrderHistory</code> applies <code>UPPER</code> to indexed <code>Email</code>; the database uses a case-insensitive collation.</li>
+<li><code>usp_GetDailySales</code> wraps <code>Orders.OrderDate</code> in <code>DATEDIFF</code>. Its rewrite uses the existing column directly.</li>
+<li>The loyalty procedure repeatedly invokes <code>fn_CustomerSpend</code>; an inner statement ran about 300,000 times.</li>
+</ul></details>
+</section>
+
+<section id="forum-indexes">
+<h2>ForumDemo indexes</h2>
+<p><strong>The post-vote count has a useful targeted index opportunity, while stored relationships need validation.</strong> The vote count repeatedly reads many entries for one post, so its new search path may reduce work at the cost of extra writes. Enabled but untrusted relationships can also prevent efficient searches. Validate their data before restoring trust. Other frequently run lookups were already fast per call, so wider new indexes are not included in this first change set.</p>
+<ul>
+<li>Add the post-vote search path after allowing for its write cost.</li>
+<li>Validate the identified relationships and investigate any violations that prevent trust from being restored.</li>
+</ul>
+<details><summary>Technical details</summary><ul>
+<li>The vote-count candidate is <code>dbo.Votes(PostId, VoteTypeId)</code>. The assessed workload averaged about 1,560 reads per call; the table also had substantial observed write activity.</li>
+<li>The relationship inventory contains 19 names even though one summary says 18. The supplied script processes all 19 names and skips a relationship when it detects violating rows.</li>
+</ul></details>
+</section>
+
+<section id="forum-code">
+<h2>ForumDemo code</h2>
+<p><strong>Two procedures can return inflated or mismatched results, and a third pauses while holding updates open.</strong> One combines votes and badges before counting them and matches a person identifier to a post identifier. Another combines comments and votes before counting and may select multiple badges. Replace these only after confirming the intended result contract. Removing a separate five-second pause will shorten the time updates hold locks; no observed blocking chain was attributed to this procedure.</p>
+<ul>
+<li>Check expected figures with business owners and deploy the two corrected result procedures.</li>
+<li>Remove the pause inside <code>usp_UpdateTablesWithDelay</code>.</li>
+</ul>
+<details><summary>Technical details</summary><ul>
+<li><code>dbo.sp00060</code> contains the multiplying joins and the mismatched user-to-post comparison. Its replacement retains a tag-text match that still needs a separate data-model review.</li>
+<li><code>dbo.sp09994</code> contains the other multiplying joins. Its replacement retains the procedure’s existing fixed historical date; confirm that date is intended.</li>
+<li><code>dbo.usp_UpdateTablesInLoop</code> repeatedly chooses random rows and pauses; it appears suited to controlled test generation, not routine application traffic.</li>
+</ul></details>
+</section>
+
+<section id="sales-indexes">
+<h2>SalesDemo indexes</h2>
+<p><strong>One additional search path addresses repeated account-total calculations.</strong> The payment workload frequently sums order amounts by account and status, while the current order access scans more widely. Add the consolidated account-and-status index after testing the extra cost on this write-heavy table. The existing primary-key searches and page density need no change.</p>
+<ul>
+<li>Build the single account-and-status index and assess payment and refund work after deployment.</li>
+</ul>
+<details><summary>Technical details</summary><ul>
+<li>The chosen index is <code>dbo.Orders(AccountId, Status) INCLUDE (Amount)</code>. It consolidates the overlapping server-wide, index and procedure suggestions into one change.</li>
+<li>The alternative filtered index would largely duplicate this access path because the frequent calculation includes the common <code>Open</code> status. Its script is omitted.</li>
+<li>The table has about 50,000 rows. The assessment’s narrower candidate estimate was about 1.5 MB; the included <code>Amount</code> makes final size greater, but its exact width-related storage effect was not established.</li>
+</ul></details>
+</section>
+
+<section id="sales-code">
+<h2>SalesDemo code</h2>
+<p><strong>The payment procedure’s repeated total calculation is the main measured code cost.</strong> Its new index addresses that calculation; the coordinated procedure replacements address the separate deadlock cycle described above. These changes must be tested together. Both existing procedures have explicit transactions without complete failure handling, and the selected deadlock fixes do not resolve that omission.</p>
+<details><summary>Technical details</summary><ul>
+<li><code>dbo.usp_PayOrder</code> recorded about 14 million logical reads during its longer workload-history window.</li>
+<li>Before production release, test the selected procedures for an absent order, changes between the initial read and the transaction, and errors after the transaction begins. No combined, tested rewrite addressing all three issues was provided.</li>
+</ul></details>
+</section>
+
+<section id="shop-code">
+<h2>ShopDemo code</h2>
+<p><strong>Shipping needs safer failure handling, while two order searches can be narrowed.</strong> The shipping procedure can leave an open transaction if its later update fails; its replacement rolls back and passes the error on. An overdue-order search path can reduce late-fee scan work, while a separate customer-balance path reduces broad reads. Neither search path removes the deliberate pause in the billing job.</p>
+<ul>
+<li>Deploy and test the shipping failure-handling change.</li>
+<li>Add the balance and overdue-order search paths, allowing for extra work on order updates.</li>
+<li>Use a single captured time for each newly placed order.</li>
+</ul>
+<details><summary>Technical details</summary><ul>
+<li><code>usp_ApplyLateFees</code> filters <code>dbo.Orders</code> by <code>Status = 'Open'</code> and overdue <code>DueDate</code>. The filtered index supports that predicate.</li>
+<li><code>usp_CustomerBalance</code> filters by <code>CustomerId</code> and <code>Status</code> and totals <code>Total</code> plus <code>LateFee</code>. One covering-index script was selected; the duplicate was omitted.</li>
+</ul></details>
+</section>
+
+<section id="limitations">
+<h2>Limitations</h2>
+<ul>
+<li>Index-usage and recent runtime observations cover only about 32 hours after restart. They do not establish how infrequent or seasonal work behaves.</li>
+<li>Seven lower-load user databases were not examined in depth. ShopDemo was added because blocking was active there.</li>
+<li>Some summaries and script lists were shortened. One ForumDemo collection procedure was also incomplete; it is assessment machinery, not a basis for an application change.</li>
+<li>Backup history does not prove whether external backups exist or can be restored. Their location, retention and recovery requirements must be confirmed.</li>
+<li>The ShopDemo billing job definition was unavailable, so its unsafe pause cannot be replaced by a verified script here. The SalesDemo procedure scripts also need business-rule and failure-path testing before production use.</li>
+</ul>
+</section>
+
+<section id="scripts"><h2>Scripts</h2>
+<p>These are the selected change batches, ordered to match the action plan where a script is available. Run only after the approvals and testing described above. Each block is copied from the corresponding recommendation; no additional batch has been constructed.</p>
+
+<h3>Check listed databases for damage — Server health — listed databases</h3>
+<pre><code>USE [IndexTunerChallenge];
+GO
+DBCC CHECKDB ([IndexTunerChallenge]) WITH NO_INFOMSGS;
+GO
+
+USE [BenchDeploy];
+GO
+DBCC CHECKDB ([BenchDeploy]) WITH NO_INFOMSGS;
+GO
+
+USE [IndexTunerChallenge_bench_challenge];
+GO
+DBCC CHECKDB ([IndexTunerChallenge_bench_challenge]) WITH NO_INFOMSGS;
+GO
+
+USE [TunerBench];
+GO
+DBCC CHECKDB ([TunerBench]) WITH NO_INFOMSGS;
+GO
+
+USE [SQLStormOltp];
+GO
+DBCC CHECKDB ([SQLStormOltp]) WITH NO_INFOMSGS;
+GO
+
+USE [SQLStormOltp_bench_sqlstorm-oltp];
+GO
+DBCC CHECKDB ([SQLStormOltp_bench_sqlstorm-oltp]) WITH NO_INFOMSGS;
+GO
+
+USE [RubricArchive];
+GO
+DBCC CHECKDB ([RubricArchive]) WITH NO_INFOMSGS;
+GO
+
+USE [tpch10];
+GO
+DBCC CHECKDB ([tpch10]) WITH NO_INFOMSGS;
+GO
+
+USE [tpch10_bench_tpch10-realistic];
+GO
+DBCC CHECKDB ([tpch10_bench_tpch10-realistic]) WITH NO_INFOMSGS;
+GO
+
+USE [ForumDemo];
+GO
+DBCC CHECKDB ([ForumDemo]) WITH NO_INFOMSGS;
+GO
+
+USE [ShopDemo];
+GO
+DBCC CHECKDB ([ShopDemo]) WITH NO_INFOMSGS;
+GO
+
+USE [SalesDemo];
+GO
+DBCC CHECKDB ([SalesDemo]) WITH NO_INFOMSGS;
+GO
+
+USE [RetailOps];
+GO
+DBCC CHECKDB ([RetailOps]) WITH NO_INFOMSGS;
+GO</code></pre>
+
+<h3>Align payment table access — Deadlocks — SalesDemo</h3>
+<pre><code>USE [SalesDemo];
+GO
+CREATE OR ALTER PROCEDURE dbo.usp_PayOrder @OrderId int
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @AccountId int,
+            @Amount decimal(12,2);
+
+    SELECT
+        @AccountId = AccountId,
+        @Amount = Amount
+    FROM dbo.Orders
+    WHERE OrderId = @OrderId;
+
+    BEGIN TRANSACTION;
+        UPDATE dbo.Accounts
+           SET Balance = Balance - @Amount,
+               UpdatedAt = SYSDATETIME()
+         WHERE AccountId = @AccountId;
+
+        UPDATE dbo.Accounts
+           SET OpenOrderTotal =
+               (SELECT SUM(o.Amount)
+                  FROM dbo.Orders AS o
+                 WHERE o.AccountId = @AccountId
+                   AND o.Status IN ('Open', 'Refunded'))
+         WHERE AccountId = @AccountId;
+
+        INSERT dbo.Payments (OrderId, Amount, Kind, CreatedAt)
+        VALUES (@OrderId, @Amount, 'Payment', SYSDATETIME());
+
+        UPDATE dbo.Orders
+           SET Status = 'Paid',
+               UpdatedAt = SYSDATETIME()
+         WHERE OrderId = @OrderId;
+    COMMIT;
+END;
+GO</code></pre>
+
+<h3>Align refund table access — Deadlocks — SalesDemo</h3>
+<pre><code>USE [SalesDemo];
+GO
+CREATE OR ALTER PROCEDURE dbo.usp_RefundOrder @OrderId int
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @AccountId int,
+            @Amount decimal(12,2);
+
+    SELECT
+        @AccountId = AccountId,
+        @Amount = Amount
+    FROM dbo.Orders
+    WHERE OrderId = @OrderId;
+
+    BEGIN TRANSACTION;
+        UPDATE dbo.Accounts
+           SET Balance = Balance + @Amount,
+               UpdatedAt = SYSDATETIME()
+         WHERE AccountId = @AccountId;
+
+        UPDATE dbo.Orders
+           SET Status = 'Refunded',
+               UpdatedAt = SYSDATETIME()
+         WHERE OrderId = @OrderId;
+
+        INSERT dbo.Payments (OrderId, Amount, Kind, CreatedAt)
+        VALUES (@OrderId, -@Amount, 'Refund', SYSDATETIME());
+    COMMIT;
+END;
+GO</code></pre>
+
+<h3>Make shipping failures release the transaction — Code — ShopDemo</h3>
+<pre><code>USE [ShopDemo];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_ShipOrder
+    @OrderId int,
+    @CustomerId int
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        UPDATE dbo.Customers
+           SET LastOrderDate = SYSDATETIME()
+         WHERE CustomerId = @CustomerId;
+
+        UPDATE dbo.Orders
+           SET Status = 'Shipped'
+         WHERE OrderId = @OrderId;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() &lt;&gt; 0
+            ROLLBACK TRANSACTION;
+
+        THROW;
+    END CATCH;
+END;
+GO</code></pre>
+
+<h3>Correct user and post counts — Code — ForumDemo</h3>
+<pre><code>USE [ForumDemo];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp00060
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH PostCounts AS
+    (
+        SELECT
+            p.OwnerUserId AS UserId,
+            COUNT_BIG(*) AS TotalPosts
+        FROM dbo.Posts AS p
+        WHERE p.OwnerUserId IS NOT NULL
+        GROUP BY p.OwnerUserId
+    ),
+    VoteCounts AS
+    (
+        SELECT
+            p.OwnerUserId AS UserId,
+            SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpVotes,
+            SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownVotes
+        FROM dbo.Posts AS p
+        LEFT JOIN dbo.Votes AS v
+            ON v.PostId = p.Id
+           AND v.VoteTypeId IN (2, 3)
+        WHERE p.OwnerUserId IS NOT NULL
+        GROUP BY p.OwnerUserId
+    ),
+    BadgeCounts AS
+    (
+        SELECT
+            b.UserId,
+            COUNT_BIG(*) AS BadgeCount
+        FROM dbo.Badges AS b
+        GROUP BY b.UserId
+    ),
+    RankedPosts AS
+    (
+        SELECT
+            p.OwnerUserId,
+            p.Id AS PostId,
+            p.Title,
+            p.CreationDate,
+            ROW_NUMBER() OVER
+            (
+                PARTITION BY t.Id
+                ORDER BY p.CreationDate DESC, p.Id DESC
+            ) AS rn,
+            t.TagName
+        FROM dbo.Posts AS p
+        INNER JOIN dbo.Tags AS t
+            ON p.Tags LIKE '%' + t.TagName + '%'
+        WHERE p.PostTypeId = 1
+    ),
+    TopUsers AS
+    (
+        SELECT
+            u.Id AS UserId,
+            u.DisplayName,
+            CONVERT(int, ISNULL(pc.TotalPosts, 0)) AS TotalPosts,
+            CONVERT(int, ISNULL(vc.UpVotes, 0)) AS UpVotes,
+            CONVERT(int, ISNULL(vc.DownVotes, 0)) AS DownVotes,
+            CONVERT(int, ISNULL(bc.BadgeCount, 0)) AS BadgeCount,
+            DENSE_RANK() OVER
+            (
+                ORDER BY
+                    ISNULL(pc.TotalPosts, 0) DESC,
+                    ISNULL(vc.UpVotes, 0) - ISNULL(vc.DownVotes, 0) DESC
+            ) AS UserRank
+        FROM dbo.Users AS u
+        LEFT JOIN PostCounts AS pc
+            ON pc.UserId = u.Id
+        LEFT JOIN VoteCounts AS vc
+            ON vc.UserId = u.Id
+        LEFT JOIN BadgeCounts AS bc
+            ON bc.UserId = u.Id
+        WHERE ISNULL(pc.TotalPosts, 0) &gt; 10
+    )
+    SELECT
+        tu.UserRank,
+        tu.DisplayName,
+        tu.TotalPosts,
+        tu.UpVotes,
+        tu.DownVotes,
+        tu.BadgeCount,
+        rp.Title AS LatestPostTitle,
+        rp.CreationDate AS LatestPostDate,
+        CASE
+            WHEN rp.rn = 1 THEN 'Latest'
+            ELSE 'Older'
+        END AS PostStatus
+    FROM TopUsers AS tu
+    LEFT JOIN RankedPosts AS rp
+        ON rp.OwnerUserId = tu.UserId
+    ORDER BY
+        tu.UserRank,
+        rp.CreationDate DESC;
+END;
+GO</code></pre>
+
+<h3>Correct post counts and badge selection — Code — ForumDemo</h3>
+<pre><code>USE [ForumDemo];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp09994
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH CommentCounts AS
+    (
+        SELECT
+            c.PostId,
+            COUNT_BIG(*) AS CommentCount
+        FROM dbo.Comments AS c
+        GROUP BY c.PostId
+    ),
+    VoteCounts AS
+    (
+        SELECT
+            v.PostId,
+            SUM(CASE WHEN v.VoteTypeId = 2 THEN 1 ELSE 0 END) AS UpVotes,
+            SUM(CASE WHEN v.VoteTypeId = 3 THEN 1 ELSE 0 END) AS DownVotes
+        FROM dbo.Votes AS v
+        WHERE v.VoteTypeId IN (2, 3)
+        GROUP BY v.PostId
+    ),
+    RankedPosts AS
+    (
+        SELECT
+            p.Id AS PostId,
+            p.OwnerUserId,
+            p.Title,
+            p.Score,
+            p.ViewCount,
+            p.CreationDate,
+            p.LastActivityDate,
+            CONVERT(int, ISNULL(cc.CommentCount, 0)) AS CommentCount,
+            CONVERT(int, ISNULL(vc.UpVotes, 0)) AS UpVotes,
+            CONVERT(int, ISNULL(vc.DownVotes, 0)) AS DownVotes,
+            ROW_NUMBER() OVER
+            (
+                ORDER BY
+                    p.Score DESC,
+                    p.ViewCount DESC,
+                    p.CreationDate DESC,
+                    p.Id DESC
+            ) AS [Rank]
+        FROM dbo.Posts AS p
+        LEFT JOIN CommentCounts AS cc
+            ON cc.PostId = p.Id
+        LEFT JOIN VoteCounts AS vc
+            ON vc.PostId = p.Id
+        WHERE p.PostTypeId = 1
+          AND p.CreationDate &gt;= DATEADD(YEAR, -1, CAST('2024-10-01T12:34:56' AS datetime))
+    ),
+    TopPosts AS
+    (
+        SELECT
+            rp.PostId,
+            rp.OwnerUserId,
+            rp.Title,
+            rp.Score,
+            rp.ViewCount,
+            rp.CreationDate,
+            rp.LastActivityDate,
+            rp.CommentCount,
+            rp.UpVotes,
+            rp.DownVotes,
+            rp.[Rank]
+        FROM RankedPosts AS rp
+        WHERE rp.[Rank] &lt;= 10
+    )
+    SELECT
+        tp.PostId,
+        tp.Title,
+        tp.Score,
+        tp.ViewCount,
+        tp.CreationDate,
+        tp.LastActivityDate,
+        tp.CommentCount,
+        tp.UpVotes,
+        tp.DownVotes,
+        COALESCE(b.Name, 'No Badge') AS TopBadge
+    FROM TopPosts AS tp
+    OUTER APPLY
+    (
+        SELECT TOP (1)
+            b.Name
+        FROM dbo.Badges AS b
+        WHERE tp.UpVotes &gt; 100
+          AND b.UserId = tp.OwnerUserId
+        ORDER BY
+            b.Class ASC,
+            b.Date DESC,
+            b.Id DESC
+    ) AS b
+    ORDER BY
+        tp.Score DESC,
+        tp.ViewCount DESC;
+END;
+GO</code></pre>
+
+<h3>Remove the pause between table updates — Code — ForumDemo</h3>
+<pre><code>USE [ForumDemo];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_UpdateTablesWithDelay
+    @UserId INT,
+    @NewReputation INT,
+    @PostId INT,
+    @NewScore INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        UPDATE dbo.Users
+        SET Reputation = @NewReputation,
+            LastAccessDate = GETDATE()
+        WHERE Id = @UserId;
+
+        DECLARE @RowsAffected1 INT = @@ROWCOUNT;
+
+        UPDATE dbo.Posts
+        SET Score = @NewScore,
+            LastActivityDate = GETDATE()
+        WHERE Id = @PostId;
+
+        DECLARE @RowsAffected2 INT = @@ROWCOUNT;
+
+        COMMIT TRANSACTION;
+
+        SELECT
+            'Success' AS Status,
+            'Both tables updated successfully' AS Message,
+            @RowsAffected1 AS UsersRowsAffected,
+            @RowsAffected2 AS PostsRowsAffected;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT &gt; 0
+            ROLLBACK TRANSACTION;
+
+        SELECT
+            'Error' AS Status,
+            ERROR_NUMBER() AS ErrorNumber,
+            ERROR_MESSAGE() AS ErrorMessage,
+            ERROR_LINE() AS ErrorLine,
+            ERROR_PROCEDURE() AS ErrorProcedure;
+
+        THROW;
+    END CATCH;
+END;
+GO</code></pre>
+
+<h3>Restore automatic search information — Server health — ForumDemo, SQLStormOltp and tpch10</h3>
+<pre><code>USE [ForumDemo];
+GO
+ALTER DATABASE [ForumDemo] SET AUTO_CREATE_STATISTICS ON;
+ALTER DATABASE [ForumDemo] SET AUTO_UPDATE_STATISTICS ON;
+GO
+
+USE [SQLStormOltp];
+GO
+ALTER DATABASE [SQLStormOltp] SET AUTO_CREATE_STATISTICS ON;
+ALTER DATABASE [SQLStormOltp] SET AUTO_UPDATE_STATISTICS ON;
+GO
+
+USE [tpch10];
+GO
+ALTER DATABASE [tpch10] SET AUTO_CREATE_STATISTICS ON;
+ALTER DATABASE [tpch10] SET AUTO_UPDATE_STATISTICS ON;
+GO</code></pre>
+
+<h3>Speed up account order totals — Indexes — SalesDemo</h3>
+<pre><code>USE [SalesDemo];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Orders')
+      AND name = N'IX_Orders_AccountId_Status_Amount'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Orders_AccountId_Status_Amount]
+    ON [dbo].[Orders] ([AccountId], [Status])
+    INCLUDE ([Amount])
+    WITH
+    (
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        DATA_COMPRESSION = NONE
+    );
+END;
+GO</code></pre>
+
+<h3>Speed up customer balance reads — Indexes — ShopDemo</h3>
+<pre><code>USE [ShopDemo];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Orders')
+      AND name = N'IX_Orders_Customer_Status_Balance'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Orders_Customer_Status_Balance
+        ON dbo.Orders (CustomerId, Status)
+        INCLUDE (Total, LateFee)
+        WITH (ONLINE = ON, SORT_IN_TEMPDB = ON);
+END;
+GO</code></pre>
+
+<h3>Match the phone search to stored values — Code — RetailOps</h3>
+<pre><code>USE [RetailOps];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_FindCustomerByPhone
+    @Phone varchar(20)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT CustomerId, FirstName, LastName, Email, Phone, Region, LoyaltyTier
+    FROM dbo.Customers
+    WHERE Phone = @Phone;
+END;
+GO</code></pre>
+
+<h3>Simplify the email search — Code — RetailOps</h3>
+<pre><code>USE [RetailOps];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_GetCustomerOrderHistory
+    @Email nvarchar(200)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT TOP (20) *
+    FROM dbo.Customers AS c
+    JOIN dbo.Orders AS o
+        ON o.CustomerId = c.CustomerId
+    WHERE c.Email = @Email
+    ORDER BY o.OrderDate DESC;
+END;
+GO</code></pre>
+
+<h3>Speed up the daily sales date search — Code — RetailOps</h3>
+<pre><code>USE [RetailOps];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_GetDailySales
+    @ReportDate date
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT p.Category,
+           COUNT(DISTINCT o.OrderId) AS Orders,
+           SUM(ol.Quantity * ol.UnitPrice) AS Revenue
+    FROM dbo.Orders AS o
+    JOIN dbo.OrderLines AS ol
+        ON ol.OrderId = o.OrderId
+    JOIN dbo.Products AS p
+        ON p.ProductId = ol.ProductId
+    WHERE o.OrderDate &gt;= @ReportDate
+      AND o.OrderDate &lt; DATEADD(day, 1, @ReportDate)
+      AND o.Status &lt;&gt; 'Cancelled'
+    GROUP BY p.Category
+    ORDER BY Revenue DESC;
+END;
+GO</code></pre>
+
+<h3>Calculate loyalty tiers together — Code — RetailOps</h3>
+<pre><code>USE [RetailOps];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_RecalcLoyaltyTiers
+    @Region varchar(20),
+    @AsOf date
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH RegionalSpend AS
+    (
+        SELECT o.CustomerId,
+               SUM(ol.Quantity * ol.UnitPrice) AS Spend
+        FROM dbo.Customers AS c
+        JOIN dbo.Orders AS o
+            ON o.CustomerId = c.CustomerId
+        JOIN dbo.OrderLines AS ol
+            ON ol.OrderId = o.OrderId
+        WHERE c.Region = @Region
+          AND o.OrderDate &gt;= DATEADD(year, -1, @AsOf)
+          AND o.OrderDate &lt; @AsOf
+          AND o.Status &lt;&gt; 'Cancelled'
+        GROUP BY o.CustomerId
+    )
+    UPDATE c
+       SET LoyaltyTier =
+           CASE
+               WHEN COALESCE(rs.Spend, CONVERT(decimal(14, 2), 0)) &gt;= 12500 THEN 'Gold'
+               WHEN COALESCE(rs.Spend, CONVERT(decimal(14, 2), 0)) &gt;= 9500 THEN 'Silver'
+               ELSE 'Bronze'
+           END
+    FROM dbo.Customers AS c
+    LEFT JOIN RegionalSpend AS rs
+        ON rs.CustomerId = c.CustomerId
+    WHERE c.Region = @Region;
+END;
+GO</code></pre>
+
+<h3>Protect simultaneous cart additions — Code — RetailOps</h3>
+<pre><code>USE [RetailOps];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_AddCartItem
+    @CartId int,
+    @ProductId int,
+    @Quantity int
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        UPDATE ci WITH (UPDLOCK, SERIALIZABLE)
+           SET Quantity = Quantity + @Quantity
+        FROM dbo.CartItems AS ci
+        WHERE ci.CartId = @CartId
+          AND ci.ProductId = @ProductId;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            INSERT dbo.CartItems
+                (CartId, ProductId, Quantity)
+            VALUES
+                (@CartId, @ProductId, @Quantity);
+        END;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF XACT_STATE() &lt;&gt; 0
+            ROLLBACK TRANSACTION;
+
+        THROW;
+    END CATCH;
+END;
+GO</code></pre>
+
+<h3>Validate and restore trusted relationships — Indexes — ForumDemo</h3>
+<pre><code>USE [ForumDemo];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [AIIndexTuner].[Recommendation] AS c
+    WHERE NOT EXISTS
+    (
+        SELECT 1
+        FROM [AIIndexTuner].[Run] AS p
+        WHERE p.[RunId] = c.[RunId]
+    )
+)
+BEGIN
+    ALTER TABLE [AIIndexTuner].[Recommendation]
+    WITH CHECK CHECK CONSTRAINT [FK_AIIndexTuner_Recommendation_Run];
+END
+ELSE
+    PRINT N'FK_AIIndexTuner_Recommendation_Run skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[Badges] AS c
+    WHERE c.[UserId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Users] AS p
+        WHERE p.[Id] = c.[UserId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[Badges]
+    WITH CHECK CHECK CONSTRAINT [FK__Badges__UserId__6477ECF3];
+END
+ELSE
+    PRINT N'FK__Badges__UserId__6477ECF3 skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[Comments] AS c
+    WHERE c.[PostId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Posts] AS p
+        WHERE p.[Id] = c.[PostId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[Comments]
+    WITH CHECK CHECK CONSTRAINT [FK__Comments__PostId__4CA06362];
+END
+ELSE
+    PRINT N'FK__Comments__PostId__4CA06362 skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[Comments] AS c
+    WHERE c.[UserId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Users] AS p
+        WHERE p.[Id] = c.[UserId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[Comments]
+    WITH CHECK CHECK CONSTRAINT [FK__Comments__UserId__4D94879B];
+END
+ELSE
+    PRINT N'FK__Comments__UserId__4D94879B skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[PostHistory] AS c
+    WHERE c.[PostHistoryTypeId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[PostHistoryTypes] AS p
+        WHERE p.[Id] = c.[PostHistoryTypeId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[PostHistory]
+    WITH CHECK CHECK CONSTRAINT [FK__PostHisto__PostH__5070F446];
+END
+ELSE
+    PRINT N'FK__PostHisto__PostH__5070F446 skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[PostHistory] AS c
+    WHERE c.[PostId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Posts] AS p
+        WHERE p.[Id] = c.[PostId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[PostHistory]
+    WITH CHECK CHECK CONSTRAINT [FK__PostHisto__PostI__5165187F];
+END
+ELSE
+    PRINT N'FK__PostHisto__PostI__5165187F skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[PostHistory] AS c
+    WHERE c.[UserId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Users] AS p
+        WHERE p.[Id] = c.[UserId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[PostHistory]
+    WITH CHECK CHECK CONSTRAINT [FK__PostHisto__UserI__52593CB8];
+END
+ELSE
+    PRINT N'FK__PostHisto__UserI__52593CB8 skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[PostLinks] AS c
+    WHERE c.[LinkTypeId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[LinkTypes] AS p
+        WHERE p.[Id] = c.[LinkTypeId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[PostLinks]
+    WITH CHECK CHECK CONSTRAINT [FK__PostLinks__LinkT__571DF1D5];
+END
+ELSE
+    PRINT N'FK__PostLinks__LinkT__571DF1D5 skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[PostLinks] AS c
+    WHERE c.[PostId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Posts] AS p
+        WHERE p.[Id] = c.[PostId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[PostLinks]
+    WITH CHECK CHECK CONSTRAINT [FK__PostLinks__PostI__5535A963];
+END
+ELSE
+    PRINT N'FK__PostLinks__PostI__5535A963 skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[PostLinks] AS c
+    WHERE c.[RelatedPostId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Posts] AS p
+        WHERE p.[Id] = c.[RelatedPostId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[PostLinks]
+    WITH CHECK CHECK CONSTRAINT [FK__PostLinks__Relat__5629CD9C];
+END
+ELSE
+    PRINT N'FK__PostLinks__Relat__5629CD9C skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[Posts] AS c
+    WHERE c.[AcceptedAnswerId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Posts] AS p
+        WHERE p.[Id] = c.[AcceptedAnswerId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[Posts]
+    WITH CHECK CHECK CONSTRAINT [FK__Posts__AcceptedA__48CFD27E];
+END
+ELSE
+    PRINT N'FK__Posts__AcceptedA__48CFD27E skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[Posts] AS c
+    WHERE c.[LastEditorUserId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Users] AS p
+        WHERE p.[Id] = c.[LastEditorUserId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[Posts]
+    WITH CHECK CHECK CONSTRAINT [FK__Posts__LastEdito__47DBAE45];
+END
+ELSE
+    PRINT N'FK__Posts__LastEdito__47DBAE45 skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[Posts] AS c
+    WHERE c.[OwnerUserId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Users] AS p
+        WHERE p.[Id] = c.[OwnerUserId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[Posts]
+    WITH CHECK CHECK CONSTRAINT [FK__Posts__OwnerUser__46E78A0C];
+END
+ELSE
+    PRINT N'FK__Posts__OwnerUser__46E78A0C skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[Posts] AS c
+    WHERE c.[ParentId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Posts] AS p
+        WHERE p.[Id] = c.[ParentId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[Posts]
+    WITH CHECK CHECK CONSTRAINT [FK__Posts__ParentId__49C3F6B7];
+END
+ELSE
+    PRINT N'FK__Posts__ParentId__49C3F6B7 skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[Posts] AS c
+    WHERE c.[PostTypeId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[PostTypes] AS p
+        WHERE p.[Id] = c.[PostTypeId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[Posts]
+    WITH CHECK CHECK CONSTRAINT [FK__Posts__PostTypeI__45F365D3];
+END
+ELSE
+    PRINT N'FK__Posts__PostTypeI__45F365D3 skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[Tags] AS c
+    WHERE c.[ExcerptPostId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Posts] AS p
+        WHERE p.[Id] = c.[ExcerptPostId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[Tags]
+    WITH CHECK CHECK CONSTRAINT [FK__Tags__ExcerptPos__59FA5E80];
+END
+ELSE
+    PRINT N'FK__Tags__ExcerptPos__59FA5E80 skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[Tags] AS c
+    WHERE c.[WikiPostId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Posts] AS p
+        WHERE p.[Id] = c.[WikiPostId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[Tags]
+    WITH CHECK CHECK CONSTRAINT [FK__Tags__WikiPostId__5AEE82B9];
+END
+ELSE
+    PRINT N'FK__Tags__WikiPostId__5AEE82B9 skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[Votes] AS c
+    WHERE c.[UserId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[Users] AS p
+        WHERE p.[Id] = c.[UserId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[Votes]
+    WITH CHECK CHECK CONSTRAINT [FK__Votes__UserId__5EBF139D];
+END
+ELSE
+    PRINT N'FK__Votes__UserId__5EBF139D skipped because violating rows exist.';
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM [dbo].[Votes] AS c
+    WHERE c.[VoteTypeId] IS NOT NULL
+      AND NOT EXISTS
+    (
+        SELECT 1
+        FROM [dbo].[VoteTypes] AS p
+        WHERE p.[Id] = c.[VoteTypeId]
+    )
+)
+BEGIN
+    ALTER TABLE [dbo].[Votes]
+    WITH CHECK CHECK CONSTRAINT [FK__Votes__VoteTypeI__5DCAEF64];
+END
+ELSE
+    PRINT N'FK__Votes__VoteTypeI__5DCAEF64 skipped because violating rows exist.';
+GO</code></pre>
+
+<h3>Speed up votes by post — Indexes — ForumDemo</h3>
+<pre><code>USE [ForumDemo];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Votes')
+      AND name = N'IX_Votes_PostId_VoteTypeId'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX [IX_Votes_PostId_VoteTypeId]
+    ON [dbo].[Votes]
+    (
+        [PostId] ASC,
+        [VoteTypeId] ASC
+    )
+    WITH
+    (
+        DATA_COMPRESSION = PAGE,
+        ONLINE = ON,
+        SORT_IN_TEMPDB = ON,
+        FILLFACTOR = 100
+    );
+END;
+GO</code></pre>
+
+<h3>Speed up overdue-order updates — Indexes — ShopDemo</h3>
+<pre><code>USE [ShopDemo];
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'dbo.Orders')
+      AND name = N'IX_Orders_Open_DueDate'
+)
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_Orders_Open_DueDate
+        ON dbo.Orders (DueDate)
+        INCLUDE (Total)
+        WHERE Status = 'Open'
+        WITH (ONLINE = ON, SORT_IN_TEMPDB = ON);
+END;
+GO</code></pre>
+
+<h3>Use one time when placing an order — Code — ShopDemo</h3>
+<pre><code>USE [ShopDemo];
+GO
+
+CREATE OR ALTER PROCEDURE dbo.usp_PlaceOrder
+    @CustomerId int,
+    @Total decimal(12,2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @Now datetime2(0) = SYSDATETIME();
+
+    INSERT dbo.Orders
+        (CustomerId, OrderDate, DueDate, Status, Total)
+    VALUES
+        (@CustomerId, @Now, DATEADD(day, 30, CAST(@Now AS date)), 'Open', @Total);
+END;
+GO</code></pre>
+
+<h3>Make transaction-log growth predictable — Server health — ForumDemo, IndexTunerChallenge, SQLStormOltp and tpch10</h3>
+<pre><code>USE [ForumDemo];
+GO
+ALTER DATABASE [ForumDemo]
+MODIFY FILE
+(
+    NAME = N'SQLStorm_log',
+    FILEGROWTH = 256MB
+);
+GO
+
+USE [IndexTunerChallenge];
+GO
+ALTER DATABASE [IndexTunerChallenge]
+MODIFY FILE
+(
+    NAME = N'IndexTunerChallenge_log',
+    FILEGROWTH = 512MB
+);
+GO
+
+USE [SQLStormOltp];
+GO
+ALTER DATABASE [SQLStormOltp]
+MODIFY FILE
+(
+    NAME = N'SQLStorm_log',
+    FILEGROWTH = 64MB
+);
+GO
+
+USE [tpch10];
+GO
+ALTER DATABASE [tpch10]
+MODIFY FILE
+(
+    NAME = N'tpch10_log',
+    FILEGROWTH = 64MB
+);
+GO</code></pre>
+</section>
+<section id="assessment-run-log" lang="en" style="margin-top:2em">
+<h2>Assessment run log</h2>
+<p>Started 2026-11-19 23:27 UTC, took 9m 43s, used 11 credits.</p>
+<p>Databases analyzed: Chosen by share of plan-cache CPU across 10 user database(s): RetailOps 57%, ForumDemo 32.4%, SalesDemo 9.1%. 7 database(s) under 2% of the load were left out. Blocking was active in ShopDemo, so Locking and Blocking connected there and its code is reviewed too.</p>
+<table style="border-collapse:collapse;width:100%">
+<thead><tr><th style="text-align:left;padding:4px 8px;border-bottom:1px solid currentColor">Step</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid currentColor">Outcome</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid currentColor">Duration</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid currentColor">Credit</th><th style="text-align:left;padding:4px 8px;border-bottom:1px solid currentColor">Notes</th></tr></thead>
+<tbody>
+<tr><td style="padding:4px 8px">Server Health</td><td style="padding:4px 8px">Completed</td><td style="padding:4px 8px">42s</td><td style="padding:4px 8px">1</td><td style="padding:4px 8px"></td></tr>
+<tr><td style="padding:4px 8px">Locking and Blocking</td><td style="padding:4px 8px">Completed</td><td style="padding:4px 8px">57s</td><td style="padding:4px 8px">1</td><td style="padding:4px 8px"></td></tr>
+<tr><td style="padding:4px 8px">Fix Deadlocks</td><td style="padding:4px 8px">Completed</td><td style="padding:4px 8px">34s</td><td style="padding:4px 8px">1</td><td style="padding:4px 8px"></td></tr>
+<tr><td style="padding:4px 8px">Index Tuning (RetailOps)</td><td style="padding:4px 8px">Completed</td><td style="padding:4px 8px">54s</td><td style="padding:4px 8px">1</td><td style="padding:4px 8px"></td></tr>
+<tr><td style="padding:4px 8px">Code Review (RetailOps)</td><td style="padding:4px 8px">Completed</td><td style="padding:4px 8px">55s</td><td style="padding:4px 8px">1</td><td style="padding:4px 8px"></td></tr>
+<tr><td style="padding:4px 8px">Index Tuning (ForumDemo)</td><td style="padding:4px 8px">Completed</td><td style="padding:4px 8px">57s</td><td style="padding:4px 8px">1</td><td style="padding:4px 8px"></td></tr>
+<tr><td style="padding:4px 8px">Code Review (ForumDemo)</td><td style="padding:4px 8px">Completed</td><td style="padding:4px 8px">52s</td><td style="padding:4px 8px">1</td><td style="padding:4px 8px"></td></tr>
+<tr><td style="padding:4px 8px">Index Tuning (SalesDemo)</td><td style="padding:4px 8px">Completed</td><td style="padding:4px 8px">34s</td><td style="padding:4px 8px">1</td><td style="padding:4px 8px"></td></tr>
+<tr><td style="padding:4px 8px">Code Review (SalesDemo)</td><td style="padding:4px 8px">Completed</td><td style="padding:4px 8px">36s</td><td style="padding:4px 8px">1</td><td style="padding:4px 8px"></td></tr>
+<tr><td style="padding:4px 8px">Code Review (ShopDemo)</td><td style="padding:4px 8px">Completed</td><td style="padding:4px 8px">41s</td><td style="padding:4px 8px">1</td><td style="padding:4px 8px"></td></tr>
+<tr><td style="padding:4px 8px">Assessment report</td><td style="padding:4px 8px">Completed</td><td style="padding:4px 8px">1m 54s</td><td style="padding:4px 8px">1</td><td style="padding:4px 8px"></td></tr>
+</tbody></table>
+</section>
+<footer>
+<p>Based on analysis as of 2026-11-19 23:35:36 UTC</p>
+<p>Generated by AI SQL Tuner Studio v3.6.3.0 using model gpt-6-sol with reasoning effort medium. <a href="https://aisqltuner.com">aisqltuner.com</a></p>
+</footer>
+</main>
+</div>
+
+</body>
+</html>
